@@ -574,8 +574,7 @@ var camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
 camera.position.set(0, 0, 5);
 camera.lookAt(0, 0, 0);
 
-// ── Texture Pipeline (texElementImage2D → manual GL textures) ──────
-var panelsReady = false;
+// ── Texture Pipeline ───────────────────────────────────────────────
 
 // ── Panel Meshes + Textures ────────────────────────────────────────
 var PANEL_ASPECT = W / H;
@@ -862,8 +861,6 @@ document.addEventListener("keydown", function(e) {
 
 // ── Render on timeline update ──────────────────────────────────────
 tl.eventCallback("onUpdate", function() {
-  if (panelsReady) capturePanels();
-
   camState._velX = camState.px - prevPx;
   camState._velZ = camState.pz - prevPz;
   prevPx = camState.px;
@@ -899,9 +896,9 @@ tl.eventCallback("onUpdate", function() {
 
 window.__timelines["orbit-theater"] = tl;
 
-// Defer first render to after browser layout pass
+// Capture panels once after browser layout, then seek to initial frame
 setTimeout(function() {
-  panelsReady = true;
+  capturePanels();
   tl.seek(0);
 }, 0);
 </script>
