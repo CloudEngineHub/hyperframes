@@ -185,7 +185,7 @@ In the root `index.html`:
 
 - **Narration**: `<audio id="narration" src="narration.wav" data-start="0" data-duration="..." data-track-index="0" data-volume="1">`
 - **Underscore/music** (if storyboard specifies): `<audio id="underscore" src="underscore.mp3" data-start="0" data-duration="..." data-track-index="3" data-volume="0.15">`
-- **SFX**: If `sfx/` directory exists in the project, wire sound effects at beat boundaries. Each SFX gets its own track index (41+) to avoid conflicts:
+- **SFX**: Copy the bundled SFX library to the project: `cp -r skills/website-to-hyperframes/assets/sfx/ <project-dir>/sfx/` (or if the skill is installed elsewhere, find it with `ls */website-to-hyperframes/assets/sfx/ 2>/dev/null`). Then wire sound effects at beat boundaries in `index.html`. Each SFX gets its own track index (41+) to avoid conflicts:
 
 ```html
 <audio
