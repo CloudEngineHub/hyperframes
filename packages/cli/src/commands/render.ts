@@ -51,12 +51,43 @@ import {
   validateVariables,
   formatVariableValidationIssue,
   normalizeResolutionFlag,
+  parseFps,
+  fpsToNumber,
+  fpsToFfmpegArg,
   type VariableValidationIssue,
   type CanvasResolution,
+  type Fps,
+  type FpsParseResult,
 } from "@hyperframes/core";
 
-const VALID_FPS = new Set([24, 30, 60]);
 const VALID_QUALITY = new Set(["draft", "standard", "high"]);
+
+/**
+ * Map a {@link FpsParseResult} failure reason to a human-friendly
+ * error-box message. The empty / undefined / default-fallthrough case
+ * shouldn't be reachable from the CLI flag (citty supplies a default of
+ * "30") but the branch exists so this helper can be reused by other
+ * fps-accepting CLI surfaces in the future.
+ */
+function formatFpsParseError(
+  input: string,
+  reason: Exclude<FpsParseResult, { ok: true }>["reason"],
+): string {
+  switch (reason) {
+    case "empty":
+      return "Frame rate must not be empty.";
+    case "not-a-number":
+      return `Got "${input}". Frame rate must be an integer (e.g. 30) or a rational (e.g. 30000/1001 for NTSC).`;
+    case "non-positive":
+      return `Got "${input}". Frame rate must be greater than zero.`;
+    case "out-of-range":
+      return `Got "${input}". Frame rate must be in the range 1–240.`;
+    case "invalid-fraction":
+      return `Got "${input}". Rational frame rates must be two positive integers separated by '/' (e.g. 30000/1001).`;
+    case "ambiguous-decimal":
+      return `Got "${input}". Decimal frame rates are ambiguous — use the exact rational form instead (e.g. 30000/1001 for 29.97).`;
+  }
+}
 const VALID_FORMAT = new Set(["mp4", "webm", "mov", "png-sequence"]);
 // `png-sequence` writes a directory of frames rather than a single muxed file,
 // so its "extension" is empty — the auto-output path becomes a directory name.
@@ -95,7 +126,10 @@ export default defineCommand({
     fps: {
       type: "string",
       alias: "f",
-      description: "Frame rate: 24, 30, 60",
+      description:
+        "Frame rate. Accepts integer (24, 25, 30, 50, 60, 120, 240) or " +
+        "ffmpeg-style rational (30000/1001 for NTSC 29.97, 24000/1001 for " +
+        "23.976, 60000/1001 for 59.94). Range 1-240.",
       default: "30",
     },
     quality: {
@@ -194,12 +228,17 @@ export default defineCommand({
     const project = resolveProject(args.dir);
 
     // ── Validate fps ───────────────────────────────────────────────────────
-    const fpsRaw = parseInt(args.fps ?? "30", 10);
-    if (!VALID_FPS.has(fpsRaw)) {
-      errorBox("Invalid fps", `Got "${args.fps ?? "30"}". Must be 24, 30, or 60.`);
+    // Accept either integer (`30`) or ffmpeg-style rational (`30000/1001`).
+    // The whitelist-based validator was replaced with a sane numeric range so
+    // legitimate framerates (NTSC trio, PAL, 120/240 slow-mo) work without
+    // CLI gymnastics. The exact rational survives end-to-end into FFmpeg's
+    // `-r` / `-framerate` flags via `fpsToFfmpegArg`.
+    const fpsParse = parseFps(args.fps ?? "30");
+    if (!fpsParse.ok) {
+      errorBox("Invalid fps", formatFpsParseError(args.fps ?? "30", fpsParse.reason));
       process.exit(1);
     }
-    const fps = fpsRaw as 24 | 30 | 60;
+    const fps: Fps = fpsParse.value;
 
     // ── Validate quality ───────────────────────────────────────────────────
     const qualityRaw = args.quality ?? "standard";
@@ -354,7 +393,9 @@ export default defineCommand({
       console.log(
         c.accent("\u25C6") + "  Rendering " + c.accent(nameLabel) + c.dim(" \u2192 " + outputPath),
       );
-      console.log(c.dim("   " + fps + "fps \u00B7 " + quality + " \u00B7 " + workerLabel));
+      console.log(
+        c.dim("   " + fpsToFfmpegArg(fps) + "fps \u00B7 " + quality + " \u00B7 " + workerLabel),
+      );
       if (outputResolution) {
         // Don't claim "supersampled" — when the composition is already at the
         // target dimensions, the DPR resolves to 1 and no supersampling
@@ -521,7 +562,7 @@ export default defineCommand({
 });
 
 interface RenderOptions {
-  fps: 24 | 30 | 60;
+  fps: Fps;
   quality: "draft" | "standard" | "high";
   format: "mp4" | "webm" | "mov" | "png-sequence";
   workers?: number;
@@ -865,7 +906,7 @@ async function renderDocker(
   // Track metrics (no job object available from Docker — use a minimal stub)
   trackRenderComplete({
     durationMs: elapsed,
-    fps: options.fps,
+    fps: fpsToNumber(options.fps),
     quality: options.quality,
     workers: options.workers,
     docker: true,
@@ -964,7 +1005,7 @@ function handleRenderError(
 ): never {
   const message = error instanceof Error ? error.message : String(error);
   trackRenderError({
-    fps: options.fps,
+    fps: fpsToNumber(options.fps),
     quality: options.quality,
     docker,
     workers: options.workers,
@@ -1001,7 +1042,7 @@ function trackRenderMetrics(
 
   trackRenderComplete({
     durationMs: elapsedMs,
-    fps: options.fps,
+    fps: fpsToNumber(options.fps),
     quality: options.quality,
     workers: options.workers ?? perf?.workers,
     docker,

@@ -115,3 +115,71 @@ describe("POST /projects/:id/render — outputResolution forwarding", () => {
     }
   });
 });
+
+describe("POST /projects/:id/render — fps wire format", () => {
+  // The fps fraction-syntax feature accepts JSON `number` (integer fps) and
+  // JSON `string` (ffmpeg-style rational) on the wire, normalizing both to
+  // the structured Fps form before invoking the adapter.
+  it("forwards integer fps as { num, den: 1 }", async () => {
+    const spy = vi.fn();
+    const { app, cleanup } = buildApp(spy);
+    try {
+      await app.request("http://localhost/projects/demo/render", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fps: 60, quality: "standard", format: "mp4" }),
+      });
+      expect(spy.mock.calls[0][0].fps).toEqual({ num: 60, den: 1 });
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("parses '30000/1001' string body as exact NTSC", async () => {
+    const spy = vi.fn();
+    const { app, cleanup } = buildApp(spy);
+    try {
+      await app.request("http://localhost/projects/demo/render", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fps: "30000/1001", quality: "standard", format: "mp4" }),
+      });
+      expect(spy.mock.calls[0][0].fps).toEqual({ num: 30000, den: 1001 });
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("falls back to 30/1 for malformed fps values", async () => {
+    // Matches the lenient handling of `quality` and `resolution` in the same
+    // route — the producer surfaces a clearer downstream error if the value
+    // is genuinely unusable.
+    const spy = vi.fn();
+    const { app, cleanup } = buildApp(spy);
+    try {
+      await app.request("http://localhost/projects/demo/render", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fps: "abc", quality: "standard", format: "mp4" }),
+      });
+      expect(spy.mock.calls[0][0].fps).toEqual({ num: 30, den: 1 });
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("falls back to 30/1 when fps is omitted", async () => {
+    const spy = vi.fn();
+    const { app, cleanup } = buildApp(spy);
+    try {
+      await app.request("http://localhost/projects/demo/render", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ quality: "standard", format: "mp4" }),
+      });
+      expect(spy.mock.calls[0][0].fps).toEqual({ num: 30, den: 1 });
+    } finally {
+      cleanup();
+    }
+  });
+});

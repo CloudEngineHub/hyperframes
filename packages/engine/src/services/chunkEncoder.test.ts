@@ -79,7 +79,7 @@ describe("getEncoderPreset", () => {
 });
 
 describe("buildEncoderArgs anti-banding", () => {
-  const baseOptions = { fps: 30, width: 1920, height: 1080 };
+  const baseOptions = { fps: { num: 30, den: 1 }, width: 1920, height: 1080 };
 
   it("adds aq-mode=3 x264-params for h264 CPU encoding", () => {
     const args = buildEncoderArgs(
@@ -148,8 +148,35 @@ describe("buildEncoderArgs anti-banding", () => {
   });
 });
 
+describe("buildEncoderArgs fps rational forwarding", () => {
+  // Regression for the fps fraction-syntax feature: rational fps must reach
+  // ffmpeg's `-r` flag verbatim (e.g. "30000/1001") so NTSC stays exact end-
+  // to-end rather than being rounded to 29.97 decimal at the encoder boundary.
+  it("emits integer -r for { num: 30, den: 1 }", () => {
+    const args = buildEncoderArgs(
+      { fps: { num: 30, den: 1 }, width: 1920, height: 1080, codec: "h264" },
+      ["-framerate", "30", "-i", "frames/%04d.png"],
+      "out.mp4",
+    );
+    const rIdx = args.indexOf("-r");
+    expect(rIdx).toBeGreaterThan(-1);
+    expect(args[rIdx + 1]).toBe("30");
+  });
+
+  it("emits rational -r for NTSC { num: 30000, den: 1001 }", () => {
+    const args = buildEncoderArgs(
+      { fps: { num: 30000, den: 1001 }, width: 1920, height: 1080, codec: "h264" },
+      ["-framerate", "30000/1001", "-i", "frames/%04d.png"],
+      "out.mp4",
+    );
+    const rIdx = args.indexOf("-r");
+    expect(rIdx).toBeGreaterThan(-1);
+    expect(args[rIdx + 1]).toBe("30000/1001");
+  });
+});
+
 describe("buildEncoderArgs GPU preset mapping", () => {
-  const baseOptions = { fps: 30, width: 1920, height: 1080 };
+  const baseOptions = { fps: { num: 30, den: 1 }, width: 1920, height: 1080 };
   const inputArgs = ["-framerate", "30", "-i", "frames/%04d.png"];
 
   function presetArg(args: string[]): string | undefined {
@@ -232,7 +259,7 @@ describe("buildEncoderArgs GPU preset mapping", () => {
 });
 
 describe("buildEncoderArgs color space", () => {
-  const baseOptions = { fps: 30, width: 1920, height: 1080 };
+  const baseOptions = { fps: { num: 30, den: 1 }, width: 1920, height: 1080 };
   const inputArgs = ["-framerate", "30", "-i", "frames/%04d.png"];
 
   it("adds bt709 color space metadata for h264 CPU encoding", () => {
@@ -365,7 +392,7 @@ describe("getEncoderPreset HDR", () => {
 });
 
 describe("buildEncoderArgs HDR color space", () => {
-  const baseOptions = { fps: 30, width: 1920, height: 1080 };
+  const baseOptions = { fps: { num: 30, den: 1 }, width: 1920, height: 1080 };
   const inputArgs = ["-framerate", "30", "-i", "frames/%04d.png"];
 
   it("emits BT.2020 + arib-std-b67 tags for HDR HLG (h265 SW)", () => {

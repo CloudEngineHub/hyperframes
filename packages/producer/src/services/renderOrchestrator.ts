@@ -29,7 +29,13 @@ import {
   symlinkSync,
 } from "fs";
 import { parseHTML } from "linkedom";
-import { CANVAS_DIMENSIONS, type CanvasResolution } from "@hyperframes/core";
+import {
+  CANVAS_DIMENSIONS,
+  type CanvasResolution,
+  type Fps,
+  fpsToNumber,
+  fpsToFfmpegArg,
+} from "@hyperframes/core";
 import {
   type EngineConfig,
   resolveConfig,
@@ -214,7 +220,17 @@ export type RenderStatus =
   | "cancelled";
 
 export interface RenderConfig {
-  fps: 24 | 30 | 60;
+  /**
+   * Frame rate as an exact rational. Integer fps is `{ num: 30, den: 1 }`;
+   * NTSC is `{ num: 30000, den: 1001 }`. This shape lets the orchestrator
+   * pass the exact rational through to FFmpeg's `-r` / `-framerate` flags
+   * without a decimal round-trip — see `fpsToFfmpegArg` in @hyperframes/core.
+   *
+   * Use `fpsToNumber(config.fps)` at any site that needs a `number` for
+   * arithmetic (frame-index → time, telemetry, frame-interval ms). Decimal
+   * precision at our scales is more than sufficient.
+   */
+  fps: Fps;
   quality: "draft" | "standard" | "high";
   /**
    * Output container format. Defaults to `"mp4"`; existing renders are
@@ -2345,7 +2361,7 @@ export async function executeRenderJob(
     perfStages.browserProbeMs = Date.now() - probeStart;
 
     job.duration = composition.duration;
-    job.totalFrames = Math.ceil(composition.duration * job.config.fps);
+    job.totalFrames = Math.ceil(composition.duration * fpsToNumber(job.config.fps));
     const totalFrames = job.totalFrames;
 
     if (job.duration <= 0) {
@@ -2487,7 +2503,14 @@ export async function executeRenderJob(
       extractionResult = await extractAllVideoFrames(
         composition.videos,
         projectDir,
-        { fps: job.config.fps, outputDir: join(compiledDir, "__hyperframes_video_frames") },
+        // extractAllVideoFrames takes fps as a number (decimal). Frames sampled
+        // from a video at 29.97 vs 30 differ by ~1 frame in 1000 — not enough
+        // to break visual parity, and the encoder-side rational keeps the
+        // output framerate exact.
+        {
+          fps: fpsToNumber(job.config.fps),
+          outputDir: join(compiledDir, "__hyperframes_video_frames"),
+        },
         abortSignal,
         { extractCacheDir: cfg.extractCacheDir },
         compiledDir,
@@ -2697,7 +2720,7 @@ export async function executeRenderJob(
         captureCalibration = await measureCaptureCostFromSession(
           calibrationSession,
           totalFrames,
-          job.config.fps,
+          fpsToNumber(job.config.fps),
         );
         logCaptureCalibrationResult(captureCalibration, log);
       } catch (error) {
@@ -2741,7 +2764,7 @@ export async function executeRenderJob(
             captureCalibration = await measureCaptureCostFromSession(
               calibrationSession,
               totalFrames,
-              job.config.fps,
+              fpsToNumber(job.config.fps),
             );
             logCaptureCalibrationResult(captureCalibration, log);
           } catch (fallbackError) {
@@ -2967,10 +2990,11 @@ export async function executeRenderJob(
           return map;
         });
 
+        const fpsDecimal = fpsToNumber(job.config.fps);
         const transitionRanges: TransitionRange[] = transitionMeta.map((t) => ({
           ...t,
-          startFrame: Math.floor(t.time * job.config.fps),
-          endFrame: Math.ceil((t.time + t.duration) * job.config.fps),
+          startFrame: Math.floor(t.time * fpsDecimal),
+          endFrame: Math.ceil((t.time + t.duration) * fpsDecimal),
         }));
 
         if (transitionRanges.length > 0) {
@@ -3118,7 +3142,8 @@ export async function executeRenderJob(
             "-t",
             String(duration),
             "-r",
-            String(job.config.fps),
+            // Pass the rational form to FFmpeg so NTSC stays exact end-to-end.
+            fpsToFfmpegArg(job.config.fps),
             "-vf",
             `scale=${dims.width}:${dims.height}:force_original_aspect_ratio=increase,crop=${dims.width}:${dims.height}`,
             "-pix_fmt",
@@ -3267,7 +3292,7 @@ export async function executeRenderJob(
             beforeCaptureHook,
             width,
             height,
-            fps: job.config.fps,
+            fps: fpsToNumber(job.config.fps),
             compositeTransfer,
             nativeHdrImageIds,
             hdrImageBuffers,
@@ -3295,7 +3320,7 @@ export async function executeRenderJob(
 
           for (let i = 0; i < totalFrames; i++) {
             assertNotAborted();
-            const time = i / job.config.fps;
+            const time = (i * job.config.fps.den) / job.config.fps.num;
             if (hdrPerf) hdrPerf.frames += 1;
 
             // Seek timeline
@@ -3420,7 +3445,7 @@ export async function executeRenderJob(
                       sceneBuf as Buffer,
                       el,
                       time,
-                      job.config.fps,
+                      fpsToNumber(job.config.fps),
                       hdrVideoFrameSources,
                       hdrVideoStartTimes,
                       width,
@@ -3733,7 +3758,7 @@ export async function executeRenderJob(
 
               for (let i = 0; i < totalFrames; i++) {
                 assertNotAborted();
-                const time = i / job.config.fps;
+                const time = (i * job.config.fps.den) / job.config.fps.num;
                 const { buffer } = await captureFrameToBuffer(session, i, time);
                 await reorderBuffer.waitForFrame(i);
                 currentEncoder.writeFrame(buffer);
@@ -3841,7 +3866,7 @@ export async function executeRenderJob(
 
               for (let i = 0; i < job.totalFrames; i++) {
                 assertNotAborted();
-                const time = i / job.config.fps;
+                const time = (i * job.config.fps.den) / job.config.fps.num;
                 await captureFrame(session, i, time);
                 job.framesRendered = i + 1;
 
@@ -4011,7 +4036,11 @@ export async function executeRenderJob(
     const perfSummary: RenderPerfSummary = {
       renderId: job.id,
       totalElapsedMs: totalElapsed,
-      fps: job.config.fps,
+      // RenderPerfSummary surfaces fps as a decimal because it lands in JSON
+      // payloads (CLI telemetry, regression-harness reports) where a single
+      // number is friendlier than `{num,den}`. Callers needing the rational
+      // back can read `job.config.fps`.
+      fps: fpsToNumber(job.config.fps),
       quality: job.config.quality,
       workers: workerCount,
       chunkedEncode: enableChunkedEncode,

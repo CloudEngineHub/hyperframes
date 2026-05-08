@@ -63,7 +63,14 @@ export interface StudioApiAdapter {
     project: ResolvedProject;
     outputPath: string;
     format: "mp4" | "webm" | "mov";
-    fps: number;
+    /**
+     * Frame rate as an exact rational. The HTTP layer (POST
+     * `/projects/:id/render`) accepts either a JSON number (integer fps,
+     * `30`) or a JSON string (ffmpeg-style rational, `"30000/1001"`); the
+     * route normalizes both into `Fps` before invoking the adapter, so
+     * adapter implementations only ever see the rational form.
+     */
+    fps: import("../core.types.js").Fps;
     quality: string;
     jobId: string;
     /**

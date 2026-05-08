@@ -27,7 +27,7 @@ describe("pageScreenshotCapture supersample plumbing", () => {
     await pageScreenshotCapture(page, {
       width: 1920,
       height: 1080,
-      fps: 30,
+      fps: { num: 30, den: 1 },
       format: "jpeg",
       quality: 80,
     });
@@ -45,7 +45,7 @@ describe("pageScreenshotCapture supersample plumbing", () => {
     await pageScreenshotCapture(page, {
       width: 1920,
       height: 1080,
-      fps: 30,
+      fps: { num: 30, den: 1 },
       format: "jpeg",
       deviceScaleFactor: 1,
     });
@@ -61,7 +61,7 @@ describe("pageScreenshotCapture supersample plumbing", () => {
     await pageScreenshotCapture(page, {
       width: 1920,
       height: 1080,
-      fps: 30,
+      fps: { num: 30, den: 1 },
       format: "jpeg",
       deviceScaleFactor: 2,
     });
@@ -81,7 +81,7 @@ describe("pageScreenshotCapture supersample plumbing", () => {
     await pageScreenshotCapture(page, {
       width: 1280,
       height: 720,
-      fps: 30,
+      fps: { num: 30, den: 1 },
       format: "jpeg",
       deviceScaleFactor: 3,
     });

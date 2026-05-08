@@ -1,7 +1,9 @@
 import type { HdrTransfer } from "../utils/hdr.js";
+import type { Fps } from "@hyperframes/core";
 
 export interface EncoderOptions {
-  fps: number;
+  /** Frame rate as an exact rational; see `Fps` in @hyperframes/core. */
+  fps: Fps;
   width: number;
   height: number;
   codec?: "h264" | "h265" | "vp9" | "prores";

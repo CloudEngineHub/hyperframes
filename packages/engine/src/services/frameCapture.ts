@@ -10,7 +10,7 @@
 import { type Browser, type Page, type Viewport, type ConsoleMessage } from "puppeteer-core";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import { quantizeTimeToFrame } from "@hyperframes/core";
+import { quantizeTimeToFrame, fpsToNumber } from "@hyperframes/core";
 
 // ── Extracted modules ───────────────────────────────────────────────────────
 import {
@@ -228,7 +228,10 @@ export async function createCaptureSession(
     },
     captureMode,
     beginFrameTimeTicks: 0,
-    beginFrameIntervalMs: 1000 / Math.max(1, options.fps),
+    // Frame interval in ms: 1000 * den / num. For 30/1 → 33.333…, for
+    // 30000/1001 (NTSC) → 33.366…. JavaScript number precision is fine at
+    // these scales — no rounding required.
+    beginFrameIntervalMs: (1000 * options.fps.den) / Math.max(1, options.fps.num),
     beginFrameHasDamageCount: 0,
     beginFrameNoDamageCount: 0,
     config,
@@ -591,7 +594,7 @@ async function prepareFrameForCapture(
     throw new Error("[FrameCapture] Session not initialized");
   }
 
-  const quantizedTime = quantizeTimeToFrame(time, options.fps);
+  const quantizedTime = quantizeTimeToFrame(time, fpsToNumber(options.fps));
 
   const seekStart = Date.now();
   // Seek via the __hf protocol. The page's seek() implementation handles

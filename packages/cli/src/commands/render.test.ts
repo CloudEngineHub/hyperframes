@@ -68,7 +68,7 @@ describe("renderLocal browser GPU config", () => {
     setEnv("PRODUCER_BROWSER_GPU_MODE", "hardware");
 
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -86,7 +86,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("forwards browserGpuMode='auto' into producer config (probe-then-choose)", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -104,7 +104,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("passes an explicit hardware override for default local browser GPU", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -137,7 +137,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("forwards parsed --variables payload to createRenderJob", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -152,7 +152,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("forwards format: png-sequence through to createRenderJob", async () => {
     await renderLocal("/tmp/project", "/tmp/frames", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "png-sequence",
       gpu: false,
@@ -166,7 +166,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("omits variables from createRenderJob when not provided", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -180,7 +180,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("forwards entryFile to createRenderJob when --composition is set", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -195,7 +195,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("omits entryFile from createRenderJob when --composition is not set", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -209,7 +209,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("forwards outputResolution to createRenderJob when --resolution is set", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -224,7 +224,7 @@ describe("renderLocal browser GPU config", () => {
 
   it("omits outputResolution from createRenderJob by default", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,
@@ -245,7 +245,7 @@ describe("renderLocal browser GPU config", () => {
       });
 
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       quality: "standard",
       format: "mp4",
       gpu: false,

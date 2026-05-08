@@ -74,7 +74,7 @@ function createViteAdapter(dataDir: string, server: ViteDevServer): StudioApiAda
     | null = null;
   let _producerModulePromise: Promise<{
     createRenderJob: (config: {
-      fps: 24 | 30 | 60;
+      fps: import("@hyperframes/core").Fps;
       quality: "draft" | "standard" | "high";
       format: string;
       outputResolution?: "landscape" | "portrait" | "landscape-4k" | "portrait-4k";
@@ -242,7 +242,10 @@ function createViteAdapter(dataDir: string, server: ViteDevServer): StudioApiAda
           }
           const { createRenderJob, executeRenderJob } = await getProducerModule();
           const job = createRenderJob({
-            fps: opts.fps as 24 | 30 | 60,
+            // opts.fps is already an Fps rational — the studio-api route
+            // normalized any wire-format `number | string` into the structured
+            // form before calling this adapter.
+            fps: opts.fps,
             quality: opts.quality as "draft" | "standard" | "high",
             format: opts.format,
             outputResolution: opts.outputResolution,

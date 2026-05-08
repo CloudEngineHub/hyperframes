@@ -4,6 +4,7 @@
  * The engine's page contract. Any web page that wants to be rendered
  * as video must expose `window.__hf` implementing the HfProtocol interface.
  */
+import type { Fps } from "@hyperframes/core";
 
 // ── Seek Protocol ──────────────────────────────────────────────────────────────
 
@@ -81,7 +82,13 @@ export interface HfProtocol {
 export interface CaptureOptions {
   width: number;
   height: number;
-  fps: number;
+  /**
+   * Frame rate as an exact rational. Integer fps is `{ num: 30, den: 1 }`;
+   * NTSC is `{ num: 30000, den: 1001 }`. Captures are scheduled by the
+   * decimal interval (1000 * den / num ms) but FFmpeg arg builders emit the
+   * rational form verbatim — see `fpsToFfmpegArg`.
+   */
+  fps: Fps;
   format?: "jpeg" | "png";
   quality?: number;
   deviceScaleFactor?: number;

@@ -17,6 +17,7 @@ import {
 } from "../utils/gpuEncoder.js";
 import { type HdrTransfer, getHdrEncoderColorParams } from "../utils/hdr.js";
 import { formatFfmpegError, runFfmpeg } from "../utils/runFfmpeg.js";
+import { fpsToFfmpegArg } from "@hyperframes/core";
 import type { EncoderOptions, EncodeResult, MuxResult } from "./chunkEncoder.types.js";
 
 export type { EncoderOptions, EncodeResult, MuxResult } from "./chunkEncoder.types.js";
@@ -105,7 +106,7 @@ export function buildEncoderArgs(
     options = { ...options, hdr: undefined };
   }
 
-  const args: string[] = [...inputArgs, "-r", String(fps)];
+  const args: string[] = [...inputArgs, "-r", fpsToFfmpegArg(fps)];
   const shouldUseGpu = useGpu && gpuEncoder !== null;
 
   if (codec === "h264" || codec === "h265") {
@@ -309,7 +310,7 @@ export async function encodeFramesFromDir(
   }
 
   const inputPath = join(framesDir, framePattern);
-  const inputArgs = ["-framerate", String(options.fps), "-i", inputPath];
+  const inputArgs = ["-framerate", fpsToFfmpegArg(options.fps), "-i", inputPath];
   const args = buildEncoderArgs(options, inputArgs, outputPath, gpuEncoder);
 
   return new Promise((resolve) => {
@@ -432,7 +433,7 @@ export async function encodeFramesChunkedConcat(
     const inputPath = join(framesDir, framePattern);
     const inputArgs = [
       "-framerate",
-      String(options.fps),
+      fpsToFfmpegArg(options.fps),
       "-start_number",
       String(startNumber),
       "-i",

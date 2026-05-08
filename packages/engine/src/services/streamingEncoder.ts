@@ -26,6 +26,7 @@ import { formatFfmpegError } from "../utils/runFfmpeg.js";
 import { getHdrEncoderColorParams } from "../utils/hdr.js";
 import { type EncoderOptions } from "./chunkEncoder.types.js";
 import { DEFAULT_CONFIG, type EngineConfig } from "../config.js";
+import { fpsToFfmpegArg, type Fps } from "@hyperframes/core";
 
 // Re-export EncoderOptions so callers can reference the type via this module.
 export type { EncoderOptions } from "./chunkEncoder.types.js";
@@ -99,7 +100,8 @@ export function createFrameReorderBuffer(startFrame: number, endFrame: number): 
 // ---------------------------------------------------------------------------
 
 export interface StreamingEncoderOptions {
-  fps: number;
+  /** Frame rate as an exact rational; see `Fps` in @hyperframes/core. */
+  fps: Fps;
   width: number;
   height: number;
   codec?: "h264" | "h265" | "vp9" | "prores";
@@ -169,7 +171,7 @@ export function buildStreamingArgs(
       "-s",
       `${options.width}x${options.height}`,
       "-framerate",
-      String(fps),
+      fpsToFfmpegArg(fps),
     );
     if (inputColorTrc) {
       args.push(
@@ -184,9 +186,18 @@ export function buildStreamingArgs(
     args.push("-i", "-");
   } else {
     const inputCodec = imageFormat === "png" ? "png" : "mjpeg";
-    args.push("-f", "image2pipe", "-vcodec", inputCodec, "-framerate", String(fps), "-i", "-");
+    args.push(
+      "-f",
+      "image2pipe",
+      "-vcodec",
+      inputCodec,
+      "-framerate",
+      fpsToFfmpegArg(fps),
+      "-i",
+      "-",
+    );
   }
-  args.push("-r", String(fps));
+  args.push("-r", fpsToFfmpegArg(fps));
 
   const shouldUseGpu = useGpu && gpuEncoder !== null;
 

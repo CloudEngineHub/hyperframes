@@ -23,7 +23,7 @@ import {
 import { DEFAULT_HDR10_MASTERING } from "../utils/hdr.js";
 
 const baseHdrPq: StreamingEncoderOptions = {
-  fps: 30,
+  fps: { num: 30, den: 1 },
   width: 1920,
   height: 1080,
   codec: "h265",
@@ -41,7 +41,7 @@ const baseHdrHlg: StreamingEncoderOptions = {
 };
 
 const baseSdr: StreamingEncoderOptions = {
-  fps: 30,
+  fps: { num: 30, den: 1 },
   width: 1920,
   height: 1080,
   codec: "h264",
@@ -166,9 +166,52 @@ describe("buildStreamingArgs", () => {
     });
   });
 
+  describe("fps rational forwarding", () => {
+    // Regression for the fps fraction-syntax feature: both `-framerate`
+    // (input timestamping) and `-r` (output framerate) must carry the
+    // rational verbatim — collapsing to 29.97 decimal at this boundary
+    // would defeat the whole point of supporting NTSC end-to-end.
+    it("emits rational -framerate and -r for NTSC 30000/1001 (image2pipe)", () => {
+      const sdrNtsc: StreamingEncoderOptions = {
+        ...baseSdr,
+        fps: { num: 30000, den: 1001 },
+      };
+      const args = buildStreamingArgs(sdrNtsc, "/tmp/ntsc.mp4");
+      const framerateIdx = args.indexOf("-framerate");
+      expect(framerateIdx).toBeGreaterThan(-1);
+      expect(args[framerateIdx + 1]).toBe("30000/1001");
+
+      const rIdx = args.indexOf("-r");
+      expect(rIdx).toBeGreaterThan(-1);
+      expect(args[rIdx + 1]).toBe("30000/1001");
+    });
+
+    it("emits rational -framerate and -r for NTSC 30000/1001 (rawvideo HDR)", () => {
+      const hdrNtsc: StreamingEncoderOptions = {
+        ...baseHdrPq,
+        fps: { num: 30000, den: 1001 },
+      };
+      const args = buildStreamingArgs(hdrNtsc, "/tmp/ntsc-hdr.mp4");
+      const framerateIdx = args.indexOf("-framerate");
+      expect(framerateIdx).toBeGreaterThan(-1);
+      expect(args[framerateIdx + 1]).toBe("30000/1001");
+
+      const rIdx = args.indexOf("-r");
+      expect(rIdx).toBeGreaterThan(-1);
+      expect(args[rIdx + 1]).toBe("30000/1001");
+    });
+
+    it("emits bare integer -r for { num: 30, den: 1 }", () => {
+      const args = buildStreamingArgs(baseSdr, "/tmp/30.mp4");
+      const rIdx = args.indexOf("-r");
+      expect(rIdx).toBeGreaterThan(-1);
+      expect(args[rIdx + 1]).toBe("30");
+    });
+  });
+
   describe("GPU preset mapping", () => {
     const baseGpu: StreamingEncoderOptions = {
-      fps: 30,
+      fps: { num: 30, den: 1 },
       width: 1920,
       height: 1080,
       codec: "h264",
@@ -348,7 +391,7 @@ function createSpawnSpy(): {
 }
 
 const baseOptions: StreamingEncoderOptions = {
-  fps: 30,
+  fps: { num: 30, den: 1 },
   width: 100,
   height: 100,
   codec: "h264",

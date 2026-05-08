@@ -213,7 +213,9 @@ export function createStudioServer(options: StudioServerOptions): StudioServer {
           }
 
           const job = createRenderJob({
-            fps: opts.fps as 24 | 30 | 60,
+            // opts.fps is already an Fps rational — see vite-config-studio
+            // adapter for the same convention.
+            fps: opts.fps,
             quality: opts.quality as "draft" | "standard" | "high",
             format: opts.format,
             outputResolution: opts.outputResolution,

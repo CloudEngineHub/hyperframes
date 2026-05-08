@@ -3,7 +3,7 @@ import { streamSSE } from "hono/streaming";
 import { existsSync, readFileSync, mkdirSync, unlinkSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { StudioApiAdapter, RenderJobState } from "../types.js";
-import { VALID_CANVAS_RESOLUTIONS, type CanvasResolution } from "../../core.types.js";
+import { VALID_CANVAS_RESOLUTIONS, parseFps, type CanvasResolution } from "../../core.types.js";
 
 const VALID_RESOLUTIONS = new Set<string>(VALID_CANVAS_RESOLUTIONS);
 
@@ -50,7 +50,12 @@ export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void
     if (!project) return c.json({ error: "not found" }, 404);
 
     const body = (await c.req.json().catch(() => ({}))) as {
-      fps?: number;
+      // Polymorphic per design note in core.types.Fps:
+      //   number → integer fps (e.g. 30)
+      //   string → rational fps (e.g. "30000/1001" for NTSC 29.97)
+      // Decimals are rejected on purpose so the exact denominator stays
+      // unambiguous (29.97 ≠ 30000/1001 when ffmpeg consumes them).
+      fps?: number | string;
       quality?: string;
       format?: string;
       resolution?: string;
@@ -58,7 +63,13 @@ export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void
     const VALID_FORMATS = new Set(["mp4", "webm", "mov"]);
     const FORMAT_EXT: Record<string, string> = { mp4: ".mp4", webm: ".webm", mov: ".mov" };
     const format = VALID_FORMATS.has(body.format ?? "") ? (body.format as string) : "mp4";
-    const fps: 24 | 30 | 60 = body.fps === 24 || body.fps === 60 ? body.fps : 30;
+
+    // Default to 30 fps when unset or unparseable. The route stays lenient on
+    // invalid fps values (matching the lenient handling of `resolution` and
+    // `quality` already in this file) — the producer surfaces a clearer error
+    // message if the caller really did mean to fail loudly.
+    const fpsParse = body.fps === undefined ? null : parseFps(body.fps);
+    const fps = fpsParse && fpsParse.ok ? fpsParse.value : { num: 30, den: 1 };
     const quality = ["draft", "standard", "high"].includes(body.quality ?? "")
       ? (body.quality as string)
       : "standard";

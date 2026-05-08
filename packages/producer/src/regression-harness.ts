@@ -19,6 +19,7 @@ import { compileForRender } from "./services/htmlCompiler.js";
 import { validateCompilation } from "./services/compilationTester.js";
 import { extractMediaMetadata } from "./utils/ffprobe.js";
 import { buildRmsEnvelope, compareAudioEnvelopes } from "./utils/audioRegression.js";
+import { parseFps, fpsToNumber } from "@hyperframes/core";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,13 @@ type TestMetadata = {
   minAudioCorrelation: number;
   maxAudioLagWindows: number;
   renderConfig: {
-    fps: 24 | 30 | 60;
+    /**
+     * Frame rate. Stored on disk as a JSON number (integer fps, e.g. `30`)
+     * for legacy meta.json files, or a JSON string (`"30000/1001"` for NTSC)
+     * for rationals. The metadata validator normalizes both into an `Fps`
+     * rational at load time so downstream code only sees the structured form.
+     */
+    fps: import("@hyperframes/core").Fps;
     format?: "mp4" | "webm"; // Optional: defaults to "mp4"
     workers?: number; // Optional: auto-calculates if omitted
     /** Force HDR in the harness; omitted/false preserves historical SDR-only test behavior. */
@@ -154,9 +161,23 @@ function validateMetadata(meta: unknown): TestMetadata {
     throw new Error("meta.json: 'renderConfig' must be an object");
   }
   const rc = m.renderConfig as Record<string, unknown>;
-  if (![24, 30, 60].includes(rc.fps as number)) {
-    throw new Error("meta.json: 'renderConfig.fps' must be 24, 30, or 60");
+  // Accept either a JSON number (integer fps, e.g. 30) or a JSON string
+  // (ffmpeg-style rational, e.g. "30000/1001"). Normalize both into the Fps
+  // rational shape and write it back onto the metadata object so all
+  // downstream callers can assume the structured form.
+  const fpsRaw = rc.fps;
+  const fpsParse =
+    typeof fpsRaw === "number" || typeof fpsRaw === "string"
+      ? parseFps(fpsRaw)
+      : ({ ok: false, reason: "not-a-number" } as const);
+  if (!fpsParse.ok) {
+    throw new Error(
+      `meta.json: 'renderConfig.fps' must be an integer (e.g. 30) or rational string (e.g. "30000/1001"); got ${JSON.stringify(
+        fpsRaw,
+      )}`,
+    );
   }
+  rc.fps = fpsParse.value;
   if (rc.format !== undefined && rc.format !== "mp4" && rc.format !== "webm") {
     throw new Error("meta.json: 'renderConfig.format' must be 'mp4' or 'webm' (or omit for mp4)");
   }
@@ -452,13 +473,13 @@ function saveFailureDetails(
             renderedVideoPath,
             checkpoint.time,
             join(framesDir, `actual_${timeStr}s.png`),
-            suite.meta.renderConfig.fps,
+            fpsToNumber(suite.meta.renderConfig.fps),
           );
           extractFrameAsImage(
             snapshotVideoPath,
             checkpoint.time,
             join(framesDir, `expected_${timeStr}s.png`),
-            suite.meta.renderConfig.fps,
+            fpsToNumber(suite.meta.renderConfig.fps),
           );
         } catch {
           logPretty(`  Warning: Could not extract frame at ${checkpoint.time}s`, "⚠️");
@@ -666,7 +687,7 @@ async function runTestSuite(
         renderedOutputPath,
         snapshotVideoPath,
         time,
-        suite.meta.renderConfig.fps,
+        fpsToNumber(suite.meta.renderConfig.fps),
       );
       visualCheckpoints.push({
         time,

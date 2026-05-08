@@ -185,7 +185,10 @@ async function executeWorkerTask(
       if (signal?.aborted) {
         throw new Error("Parallel worker cancelled");
       }
-      const time = i / captureOptions.fps;
+      // captureOptions.fps is an Fps rational; collapse to decimal for the
+      // frame-index → time math. The 1-in-1001 ULP loss for NTSC is invisible
+      // at our scales (frame count tops out at single-digit thousands).
+      const time = (i * captureOptions.fps.den) / captureOptions.fps.num;
 
       if (onFrameBuffer) {
         // Streaming mode: capture to buffer and invoke callback
