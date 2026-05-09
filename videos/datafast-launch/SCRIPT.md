@@ -1,0 +1,20 @@
+# Narration Script
+
+**Duration target:** ~30 seconds
+**Word count:** ~75 words
+**Pace:** 2.5 words/sec
+
+---
+
+Most analytics tools drown you in data.
+DataFast shows you where the revenue is.
+
+From first click to paying customer — see exactly which channels drive real money.
+Revenue per visitor. Conversion by source. The full user journey.
+
+Three steps. Install a script. Connect your payments. Watch the insights roll in.
+
+Over seventeen thousand founders already made the switch.
+
+DataFast. Revenue-first analytics.
+Start your free trial at datafast.

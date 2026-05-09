@@ -1,0 +1,1255 @@
+[span] DataFast
+[span] Open main menu
+[span] DataFast
+[span] Close menu
+[a] Pricing
+[a] FAQ
+[a] Reviews
+[a] Log in
+[h1] Revenue-first analytics
+[div] Discover which marketing channels bring customers so you can grow your business, fast.
+[span] Add my website
+[div] -day free trial. No card required
+[div] Loved by
+[span] 17,051
+[div] users
+[span] Interactive demo
+[span] https://datafa.st/
+[span] codefa.st
+[p] View our
+[a] interactive analytics dashboard demo
+[p] to see how DataFast helps you track revenue and optimize your marketing channels.
+[span] Try this ✨
+[span] (people are addicted)
+[span] Mike Strives
+[span] mikestrives
+[a] Follow
+[span] Just switched all my sites to
+[a] @marclou
+[span] ’s Datafast.
+
+And damn… this thing is SaaS perfection 🤌
+
+> Frictionless
+> User-Friendly
+> Beautiful
+> Sharable
+> Easy-in-use
+
+It's the perfect SaaS playbook product imo.
+[time] 8:44 AM · Oct 3, 2025
+[span] 191
+[span] Reply
+[span] Copy link
+[span] Read 22 replies
+[span] Nico
+[span] nico_jeannen
+[a] Follow
+[span] I cancelled Plausible and am moving all my analytics to Datafast!
+[a] @marclou
+[span] did a great job with the app
+
+It kinda pains me to say that because I wanted to make a marketer-first analytics app after I sold Talknotes 🥲
+
+But instead of just *thinking* about making an analytics
+[time] 11:58 PM · Aug 19, 2025
+[span] 258
+[span] Reply
+[span] Copy link
+[span] Read 46 replies
+[span] Wanderson Jackson
+[span] jackson99ai
+[a] Follow
+[span] I’m really enjoying
+[a] @DataFast_
+[span] , it’s probably the best Analytics tools I’ve ever used in 14 years of career:) thanks
+[a] @marclou
+[time] 7:43 AM · Jun 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] jack friks
+[span] jackfriks
+[a] Follow
+[span] name a cleaner & simpler web analytics tool i dare you
+[time] 1:32 PM · Dec 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 5 replies
+[span] Kai Jiabo Feng
+[span] KF_builds
+[a] Follow
+[a] @marclou
+[span] Marc I LOVE
+[a] datafa.st
+[span] ! Came from Plausible and can't go back anymore.
+
+Also there's basically no need for amplitude / posthog anymore given how good this is and how little effort it is to start attributing revenue to marketing efforts.
+
+Well done!!
+[time] 11:35 PM · Jul 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] kir0shi
+[span] kiir0shi
+[a] Follow
+[span] I was skeptical but datafast is actually better than google analytics.
+
+My man no wonder this is such a fast growing saas
+[time] 12:00 PM · Oct 1, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Magiobus 🧑‍💻
+[span] magiobus
+[a] Follow
+[span] Woo! DataFast is awesome! 
+Setting up properly the events you can see the whole journey of a user. 
+
+For example this user entered the website on nov 20th and converted 14 days later. Also it took 2 hours to complete the checkout process :O
+
+Thanks
+[a] @marclou
+[time] 2:48 AM · Dec 5, 2024
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Katt 💎buildthekeyword.com
+[span] kattrisen
+[a] Follow
+[span] We have been giving Datafast from
+[a] @marclou
+[span] a try.
+
+I like how it shows the stats that matter.
+[time] 1:47 PM · Dec 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 4 replies
+[span] wozu
+[span] wozu_co
+[a] Follow
+[span] Pro tip:
+[a] @DataFast_
+[span] > Google Analytics for simplicity and actual useful metrics.
+[a] @marclou
+[span] Revenue / Visitor on the main dashboard is exactly what founders need to see 📈
+[time] 5:42 PM · Nov 12, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Adam
+[span] gloseeker
+[a] Follow
+[span] got to be the most satisfying real time analytics globe built by
+[a] @marclou
+[span] called datafast
+[a] Watch on X
+[time] 4:10 PM · Jul 10, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Pablo Yáñez
+[span] pabygon
+[a] Follow
+[span] It’s official: I am totally addicted to Datafast by
+[a] @marclou
+[span] . I’ve tried Posthog and Plausible before, but Datafast is easier to use and it has enough functionalities for someone like me. No brainer.
+[time] 9:06 AM · Aug 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Serg
+[span] karakhanyanS
+[a] Follow
+[span] I am officially switching from Plausible to
+[a] @DataFast_
+[a] @marclou
+[span] Reasons for that, from main to lower: 👇
+
+1. It shows me the data that I really need:
+
+Conversion, how much I made from different channels, which channels, countries converted the best, user journeys,
+[time] 1:40 PM · Dec 4, 2024
+[span] Reply
+[span] Copy link
+[span] Read 16 replies
+[span] RJ McCollam
+[span] RJMcCollam
+[a] Follow
+[span] I migrated my analytics from Plausible to DataFast by
+[a] @marclou
+[span] Install and migration of data was super easy and only took me 10min to get 3 sites moved over.
+
+I've been paying attention since the launch and excited about features being implemented.
+[a] datafa.st/?via=rj
+[time] 10:41 PM · Dec 7, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Adam
+[span] gloseeker
+[a] Follow
+[span] DataFast is great for Unlocking the hidden insights of online traffic.
+
+8.5k visitors in a single day 🚀
+[time] 8:00 PM · Dec 20, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] edwin
+[span] astrooed
+[a] Follow
+[span] i want more
+
+my
+[a] @DataFast_
+[span] dashboard starting to look like
+[a] @marclou
+[span] 's wall lol
+[time] 6:45 AM · Nov 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[h3] Tweet not found
+[p] The embedded tweet could not be found…
+[span] Marco Elizalde
+[span] marcoETmx
+[a] Follow
+[span] Day 31
+
+I installed DataFast (By Marc Lou) on my site a few weeks ago—and I’m seriously impressed.
+
+- Blazing fast
+- Beautiful, info-rich dashboard
+- Price point is unbeatable
+
+Here’s what traffic looks like after just 15 days. We’re early—but growing steadily.
+[time] 8:30 PM · Apr 9, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Dev Neill
+[span] devneill
+[a] Follow
+[span] First Goal to track CTA clicks is set up in DataFast for
+[a] know.finance
+[span] 🔥
+
+Almost time to launch 🚀
+[time] 9:20 AM · Dec 4, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Corey Chiu
+[span] realcoreychiu
+[a] Follow
+[span] datafast
+[a] @DataFast_
+[span] 新上线了一个功能，一键生成网站的insight，非常酷炫！
+[time] 4:30 AM · Jul 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 5 replies
+[span] Abdo El-Mobayad
+[span] AbdoMobayad
+[a] Follow
+[span] Datafast is absolute art!
+[a] @marclou
+[a] Claudefa.st
+[span] !!!🚀🚀
+[time] 10:39 PM · Jul 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Brock Briggs
+[span] BrockHBriggs
+[a] Follow
+[span] Started a trial of
+[a] @DataFast_
+[a] @marclou
+[span] and love it so far. Real time visitors with referring source is fantastic.
+
+10x better than search console.
+[time] 1:57 PM · Apr 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Hieu Dinh
+[span] hieudinh_
+[a] Follow
+[span] What stops analytics tools from generating reports like this?
+
+I think
+[a] @marclou
+[span] nailed it with
+[a] @DataFast_
+[time] 1:44 PM · Jul 14, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Sergiu 🤖 AI Directories
+[span] s_chiriac
+[a] Follow
+[span] Uhhuu, more sales today! 🎉
+
+Loving how it's all displayed on DataFast by
+[a] @marclou
+[span] . One of my favourite indicators is seeing the "Revenue" and "Revenue per visitor" stats.
+
+How cool is that? 😎
+[a] #buildinpublic
+[time] 9:27 PM · Oct 1, 2024
+[span] Reply
+[span] Copy link
+[span] Read more on X
+[span] Keith S
+[span] KeithSchembrii
+[a] Follow
+[span] ANDDDD LIFTOFF! Had my first wave of traffic, thanks to three reddit posts, collectively reaching 17.4K view
+
+Here's the breakdown:
+308 visits = 1.77% visited
+72 Signups = 23.38% Signup conversion 
+
+Its only just the start...Keep Building!!
+[time] 2:07 PM · Jan 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 15 replies
+[span] Christopher Woggon
+[span] chrissyinspace
+[a] Follow
+[span] Last month I was at $0, today I crossed $500. What seemed impossible is now reality. Keep trying, eventually you will be rewarded.
+[time] 1:04 PM · Jan 28, 2025
+[span] 145
+[span] Reply
+[span] Copy link
+[span] Read 37 replies
+[span] DevOps Daily
+[span] thedevopsdaily
+[a] Follow
+[span] The
+[a] @DataFast_
+[span] UX is on a next level 🔥
+
+Well done
+[a] @marclou
+[time] 11:41 AM · Jul 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Dan Kulkov
+[span] DanKulkov
+[a] Follow
+[a] datafa.st
+[span] is really good
+
+more insights than Plausible
+
+x2 cheaper
+[time] 5:01 AM · Feb 4, 2025
+[span] 145
+[span] Reply
+[span] Copy link
+[span] Read 22 replies
+[span] Chris DeWeese
+[span] chrisdeweese_
+[a] Follow
+[span] Why I switched from
+[a] @PlausibleHQ
+[a] @DataFast_
+[time] 7:04 PM · Mar 13, 2025
+[span] Reply
+[span] Copy link
+[span] Read 4 replies
+[span] Kevin Rousseau
+[span] kevton_
+[a] Follow
+[span] Switched from Vercel Analytics to
+[a] @DataFast_
+[span] ! Being able to track every payment is really good
+[time] 11:33 AM · Aug 12, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Mike Strives
+[span] mikestrives
+[a] Follow
+[span] Just switched all my sites to
+[a] @marclou
+[span] ’s Datafast.
+
+And damn… this thing is SaaS perfection 🤌
+
+> Frictionless
+> User-Friendly
+> Beautiful
+> Sharable
+> Easy-in-use
+
+It's the perfect SaaS playbook product imo.
+[time] 8:44 AM · Oct 3, 2025
+[span] 191
+[span] Reply
+[span] Copy link
+[span] Read 22 replies
+[span] Nico
+[span] nico_jeannen
+[a] Follow
+[span] I cancelled Plausible and am moving all my analytics to Datafast!
+[a] @marclou
+[span] did a great job with the app
+
+It kinda pains me to say that because I wanted to make a marketer-first analytics app after I sold Talknotes 🥲
+
+But instead of just *thinking* about making an analytics
+[time] 11:58 PM · Aug 19, 2025
+[span] 258
+[span] Reply
+[span] Copy link
+[span] Read 46 replies
+[span] Wanderson Jackson
+[span] jackson99ai
+[a] Follow
+[span] I’m really enjoying
+[a] @DataFast_
+[span] , it’s probably the best Analytics tools I’ve ever used in 14 years of career:) thanks
+[a] @marclou
+[time] 7:43 AM · Jun 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] jack friks
+[span] jackfriks
+[a] Follow
+[span] name a cleaner & simpler web analytics tool i dare you
+[time] 1:32 PM · Dec 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 5 replies
+[span] Kai Jiabo Feng
+[span] KF_builds
+[a] Follow
+[a] @marclou
+[span] Marc I LOVE
+[a] datafa.st
+[span] ! Came from Plausible and can't go back anymore.
+
+Also there's basically no need for amplitude / posthog anymore given how good this is and how little effort it is to start attributing revenue to marketing efforts.
+
+Well done!!
+[time] 11:35 PM · Jul 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] kir0shi
+[span] kiir0shi
+[a] Follow
+[span] I was skeptical but datafast is actually better than google analytics.
+
+My man no wonder this is such a fast growing saas
+[time] 12:00 PM · Oct 1, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Magiobus 🧑‍💻
+[span] magiobus
+[a] Follow
+[span] Woo! DataFast is awesome! 
+Setting up properly the events you can see the whole journey of a user. 
+
+For example this user entered the website on nov 20th and converted 14 days later. Also it took 2 hours to complete the checkout process :O
+
+Thanks
+[a] @marclou
+[time] 2:48 AM · Dec 5, 2024
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Katt 💎buildthekeyword.com
+[span] kattrisen
+[a] Follow
+[span] We have been giving Datafast from
+[a] @marclou
+[span] a try.
+
+I like how it shows the stats that matter.
+[time] 1:47 PM · Dec 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 4 replies
+[span] wozu
+[span] wozu_co
+[a] Follow
+[span] Pro tip:
+[a] @DataFast_
+[span] > Google Analytics for simplicity and actual useful metrics.
+[a] @marclou
+[span] Revenue / Visitor on the main dashboard is exactly what founders need to see 📈
+[time] 5:42 PM · Nov 12, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Adam
+[span] gloseeker
+[a] Follow
+[span] got to be the most satisfying real time analytics globe built by
+[a] @marclou
+[span] called datafast
+[a] Watch on X
+[time] 4:10 PM · Jul 10, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Pablo Yáñez
+[span] pabygon
+[a] Follow
+[span] It’s official: I am totally addicted to Datafast by
+[a] @marclou
+[span] . I’ve tried Posthog and Plausible before, but Datafast is easier to use and it has enough functionalities for someone like me. No brainer.
+[time] 9:06 AM · Aug 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Serg
+[span] karakhanyanS
+[a] Follow
+[span] I am officially switching from Plausible to
+[a] @DataFast_
+[a] @marclou
+[span] Reasons for that, from main to lower: 👇
+
+1. It shows me the data that I really need:
+
+Conversion, how much I made from different channels, which channels, countries converted the best, user journeys,
+[time] 1:40 PM · Dec 4, 2024
+[span] Reply
+[span] Copy link
+[span] Read 16 replies
+[span] RJ McCollam
+[span] RJMcCollam
+[a] Follow
+[span] I migrated my analytics from Plausible to DataFast by
+[a] @marclou
+[span] Install and migration of data was super easy and only took me 10min to get 3 sites moved over.
+
+I've been paying attention since the launch and excited about features being implemented.
+[a] datafa.st/?via=rj
+[time] 10:41 PM · Dec 7, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Adam
+[span] gloseeker
+[a] Follow
+[span] DataFast is great for Unlocking the hidden insights of online traffic.
+
+8.5k visitors in a single day 🚀
+[time] 8:00 PM · Dec 20, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] edwin
+[span] astrooed
+[a] Follow
+[span] i want more
+
+my
+[a] @DataFast_
+[span] dashboard starting to look like
+[a] @marclou
+[span] 's wall lol
+[time] 6:45 AM · Nov 18, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[h3] Tweet not found
+[p] The embedded tweet could not be found…
+[span] Marco Elizalde
+[span] marcoETmx
+[a] Follow
+[span] Day 31
+
+I installed DataFast (By Marc Lou) on my site a few weeks ago—and I’m seriously impressed.
+
+- Blazing fast
+- Beautiful, info-rich dashboard
+- Price point is unbeatable
+
+Here’s what traffic looks like after just 15 days. We’re early—but growing steadily.
+[time] 8:30 PM · Apr 9, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Dev Neill
+[span] devneill
+[a] Follow
+[span] First Goal to track CTA clicks is set up in DataFast for
+[a] know.finance
+[span] 🔥
+
+Almost time to launch 🚀
+[time] 9:20 AM · Dec 4, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Corey Chiu
+[span] realcoreychiu
+[a] Follow
+[span] datafast
+[a] @DataFast_
+[span] 新上线了一个功能，一键生成网站的insight，非常酷炫！
+[time] 4:30 AM · Jul 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 5 replies
+[span] Abdo El-Mobayad
+[span] AbdoMobayad
+[a] Follow
+[span] Datafast is absolute art!
+[a] @marclou
+[a] Claudefa.st
+[span] !!!🚀🚀
+[time] 10:39 PM · Jul 29, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Brock Briggs
+[span] BrockHBriggs
+[a] Follow
+[span] Started a trial of
+[a] @DataFast_
+[a] @marclou
+[span] and love it so far. Real time visitors with referring source is fantastic.
+
+10x better than search console.
+[time] 1:57 PM · Apr 25, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Hieu Dinh
+[span] hieudinh_
+[a] Follow
+[span] What stops analytics tools from generating reports like this?
+
+I think
+[a] @marclou
+[span] nailed it with
+[a] @DataFast_
+[time] 1:44 PM · Jul 14, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Sergiu 🤖 AI Directories
+[span] s_chiriac
+[a] Follow
+[span] Uhhuu, more sales today! 🎉
+
+Loving how it's all displayed on DataFast by
+[a] @marclou
+[span] . One of my favourite indicators is seeing the "Revenue" and "Revenue per visitor" stats.
+
+How cool is that? 😎
+[a] #buildinpublic
+[time] 9:27 PM · Oct 1, 2024
+[span] Reply
+[span] Copy link
+[span] Read more on X
+[span] Keith S
+[span] KeithSchembrii
+[a] Follow
+[span] ANDDDD LIFTOFF! Had my first wave of traffic, thanks to three reddit posts, collectively reaching 17.4K view
+
+Here's the breakdown:
+308 visits = 1.77% visited
+72 Signups = 23.38% Signup conversion 
+
+Its only just the start...Keep Building!!
+[time] 2:07 PM · Jan 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 15 replies
+[span] Christopher Woggon
+[span] chrissyinspace
+[a] Follow
+[span] Last month I was at $0, today I crossed $500. What seemed impossible is now reality. Keep trying, eventually you will be rewarded.
+[time] 1:04 PM · Jan 28, 2025
+[span] 145
+[span] Reply
+[span] Copy link
+[span] Read 37 replies
+[span] DevOps Daily
+[span] thedevopsdaily
+[a] Follow
+[span] The
+[a] @DataFast_
+[span] UX is on a next level 🔥
+
+Well done
+[a] @marclou
+[time] 11:41 AM · Jul 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Dan Kulkov
+[span] DanKulkov
+[a] Follow
+[a] datafa.st
+[span] is really good
+
+more insights than Plausible
+
+x2 cheaper
+[time] 5:01 AM · Feb 4, 2025
+[span] 145
+[span] Reply
+[span] Copy link
+[span] Read 22 replies
+[span] Chris DeWeese
+[span] chrisdeweese_
+[a] Follow
+[span] Why I switched from
+[a] @PlausibleHQ
+[a] @DataFast_
+[time] 7:04 PM · Mar 13, 2025
+[span] Reply
+[span] Copy link
+[span] Read 4 replies
+[span] Kevin Rousseau
+[span] kevton_
+[a] Follow
+[span] Switched from Vercel Analytics to
+[a] @DataFast_
+[span] ! Being able to track every payment is really good
+[time] 11:33 AM · Aug 12, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Theo Stowell
+[span] theostowell
+[a] Follow
+[span] As a tool,
+[a] @DataFast_
+[span] has improved so much since I first came across it. 
+
+These days it's a no-brainer choice for analytics for my business
+[time] 8:00 AM · Aug 16, 2025
+[span] Reply
+[span] Copy link
+[span] Read 3 replies
+[span] Erikas Mališauskas
+[span] malisauskasLT
+[a] Follow
+[span] Datafast by
+[a] @marclou
+[span] is great. I'm just sitting here looking at my website visitors browsing my product live on world map.
+
+You can feel that it was built with love. And that he is solving his own problem (data tracking). Destined for success!
+
+P.S. Yes, this is my secret
+[time] 8:00 AM · Jul 19, 2025
+[span] Reply
+[span] Copy link
+[span] Read 10 replies
+[span] Krzysztof Cichy
+[span] CichyKrzysztof
+[a] Follow
+[span] datafa st is so cool on tv with lofi hip hop radio on
+[a] @marclou
+[a] Watch on X
+[time] 10:53 AM · Aug 5, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] RJ McCollam
+[span] RJMcCollam
+[a] Follow
+[span] The journey data for a goal in DataFast is so cool and a great way to see how users are/aren't making decisions.
+
+Really looking forward to using this pretty heavily for Indie Buckets to find patterns that work and double down on those.
+[time] 5:00 PM · Feb 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Nigel Yong
+[span] niyonx
+[a] Follow
+[span] I set up Datafast by
+[a] @marclou
+[span] !
+
+Let's 10x TimeSkip!
+[time] 4:00 PM · Mar 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] NickelandDime
+[span] NickelanddimeO
+[a] Follow
+[span] who would have thought that
+[a] @DataFast_
+[span] ist actually usefull ...
+
+... I guess sometime you just have to try out new things
+[a] @jackfriks
+[span] you pulled me over to the good side 
+
+maaan, I really like this way of having an overview of my traffic for all my projects
+
+google analytics is a
+[span] jack friks
+[span] jackfriks
+[span] addicting
+[time] 5:15 PM · Aug 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Alex Ovardov
+[span] AlexOvardov
+[a] Follow
+[a] Replying to @
+[a] SidesshMore
+[span] I use
+[a] @DataFast_
+[span] for analytics. It's a really simple, good looking tool, who provides you all of the traffic analytics, custom events and user flow.
+
+It looks like this
+[time] 3:48 PM · Jul 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Arthur
+[span] arthuryuzbashew
+[a] Follow
+[span] 1 month since the launch of RedditFa! 🔥
+
+- $606 in revenue
+- 2.7K visits
+- 3 major updates released
+
+Just the beginning⚡️
+
+P.s
+[a] @CranQnow
+[span] and
+[a] @techstarterio
+[span] recently joined us -- thanks!
+[time] 9:31 PM · Mar 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 19 replies
+[span] Yuval Fishbine
+[span] YuvalFishbine
+[a] Follow
+[span] Reddit +
+[a] @DataFast_
+[span] is the best combo
+[time] 12:01 PM · Jul 2, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] OSU Dev
+[span] OsuDev78
+[a] Follow
+[span] Been using
+[a] @marclou
+[span] DataFast for the past month.
+
+Saw exactly how users were discovering my SaaS → fixed my onboarding → doubled my conversion rate in 30 days.
+
+This tool is insane for tracking what's actually working.
+
+(screenshot below for proof 👇)
+
+Great work, Marc 🙌
+[time] 5:23 PM · May 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Alexander Belogubov 🇺🇦
+[span] AlexBelogubov
+[a] Follow
+[span] I've been using DataFast for exactly a year now, and I can't imagine analytics any other way.
+
+Thanks,
+[a] @marclou
+[span] , for a wonderful product!
+[time] 7:06 AM · Oct 28, 2025
+[span] Reply
+[span] Copy link
+[span] Read 6 replies
+[span] ⌭ ROSS
+[span] rossark0
+[a] Follow
+[span] that's crazy... 
+
+really thanks for datafast, amazing project.
+[a] @marclou
+[a] Watch on X
+[time] 11:50 AM · May 15, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Nabeel
+[span] itsnotnabeel
+[a] Follow
+[span] wow
+[a] @marclou
+[span] 's datafast is insanely good! Very rare to see an indie product with such good focus on a niche problem. Great design too. kudos!
+[time] 4:53 AM · Oct 1, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Utkarsh
+[span] utkarshbuilds_
+[a] Follow
+[span] Datafast is no longer an analytics tool. 
+
+It's a feel good tool. 
+
+The dopamine hit you get after seeing viewers using your apps live is just amazing. 
+
+I sometimes open it on another screen while working!
+
+Great job Marc 👏
+[span] Marc Lou
+[span] marclou
+[span] We've got
+[span] @thepatwalls
+[span] building a startup in public with DataFast 🤩
+[time] 8:41 AM · Jun 24, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Mohd Anas
+[span] mdanassaif
+[a] Follow
+[a] @marclou
+[span] 's DataFast just awesome web analytics ever on Internet 
+
+Can See How much sessions time based on routes, This is just awesome.
+
+Love the realtime feature a lot.
+[time] 12:04 PM · Jun 24, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Miguel Pieras
+[span] mpierasb
+[a] Follow
+[span] Am I the only one addicted to ⁦
+[a] @DataFast_
+[span] ⁩ ?
+[time] 2:34 PM · Sep 16, 2025
+[span] Reply
+[span] Copy link
+[span] Read 4 replies
+[span] Hridoy Rehman
+[span] hridoyreh
+[a] Follow
+[span] I decided to use DataFast to grow my MRR as data is the most important thing that we should care about…
+[time] 1:38 PM · Sep 15, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] uaghazade
+[span] uAghazadae
+[a] Follow
+[span] i’ve tried all the popular analytics tools on my projects. GA, plausible, posthog, you name it.
+[a] @DataFast_
+[span] is the best analytics tool on the market right now.
+
+just shows the metrics you actually need. the clean, simple dashboard is a huge win.
+
+change my mind
+[time] 11:09 PM · Jun 19, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Stephon Cooper-Miller
+[span] scoopermiller
+[a] Follow
+[span] Just connect my 2nd SaaS I'm building to
+[a] @marclou
+[a] @DataFast_
+[span] .
+
+I'm excited to keep building.
+
+Next, I have to finish the main function and start the beta testing.
+[a] #SaaS
+[a] #Business
+[a] #Nocode
+[a] #Indiehacker
+[a] #entrepreneur
+[time] 2:15 AM · Dec 10, 2024
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[h3] Tweet not found
+[p] The embedded tweet could not be found…
+[span] George from 🕹prodmgmt.world
+[span] nurijanian
+[a] Follow
+[a] Replying to @
+[a] nurijanian
+[span] i love it, im a DAU, prefer it over Post Hog
+
+one other thing is I’m motivated to use it because I can see how using it generates more revenue
+
+that’s cause I already have a converting product
+
+people who are pre-revenue see it as a cost centre, I see it as a growth centre
+[time] 2:33 AM · Aug 27, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] kir0shi
+[span] kiir0shi
+[a] Follow
+[span] I was skeptical but datafast is actually better than google analytics.
+
+My man no wonder this is such a fast growing saas
+[time] 12:00 PM · Oct 1, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Luke
+[span] CodeWizard
+[a] Follow
+[span] I've been a paying sub of DataFast for one month and it's completely transformed how I look at analytics. I even spent 3 hours yesterday adding goals to all my functions. Incredible platform Marc, I love it
+[time] 12:43 PM · Jan 18, 2026
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] ChairmanKaga
+[span] TheChairmanKaga
+[a] Follow
+[span] Okay, I was skeptical about
+[a] @marclou
+[a] datafa.st
+[span] but I'm converted after turning it on today. 
+
+I'm now obsessed with finding out exactly where
+[a] AppContext.dev
+[span] 's subscribers are coming from, and what journey they take on the site before purchasing.
+[time] 1:13 AM · Oct 13, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Bhanu Teja P
+[span] pbteja1998
+[a] Follow
+[span] This looks awesome 🔥
+
+Switched my analytics completely to
+[a] @DataFast_
+[span] Now every time someone mentions SiteGPT on Twitter, I will know it from this dashboard 😀
+[time] 7:14 AM · Oct 4, 2025
+[span] 200
+[span] Reply
+[span] Copy link
+[span] Read 31 replies
+[span] Luke
+[span] CodeWizard
+[a] Follow
+[span] A month ago: handful of visitors, mostly crickets.
+
+Today: 661 visitors, +122% growth, and I can see exactly where each spike came from.
+
+The difference? I ditched GA for
+[a] @marclou
+[span] 's DataFast.
+
+Turns out when your analytics actually feel alive instead of just numbers, you want to
+[time] 11:59 PM · Jan 12, 2026
+[span] Reply
+[span] Copy link
+[span] Read 17 replies
+[span] Rohan Gilkes, CFA
+[span] rohangilkes
+[a] Follow
+[span] Just set up
+[a] datafa.st
+[a] @marclou
+[span] .
+
+Man WTF!!!😲 
+
+Setting up analytics can be like a 3 hour job depending on who is doing it.  
+
+Lol might be more for me.
+
+Datafast was like 4 minutes set up time. 5 minutes tops.
+
+Don't mention Google Analytics to me ever
+[time] 9:56 PM · Nov 13, 2025
+[span] Reply
+[span] Copy link
+[span] Read 9 replies
+[span] Sami Hindi
+[span] DevBySami
+[a] Follow
+[span] I love getting this invoice.
+
+DataFast is THE analytics tool if you're autistic.
+
+Thanks
+[a] @marclou
+[time] 7:15 PM · Apr 30, 2026
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Theo Stowell
+[span] theostowell
+[a] Follow
+[span] As a tool,
+[a] @DataFast_
+[span] has improved so much since I first came across it. 
+
+These days it's a no-brainer choice for analytics for my business
+[time] 8:00 AM · Aug 16, 2025
+[span] Reply
+[span] Copy link
+[span] Read 3 replies
+[span] Erikas Mališauskas
+[span] malisauskasLT
+[a] Follow
+[span] Datafast by
+[a] @marclou
+[span] is great. I'm just sitting here looking at my website visitors browsing my product live on world map.
+
+You can feel that it was built with love. And that he is solving his own problem (data tracking). Destined for success!
+
+P.S. Yes, this is my secret
+[time] 8:00 AM · Jul 19, 2025
+[span] Reply
+[span] Copy link
+[span] Read 10 replies
+[span] Krzysztof Cichy
+[span] CichyKrzysztof
+[a] Follow
+[span] datafa st is so cool on tv with lofi hip hop radio on
+[a] @marclou
+[a] Watch on X
+[time] 10:53 AM · Aug 5, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] RJ McCollam
+[span] RJMcCollam
+[a] Follow
+[span] The journey data for a goal in DataFast is so cool and a great way to see how users are/aren't making decisions.
+
+Really looking forward to using this pretty heavily for Indie Buckets to find patterns that work and double down on those.
+[time] 5:00 PM · Feb 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Nigel Yong
+[span] niyonx
+[a] Follow
+[span] I set up Datafast by
+[a] @marclou
+[span] !
+
+Let's 10x TimeSkip!
+[time] 4:00 PM · Mar 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] NickelandDime
+[span] NickelanddimeO
+[a] Follow
+[span] who would have thought that
+[a] @DataFast_
+[span] ist actually usefull ...
+
+... I guess sometime you just have to try out new things
+[a] @jackfriks
+[span] you pulled me over to the good side 
+
+maaan, I really like this way of having an overview of my traffic for all my projects
+
+google analytics is a
+[span] jack friks
+[span] jackfriks
+[span] addicting
+[time] 5:15 PM · Aug 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] Alex Ovardov
+[span] AlexOvardov
+[a] Follow
+[a] Replying to @
+[a] SidesshMore
+[span] I use
+[a] @DataFast_
+[span] for analytics. It's a really simple, good looking tool, who provides you all of the traffic analytics, custom events and user flow.
+
+It looks like this
+[time] 3:48 PM · Jul 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Arthur
+[span] arthuryuzbashew
+[a] Follow
+[span] 1 month since the launch of RedditFa! 🔥
+
+- $606 in revenue
+- 2.7K visits
+- 3 major updates released
+
+Just the beginning⚡️
+
+P.s
+[a] @CranQnow
+[span] and
+[a] @techstarterio
+[span] recently joined us -- thanks!
+[time] 9:31 PM · Mar 11, 2025
+[span] Reply
+[span] Copy link
+[span] Read 19 replies
+[span] Yuval Fishbine
+[span] YuvalFishbine
+[a] Follow
+[span] Reddit +
+[a] @DataFast_
+[span] is the best combo
+[time] 12:01 PM · Jul 2, 2025
+[span] Reply
+[span] Copy link
+[span] Read 2 replies
+[span] OSU Dev
+[span] OsuDev78
+[a] Follow
+[span] Been using
+[a] @marclou
+[span] DataFast for the past month.
+
+Saw exactly how users were discovering my SaaS → fixed my onboarding → doubled my conversion rate in 30 days.
+
+This tool is insane for tracking what's actually working.
+
+(screenshot below for proof 👇)
+
+Great work, Marc 🙌
+[time] 5:23 PM · May 21, 2025
+[span] Reply
+[span] Copy link
+[span] Read 1 reply
+[span] Alexander Belogubov 🇺🇦
+[span] AlexBelogubov
+[a] Follow
+[span] I've been using DataFast for exactly a year now, and I can't imagine analytics any other way.
+
+Thanks,
+[a] @marclou
+[span] , for a wonderful product!
+[time] 7:06 AM · Oct 28, 202
+[...truncated]

@@ -141,17 +141,30 @@ export function wrapScopedCompositionScript(
     var matches = __hfQueryAll(selector);
     return matches[0] || null;
   };
+  var __hfGetElementById = function(id) {
+    var found = window.document.getElementById(id);
+    if (found && __hfContains(found)) return found;
+    var root = __hfFindRoot();
+    if (!root) return found || null;
+    var idValue = id + "";
+    if (root.id === idValue) return root;
+    if (typeof root.querySelector !== "function") return null;
+    if (typeof CSS !== "undefined" && CSS && typeof CSS.escape === "function") {
+      try {
+        return root.querySelector("#" + CSS.escape(idValue)) || null;
+      } catch {}
+    }
+    try {
+      return root.querySelector('[id="' + __hfEscapeAttr(idValue) + '"]') || null;
+    } catch {}
+    return null;
+  };
   var __hfScopedDocument = typeof Proxy === "function"
     ? new Proxy(window.document, {
         get: function(target, prop, receiver) {
           if (prop === "querySelector") return __hfQueryOne;
           if (prop === "querySelectorAll") return __hfQueryAll;
-          if (prop === "getElementById") {
-            return function(id) {
-              var found = target.getElementById(id);
-              return found && __hfContains(found) ? found : null;
-            };
-          }
+          if (prop === "getElementById") return __hfGetElementById;
           var value = Reflect.get(target, prop, target);
           return typeof value === "function" ? value.bind(target) : value;
         },
@@ -212,7 +225,11 @@ export function wrapScopedCompositionScript(
         value: __hfFindRoot(),
         configurable: true,
       });
-    } catch (_err) {}
+    } catch {
+      // Best-effort: timelines coming from user code may have a frozen target
+      // or a non-extensible defineProperty path. Swallow — the scoped root
+      // is an enrichment, not a correctness invariant for playback.
+    }
     return timeline;
   };
   var __hfBaseGsap = typeof gsap === "undefined" ? window.gsap : gsap;
@@ -282,5 +299,5 @@ ${source}
   };
   __hfFindRoot();
   __hfRun();
-})()`;
+})();`;
 }

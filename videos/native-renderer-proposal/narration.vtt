@@ -1,0 +1,80 @@
+1
+00:00:00,100 --> 00:00:02,352
+Eighty-six percent.
+
+2
+00:00:02,302 --> 00:00:06,763
+That's how much of render time Chrome spends just taking screenshots.
+
+3
+00:00:06,763 --> 00:00:09,578
+The native renderer changes that.
+
+4
+00:00:09,578 --> 00:00:13,052
+H T M L stays the authoring format.
+
+5
+00:00:13,052 --> 00:00:18,631
+A Rust and Skia I R replaces the per-frame browser path for the subset we control.
+
+6
+00:00:18,631 --> 00:00:24,986
+The auto backend chooses transparently — native when the compiler can prove support, Chrome when it can't.
+
+7
+00:00:24,986 --> 00:00:27,394
+Every decision is logged.
+
+8
+00:00:27,394 --> 00:00:29,960
+Nothing changes silently.
+
+9
+00:00:29,960 --> 00:00:36,171
+Adapters compile known primitives into a deterministic I R. G-SAP stays canonical.
+
+10
+00:00:36,171 --> 00:00:41,092
+Text runs through Chrome once, cached as glyph clips, then composited.
+
+11
+00:00:41,092 --> 00:00:43,171
+Seven phases.
+
+12
+00:00:43,171 --> 00:00:47,144
+Starting with proof infrastructure — not speed claims.
+
+13
+00:00:47,144 --> 00:00:50,078
+Can we detect support accurately?
+
+14
+00:00:50,078 --> 00:00:52,723
+Can we prove quality gates?
+
+15
+00:00:52,723 --> 00:00:55,618
+Can the auto backend be trusted?
+
+16
+00:00:55,618 --> 00:00:58,039
+Then we grow the subset.
+
+17
+00:00:58,039 --> 00:01:00,513
+One fixture at a time.
+
+18
+00:01:00,513 --> 00:01:03,763
+Native rendering isn't replacing Chrome.
+
+19
+00:01:03,763 --> 00:01:07,644
+It's giving the best HyperFrames work a faster lane.
+
+20
+00:01:07,644 --> 00:01:09,828
+Let's build it right.
+

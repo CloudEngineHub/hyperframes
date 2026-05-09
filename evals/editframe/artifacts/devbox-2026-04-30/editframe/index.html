@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editframe Precise Timing Eval</title>
+    <script type="module" src="./src/index.js"></script>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #061016;
+        font-family: Inter, Arial, sans-serif;
+      }
+      ef-timegroup {
+        display: block;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #061016 0%, #0d2730 48%, #f4c15d 100%);
+        color: #f9fbf7;
+      }
+      .stage {
+        position: absolute;
+        inset: 0;
+        padding: 96px 120px;
+        display: grid;
+        grid-template-rows: 1fr auto;
+      }
+      .eyebrow {
+        font-size: 36px;
+        letter-spacing: 0;
+        text-transform: uppercase;
+        color: #8ee3d6;
+        font-weight: 800;
+      }
+      .headline {
+        margin-top: 28px;
+        font-size: 132px;
+        line-height: 0.92;
+        font-weight: 900;
+        max-width: 1120px;
+      }
+      .metric {
+        position: absolute;
+        right: 120px;
+        top: 150px;
+        width: 520px;
+        height: 520px;
+        border: 4px solid rgba(255, 255, 255, 0.75);
+        border-radius: 24px;
+        padding: 56px;
+        background: rgba(5, 14, 18, 0.54);
+      }
+      .metric-value {
+        font-size: 120px;
+        font-weight: 900;
+        color: #f4c15d;
+      }
+      .metric-label {
+        margin-top: 24px;
+        font-size: 34px;
+        color: #dce8e5;
+      }
+      .cta {
+        align-self: end;
+        display: inline-flex;
+        width: max-content;
+        padding: 26px 38px;
+        background: #061016;
+        color: #f9fbf7;
+        border: 3px solid #8ee3d6;
+        border-radius: 8px;
+        font-size: 42px;
+        font-weight: 900;
+      }
+      .marker {
+        position: absolute;
+        left: 120px;
+        bottom: 240px;
+        width: 720px;
+        height: 8px;
+        background: #8ee3d6;
+        transform-origin: left center;
+      }
+      #logo,
+      #headline,
+      #metric,
+      #marker,
+      #cta {
+        opacity: 0;
+      }
+      @keyframes logoIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes headlineIn {
+        from {
+          opacity: 0;
+          transform: translateY(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes metricIn {
+        from {
+          opacity: 0;
+          transform: scale(0.88);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes markerIn {
+        from {
+          opacity: 0;
+          transform: scaleX(0);
+        }
+        to {
+          opacity: 1;
+          transform: scaleX(1);
+        }
+      }
+      @keyframes ctaIn {
+        from {
+          opacity: 0;
+          transform: translateY(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes rootOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+      #logo {
+        animation: logoIn 250ms ease-out 1200ms forwards;
+      }
+      #headline {
+        animation: headlineIn 550ms ease-out 1450ms forwards;
+      }
+      #metric {
+        animation: metricIn 350ms cubic-bezier(0.2, 1.4, 0.35, 1) 5000ms forwards;
+      }
+      #marker {
+        animation: markerIn 400ms ease-out 5000ms forwards;
+      }
+      #cta {
+        animation: ctaIn 350ms ease-out 8500ms forwards;
+      }
+      #root {
+        animation: rootOut 600ms ease-in 9400ms forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <ef-timegroup id="root" workbench mode="fixed" duration="10s">
+      <div class="stage">
+        <div>
+          <div id="logo" class="eyebrow">Devbox Eval</div>
+          <div id="headline" class="headline">Precise timing without mystery state.</div>
+        </div>
+        <div id="cta" class="cta">Render the proof</div>
+      </div>
+      <div id="metric" class="metric">
+        <div class="metric-value">5.0s</div>
+        <div class="metric-label">Chart peak target</div>
+      </div>
+      <div id="marker" class="marker"></div>
+    </ef-timegroup>
+  </body>
+</html>

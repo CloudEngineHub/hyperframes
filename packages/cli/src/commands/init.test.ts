@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { injectTailwindBrowserScript } from "./init.js";
+import { applyResolutionPreset, injectTailwindBrowserScript } from "./init.js";
 
 const cliEntry = resolve(fileURLToPath(import.meta.url), "..", "..", "cli.ts");
 const tailwindScript =
@@ -141,6 +141,171 @@ describe("hyperframes init flag rename", () => {
       expect(res.stderr).toContain("--template flag was renamed to --example");
       expect(res.stderr).toContain(`--example "blank"`);
       expect(existsSync(target)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("applyResolutionPreset", () => {
+  function withFixture(fn: (dir: string) => void): void {
+    const dir = mkdtempSync(join(tmpdir(), "hf-resolution-test-"));
+    try {
+      mkdirSync(dir, { recursive: true });
+      fn(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  const sampleHtml = [
+    "<!doctype html>",
+    '<html lang="en">',
+    "  <head>",
+    '    <meta name="viewport" content="width=1920, height=1080" />',
+    "    <style>",
+    "      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }",
+    "    </style>",
+    "  </head>",
+    "  <body>",
+    '    <div id="root" data-composition-id="main" data-width="1920" data-height="1080">',
+    "    </div>",
+    "  </body>",
+    "</html>",
+  ].join("\n");
+
+  it("rewrites every dimension fingerprint for landscape-4k", () => {
+    withFixture((dir) => {
+      const file = join(dir, "index.html");
+      writeFileSync(file, sampleHtml, "utf-8");
+
+      applyResolutionPreset(dir, "landscape-4k");
+      const out = readFileSync(file, "utf-8");
+
+      expect(out).toContain('data-resolution="landscape-4k"');
+      expect(out).toContain('data-width="3840"');
+      expect(out).toContain('data-height="2160"');
+      expect(out).toContain("width: 3840px");
+      expect(out).toContain("height: 2160px");
+      expect(out).toContain('content="width=3840, height=2160"');
+      expect(out).not.toContain("1920");
+      expect(out).not.toContain("1080");
+    });
+  });
+
+  it("swaps to portrait dimensions for portrait-4k", () => {
+    withFixture((dir) => {
+      const file = join(dir, "index.html");
+      writeFileSync(file, sampleHtml, "utf-8");
+
+      applyResolutionPreset(dir, "portrait-4k");
+      const out = readFileSync(file, "utf-8");
+
+      expect(out).toContain('data-width="2160"');
+      expect(out).toContain('data-height="3840"');
+      expect(out).toContain('data-resolution="portrait-4k"');
+    });
+  });
+
+  it("scaffolds a 4k project end-to-end via --resolution 4k", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hf-init-test-"));
+    const target = join(dir, "proj");
+    try {
+      const res = runInit([
+        target,
+        "--example",
+        "blank",
+        "--resolution",
+        "4k",
+        "--non-interactive",
+        "--skip-skills",
+      ]);
+      expect(res.status).toBe(0);
+
+      const html = readFileSync(join(target, "index.html"), "utf-8");
+      expect(html).toContain('data-width="3840"');
+      expect(html).toContain('data-height="2160"');
+      expect(html).toContain('data-resolution="landscape-4k"');
+      expect(html).toContain("width: 3840px");
+      expect(html).toContain("height: 2160px");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an unknown --resolution value", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hf-init-test-"));
+    const target = join(dir, "proj");
+    try {
+      const res = runInit([
+        target,
+        "--example",
+        "blank",
+        "--resolution",
+        "8k",
+        "--non-interactive",
+        "--skip-skills",
+      ]);
+      expect(res.status).toBe(1);
+      expect(res.stderr).toContain("Invalid --resolution");
+      expect(existsSync(target)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rewrites height-before-width inline CSS", () => {
+    withFixture((dir) => {
+      const file = join(dir, "index.html");
+      // Reversed property order — same as the parser's stageMatchReverse path.
+      const reversedOrderHtml = sampleHtml.replace(
+        "html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }",
+        "html, body { margin: 0; height: 1080px; width: 1920px; overflow: hidden; }",
+      );
+      writeFileSync(file, reversedOrderHtml, "utf-8");
+
+      applyResolutionPreset(dir, "landscape-4k");
+      const out = readFileSync(file, "utf-8");
+
+      expect(out).toContain("height: 2160px");
+      expect(out).toContain("width: 3840px");
+      expect(out).not.toContain("1080px");
+      expect(out).not.toContain("1920px");
+    });
+  });
+
+  it("is a no-op on a file with no dimension fingerprint (does not error)", () => {
+    withFixture((dir) => {
+      const file = join(dir, "fragment.html");
+      // No data-width/height, no html/body block, no viewport — just markup.
+      const minimal = "<!doctype html><html><head></head><body><p>hi</p></body></html>";
+      writeFileSync(file, minimal, "utf-8");
+
+      expect(() => applyResolutionPreset(dir, "landscape-4k")).not.toThrow();
+      const out = readFileSync(file, "utf-8");
+      // The htmlOpenRe path adds `data-resolution="landscape-4k"` because
+      // the <html> tag is present. That's correct: an explicit signal of
+      // intended resolution survives even when no dim fields exist.
+      expect(out).toContain('data-resolution="landscape-4k"');
+    });
+  });
+
+  it("accepts uppercase --resolution value (4K)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hf-init-test-"));
+    const target = join(dir, "proj");
+    try {
+      const res = runInit([
+        target,
+        "--example",
+        "blank",
+        "--resolution",
+        "4K",
+        "--non-interactive",
+        "--skip-skills",
+      ]);
+      expect(res.status).toBe(0);
+      const html = readFileSync(join(target, "index.html"), "utf-8");
+      expect(html).toContain('data-width="3840"');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -1,3 +1,5 @@
+import type { CanvasResolution } from "../core.types.js";
+
 /** Resolved info about a single project. */
 export interface ResolvedProject {
   id: string;
@@ -64,6 +66,11 @@ export interface StudioApiAdapter {
     fps: number;
     quality: string;
     jobId: string;
+    /**
+     * Optional output resolution preset. See `resolveDeviceScaleFactor` in
+     * the producer for the integer-scale + aspect + HDR constraints.
+     */
+    outputResolution?: CanvasResolution;
   }): RenderJobState;
 
   /** Optional: generate a JPEG thumbnail via Puppeteer or similar. */

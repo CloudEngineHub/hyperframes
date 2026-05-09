@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "name": "hyperframes-editframe-devbox-evals",
+  "environment": "devbox: ssh -i ~/.ssh/miguel.sierra-dev.pem ubuntu@10.0.9.220",
+  "rubric": [
+    { "id": "visual_output_quality", "weight": 18, "judge": "blind_human_required" },
+    { "id": "timing_motion_control", "weight": 14, "judge": "automated_and_human" },
+    { "id": "timeline_editability", "weight": 12, "judge": "source_and_editor_inspection" },
+    { "id": "agent_success_rate", "weight": 12, "judge": "automated" },
+    { "id": "media_handling", "weight": 10, "judge": "automated_and_human" },
+    { "id": "render_fidelity", "weight": 10, "judge": "automated" },
+    { "id": "performance_cost", "weight": 8, "judge": "automated" },
+    { "id": "observability_debugging", "weight": 7, "judge": "human" },
+    { "id": "deployment_api", "weight": 5, "judge": "live_api_required" },
+    { "id": "human_iteration", "weight": 4, "judge": "human" }
+  ],
+  "tasks": [
+    {
+      "id": "precise_timing_default_path",
+      "title": "Precise Timing Default Local Render",
+      "durationSeconds": 10,
+      "output": { "width": 1920, "height": 1080, "fps": 30, "container": "mp4" },
+      "events": [
+        { "label": "logo appears", "timeSeconds": 1.2 },
+        { "label": "chart peak marker", "timeSeconds": 5.0 },
+        { "label": "CTA lands", "timeSeconds": 8.5 },
+        { "label": "outro fade starts", "timeSeconds": 9.4 }
+      ],
+      "acceptance": [
+        "fresh project can be created non-interactively",
+        "default documented local render command produces a valid video",
+        "ffprobe confirms duration, resolution, frame rate, and codec",
+        "timestamp snapshots can be captured for every requested event",
+        "errors are clear and do not leave misleading successful artifacts"
+      ]
+    },
+    {
+      "id": "precise_timing_fallback_path",
+      "title": "Precise Timing Expert Fallback Render",
+      "durationSeconds": 10,
+      "output": { "width": 1920, "height": 1080, "fps": 30, "container": "mp4" },
+      "acceptance": [
+        "if default render fails, document exact unsupported primitive or codec",
+        "fallback must be explicit in source/logs, not hidden as default success",
+        "fallback output must still pass ffprobe checks"
+      ]
+    },
+    {
+      "id": "cloud_api_live_render",
+      "title": "Authenticated Cloud/API Render",
+      "status": "not_run",
+      "requires": ["Editframe API token", "HyperFrames publish/render target if being compared"],
+      "acceptance": [
+        "job creation succeeds",
+        "progress/status is observable",
+        "artifact URL is durable enough for review",
+        "failure/retry behavior is documented"
+      ]
+    },
+    {
+      "id": "blind_quality_judging",
+      "title": "Blind Final Video Quality Judging",
+      "status": "not_run",
+      "requires": ["3+ generated outputs per tool", "tool labels stripped", "2+ human judges"],
+      "acceptance": [
+        "judges score final videos before seeing source or workflow logs",
+        "visual quality is reported separately from workflow reliability"
+      ]
+    }
+  ]
+}

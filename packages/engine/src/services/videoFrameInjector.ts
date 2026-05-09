@@ -15,28 +15,91 @@ import { type BeforeCaptureHook } from "./frameCapture.js";
 import { DEFAULT_CONFIG, type EngineConfig } from "../config.js";
 
 export interface VideoFrameInjectorOptions extends Partial<
-  Pick<EngineConfig, "frameDataUriCacheLimit">
+  Pick<EngineConfig, "frameDataUriCacheLimit" | "frameDataUriCacheBytesLimitMb">
 > {
   frameSrcResolver?: (framePath: string) => string | null;
 }
 
+interface FrameSourceCacheStats {
+  entries: number;
+  bytes: number;
+  /** Total entries evicted since cache creation. A high count vs a small
+   * composition signals the byte budget is too tight (cache thrash). */
+  evictions: number;
+  /** Total inserts rejected because the entry alone exceeds bytesLimit.
+   * Non-zero means a single frame is bigger than the configured budget —
+   * raise `frameDataUriCacheBytesLimitMb` if it recurs in production. */
+  oversizedRejections: number;
+}
+
+interface FrameSourceCache {
+  get: (framePath: string) => Promise<string>;
+  /** Exposed for tests + telemetry; reflects current cache occupancy. */
+  stats: () => FrameSourceCacheStats;
+}
+
+/**
+ * Two-bound LRU keyed by frame path. Either bound triggers eviction of the
+ * oldest entry — entry count protects against pathological many-tiny-frames
+ * cases, and the byte budget keeps memory bounded when the per-frame data
+ * URI grows (4K PNG frames are ~33 MB once base64-encoded).
+ *
+ * If a single entry's data URI exceeds `bytesLimit`, we skip caching it
+ * (returning the URI directly to the caller). Without this guard, the
+ * post-insert eviction loop would drop the entry we just inserted and the
+ * cache would degrade into a CPU hot path — every subsequent `get()` would
+ * re-read from disk and re-base64 the same frame.
+ *
+ * **Invariant**: cached values MUST be strings whose `.length` equals the
+ * byte count we account for at insertion. We derive size on demand via
+ * `cache.get(key)?.length` rather than maintaining a parallel `Map<string, number>`.
+ * If you ever wrap the value (e.g. cache a Buffer or an object), the byte
+ * accounting silently breaks — switch to a parallel size map first.
+ */
 function createFrameSourceCache(
-  cacheLimit: number,
+  entryLimit: number,
+  bytesLimit: number,
   frameSrcResolver?: (framePath: string) => string | null,
-) {
+): FrameSourceCache {
   const cache = new Map<string, string>();
   const inFlight = new Map<string, Promise<string>>();
+  let totalBytes = 0;
+  let evictions = 0;
+  let oversizedRejections = 0;
+
+  function evictOldest(): void {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) return;
+    // Snapshot the value before deleting so the byte-size derivation can't
+    // accidentally read post-delete (a future reorder would silently lose
+    // accounting and surface as `totalBytes` drifting out of sync).
+    const dropped = cache.get(oldestKey);
+    cache.delete(oldestKey);
+    totalBytes = Math.max(0, totalBytes - (dropped?.length ?? 0));
+    evictions++;
+  }
 
   function remember(framePath: string, dataUri: string): string {
+    // Skip caching entries that alone exceed the byte budget. Caching them
+    // would trigger immediate self-eviction on insert and pollute LRU order
+    // by displacing the previous entry's slot.
+    if (dataUri.length > bytesLimit) {
+      oversizedRejections++;
+      // Drop any stale prior version so the caller sees consistent state.
+      if (cache.has(framePath)) {
+        totalBytes = Math.max(0, totalBytes - (cache.get(framePath)?.length ?? 0));
+        cache.delete(framePath);
+      }
+      return dataUri;
+    }
     if (cache.has(framePath)) {
+      totalBytes = Math.max(0, totalBytes - (cache.get(framePath)?.length ?? 0));
       cache.delete(framePath);
     }
     cache.set(framePath, dataUri);
-    if (cache.size > cacheLimit) {
-      const oldestKey = cache.keys().next().value;
-      if (oldestKey) {
-        cache.delete(oldestKey);
-      }
+    totalBytes += dataUri.length;
+    while ((cache.size > entryLimit || totalBytes > bytesLimit) && cache.size > 0) {
+      evictOldest();
     }
     return dataUri;
   }
@@ -70,8 +133,18 @@ function createFrameSourceCache(
     return pending;
   }
 
-  return { get };
+  return {
+    get,
+    stats: () => ({
+      entries: cache.size,
+      bytes: totalBytes,
+      evictions,
+      oversizedRejections,
+    }),
+  };
 }
+
+export const __testing = { createFrameSourceCache };
 
 /**
  * Creates a BeforeCaptureHook that injects pre-extracted video frames
@@ -83,11 +156,16 @@ export function createVideoFrameInjector(
 ): BeforeCaptureHook | null {
   if (!frameLookup) return null;
 
-  const cacheLimit = Math.max(
+  const entryLimit = Math.max(
     32,
     config?.frameDataUriCacheLimit ?? DEFAULT_CONFIG.frameDataUriCacheLimit,
   );
-  const frameCache = createFrameSourceCache(cacheLimit, config?.frameSrcResolver);
+  const bytesLimitMb = Math.max(
+    64,
+    config?.frameDataUriCacheBytesLimitMb ?? DEFAULT_CONFIG.frameDataUriCacheBytesLimitMb,
+  );
+  const bytesLimit = bytesLimitMb * 1024 * 1024;
+  const frameCache = createFrameSourceCache(entryLimit, bytesLimit, config?.frameSrcResolver);
   const lastInjectedFrameByVideo = new Map<string, number>();
 
   return async (page: Page, time: number) => {

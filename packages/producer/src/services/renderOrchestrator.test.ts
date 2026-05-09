@@ -20,9 +20,12 @@ import {
   isRecoverableParallelCaptureError,
   materializeExtractedFramesForCompiledDir,
   projectBrowserEndToCompositionTimeline,
+  resolveDeviceScaleFactor,
   resolveRenderWorkerCount,
+  resolveCompositeTransfer,
   selectCaptureCalibrationFrames,
   shouldFallbackToScreenshotAfterCalibrationError,
+  shouldUseLayeredComposite,
   shouldUseStreamingEncode,
   writeCompiledArtifacts,
 } from "./renderOrchestrator.js";
@@ -368,6 +371,7 @@ function createConfig(): EngineConfig {
     hdrAutoDetect: true,
     audioGain: 1,
     frameDataUriCacheLimit: 256,
+    frameDataUriCacheBytesLimitMb: 1500,
     playerReadyTimeout: 45000,
     renderReadyTimeout: 15000,
     verifyRuntime: true,
@@ -543,6 +547,48 @@ describe("estimateCaptureCostMultiplier", () => {
   });
 });
 
+describe("shouldUseLayeredComposite", () => {
+  it("uses the layered compositor for SDR shader transition renders", () => {
+    expect(
+      shouldUseLayeredComposite({
+        hasHdrContent: false,
+        hasShaderTransitions: true,
+        isPngSequence: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("does not route PNG sequence shader renders through the streaming layered compositor", () => {
+    expect(
+      shouldUseLayeredComposite({
+        hasHdrContent: false,
+        hasShaderTransitions: true,
+        isPngSequence: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps HDR content on the layered compositor even without shader transitions", () => {
+    expect(
+      shouldUseLayeredComposite({
+        hasHdrContent: true,
+        hasShaderTransitions: false,
+        isPngSequence: false,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("resolveCompositeTransfer", () => {
+  it("uses 16-bit-expanded sRGB for SDR layered shader transition renders", () => {
+    expect(resolveCompositeTransfer(false, undefined)).toBe("srgb");
+  });
+
+  it("uses the active HDR transfer when HDR content is being preserved", () => {
+    expect(resolveCompositeTransfer(true, { transfer: "hlg" })).toBe("hlg");
+  });
+});
+
 describe("estimateMeasuredCaptureCostMultiplier", () => {
   it("turns slow calibration samples into a capture cost multiplier", () => {
     const estimate = estimateMeasuredCaptureCostMultiplier([
@@ -702,5 +748,95 @@ describe("projectBrowserEndToCompositionTimeline", () => {
 
   it("preserves scene-local media offsets inside compositions that start much later", () => {
     expect(projectBrowserEndToCompositionTimeline(21.5, 1.5, 5.5)).toBe(25.5);
+  });
+});
+
+describe("resolveDeviceScaleFactor", () => {
+  const defaults = {
+    compositionWidth: 1920,
+    compositionHeight: 1080,
+    hdrRequested: false,
+    alphaRequested: false,
+  } as const;
+
+  it("returns 1 when no outputResolution is set (default behavior)", () => {
+    expect(resolveDeviceScaleFactor({ ...defaults, outputResolution: undefined })).toBe(1);
+  });
+
+  it("returns 2 for the canonical 1080p → 4K supersample", () => {
+    expect(resolveDeviceScaleFactor({ ...defaults, outputResolution: "landscape-4k" })).toBe(2);
+  });
+
+  it("returns 2 for portrait 1080p → portrait-4k", () => {
+    expect(
+      resolveDeviceScaleFactor({
+        ...defaults,
+        compositionWidth: 1080,
+        compositionHeight: 1920,
+        outputResolution: "portrait-4k",
+      }),
+    ).toBe(2);
+  });
+
+  it("returns 1 when the composition already matches the requested resolution", () => {
+    expect(
+      resolveDeviceScaleFactor({
+        ...defaults,
+        compositionWidth: 3840,
+        compositionHeight: 2160,
+        outputResolution: "landscape-4k",
+      }),
+    ).toBe(1);
+  });
+
+  it("rejects HDR + outputResolution with a clear message", () => {
+    expect(() =>
+      resolveDeviceScaleFactor({
+        ...defaults,
+        outputResolution: "landscape-4k",
+        hdrRequested: true,
+      }),
+    ).toThrow(/hdrMode='force-hdr'/);
+  });
+
+  it("rejects alpha + outputResolution (the alpha capture path doesn't apply DPR yet)", () => {
+    expect(() =>
+      resolveDeviceScaleFactor({
+        ...defaults,
+        outputResolution: "landscape-4k",
+        alphaRequested: true,
+      }),
+    ).toThrow(/alpha output/);
+  });
+
+  it("rejects orientation mismatch (landscape comp → portrait-4k)", () => {
+    expect(() =>
+      resolveDeviceScaleFactor({ ...defaults, outputResolution: "portrait-4k" }),
+    ).toThrow(/aspect ratio/);
+  });
+
+  it("rejects downsampling (4K composition → 1080p output)", () => {
+    expect(() =>
+      resolveDeviceScaleFactor({
+        ...defaults,
+        compositionWidth: 3840,
+        compositionHeight: 2160,
+        outputResolution: "landscape",
+      }),
+    ).toThrow(/Downsampling/);
+  });
+
+  it("rejects non-integer scale factors", () => {
+    // 1500×844 → 3840×2160 has slightly different ratios in width vs height.
+    // The aspect-ratio guard fires first; pinning the rejection message
+    // covers both error paths since either is an acceptable failure here.
+    expect(() =>
+      resolveDeviceScaleFactor({
+        ...defaults,
+        compositionWidth: 1500,
+        compositionHeight: 844,
+        outputResolution: "landscape-4k",
+      }),
+    ).toThrow(/aspect ratio|non-integer/);
   });
 });

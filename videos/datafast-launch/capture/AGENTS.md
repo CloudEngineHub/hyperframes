@@ -1,0 +1,22 @@
+# DataFast | Find out which marketing channels drive your revenue
+
+Source: https://datafa.st
+
+To create a video from this capture, use the `website-to-hyperframes` skill.
+
+## What's in This Capture
+
+| File                                | Contents                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `screenshots/scroll-*.png`          | Viewport screenshots of the full page. Start with `scroll-000.png` (hero).                               |
+| `extracted/asset-descriptions.md`   | One-line description of every downloaded asset. **Read this first.**                                     |
+| `extracted/tokens.json`             | Design tokens: 20 colors, 3 fonts, 20 headings, 6 CTAs                                                   |
+| `extracted/visible-text.txt`        | Page text in DOM order, prefixed with HTML tag (`[h1]`, `[p]`, `[a]`). Use as context — rephrase freely. |
+| `extracted/detected-libraries.json` | Libraries: Tailwind CSS                                                                                  |
+| `assets/`                           | Downloaded images, SVGs, and font files.                                                                 |
+
+## Brand Summary
+
+- **Colors**: #E5E7EB, #536471, #262626, #FBFAF9, #0F1419, #006FD6, #000000, #FFFFFF, #1D9BF0, #272727
+- **Fonts**: **DM_Sans_0d7163 (100-1000 variable), **Fuzzy_Bubbles_76434e (400), -apple-system (400,700)
+- **Built with**: Tailwind CSS

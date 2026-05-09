@@ -90,7 +90,7 @@ function parseResolutionFromCss(doc: Document, cssText: string | null): CanvasRe
       const w = parseInt(inlineStyle.width, 10);
       const h = parseInt(inlineStyle.height, 10);
       if (w && h) {
-        return w > h ? "landscape" : "portrait";
+        return resolveResolutionFromDimensions(w, h);
       }
     }
   }
@@ -102,7 +102,7 @@ function parseResolutionFromCss(doc: Document, cssText: string | null): CanvasRe
     if (stageMatch) {
       const w = parseInt(stageMatch[1] ?? "", 10);
       const h = parseInt(stageMatch[2] ?? "", 10);
-      return w > h ? "landscape" : "portrait";
+      return resolveResolutionFromDimensions(w, h);
     }
     const stageMatchReverse = cssText.match(
       /#stage\s*\{[^}]*height:\s*(\d+)px[^}]*width:\s*(\d+)px[^}]*\}/,
@@ -110,7 +110,7 @@ function parseResolutionFromCss(doc: Document, cssText: string | null): CanvasRe
     if (stageMatchReverse) {
       const h = parseInt(stageMatchReverse[1] ?? "", 10);
       const w = parseInt(stageMatchReverse[2] ?? "", 10);
-      return w > h ? "landscape" : "portrait";
+      return resolveResolutionFromDimensions(w, h);
     }
   }
 
@@ -120,7 +120,12 @@ function parseResolutionFromCss(doc: Document, cssText: string | null): CanvasRe
 function parseResolutionFromHtml(doc: Document): CanvasResolution | null {
   const htmlEl = doc.documentElement;
   const resolutionAttr = htmlEl.getAttribute("data-resolution");
-  if (resolutionAttr === "landscape" || resolutionAttr === "portrait") {
+  if (
+    resolutionAttr === "landscape" ||
+    resolutionAttr === "portrait" ||
+    resolutionAttr === "landscape-4k" ||
+    resolutionAttr === "portrait-4k"
+  ) {
     return resolutionAttr;
   }
 
@@ -130,11 +135,28 @@ function parseResolutionFromHtml(doc: Document): CanvasResolution | null {
     const width = parseInt(widthAttr, 10);
     const height = parseInt(heightAttr, 10);
     if (width && height) {
-      return width > height ? "landscape" : "portrait";
+      return resolveResolutionFromDimensions(width, height);
     }
   }
 
   return null;
+}
+
+function resolveResolutionFromDimensions(width: number, height: number): CanvasResolution {
+  // `width === height` (square) falls into the portrait branch by convention —
+  // the same bias the previous `w > h ? landscape : portrait` ternary used.
+  // Square compositions are rare; pick portrait-as-default so we don't surprise
+  // the existing call sites that depend on this behavior.
+  const isLandscape = width > height;
+  const longSide = Math.max(width, height);
+  // UHD cutoff is the long side of `landscape-4k` / `portrait-4k` (3840). A
+  // looser threshold (e.g. ≥ 2560) would silently misclassify QHD/1440p
+  // (2560×1440) as 4K, which is the wrong default for a common authoring
+  // resolution closer to 1080p than to UHD. Authors who genuinely want the
+  // 4K preset can still set `data-resolution="landscape-4k"` explicitly.
+  const isUhd = longSide >= 3840;
+  if (isLandscape) return isUhd ? "landscape-4k" : "landscape";
+  return isUhd ? "portrait-4k" : "portrait";
 }
 
 export function parseHtml(html: string): ParsedHtml {

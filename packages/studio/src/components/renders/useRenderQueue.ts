@@ -11,6 +11,20 @@ export interface RenderJob {
   durationMs?: number;
 }
 
+// Mirrors `CanvasResolution` from @hyperframes/core. Kept local because
+// studio's tsconfig doesn't include node types, and the core barrel
+// transitively pulls in modules with `node:fs` imports. Drift risk is
+// low (4 string literals tied to a stable enum).
+export type ResolutionPreset = "landscape" | "portrait" | "landscape-4k" | "portrait-4k";
+
+export interface StartRenderOptions {
+  fps?: number;
+  quality?: "draft" | "standard" | "high";
+  format?: "mp4" | "webm" | "mov";
+  /** `"auto"` (default) renders at the composition's authored dimensions. */
+  resolution?: ResolutionPreset | "auto";
+}
+
 export function useRenderQueue(projectId: string | null) {
   const [jobs, setJobs] = useState<RenderJob[]>([]);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -59,20 +73,30 @@ export function useRenderQueue(projectId: string | null) {
 
   // Start a render and track progress via SSE
   const startRender = useCallback(
-    async (
-      fps = 30,
-      quality: "draft" | "standard" | "high" = "standard",
-      format: "mp4" | "webm" | "mov" = "mp4",
-    ) => {
+    async (opts: StartRenderOptions = {}) => {
       if (!projectId) return;
 
+      const fps = opts.fps ?? 30;
+      const quality = opts.quality ?? "standard";
+      const format = opts.format ?? "mp4";
+      const resolution = opts.resolution;
+
       const startTime = Date.now();
+      // "auto" / undefined means "render at the composition's authored size".
+      // Omit the field entirely — sending "auto" would trip the route's
+      // enum validation set.
+      const body: { fps: number; quality: string; format: string; resolution?: string } = {
+        fps,
+        quality,
+        format,
+      };
+      if (resolution && resolution !== "auto") body.resolution = resolution;
       let res: Response;
       try {
         res = await fetch(`/api/projects/${projectId}/render`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fps, quality, format }),
+          body: JSON.stringify(body),
         });
       } catch {
         const failedJob: RenderJob = {

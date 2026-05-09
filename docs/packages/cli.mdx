@@ -129,6 +129,10 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
     ```bash
     npx hyperframes render --output output.mp4
     ```
+    Render a specific composition instead of `index.html`:
+    ```bash
+    npx hyperframes render -c compositions/intro.html -o intro.mp4
+    ```
     For deterministic output, add `--docker`:
     ```bash
     npx hyperframes render --docker --output output.mp4
@@ -158,6 +162,7 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
     | Flag | Description |
     |------|-------------|
     | `--example, -e` | Example to scaffold (required in default mode, interactive in `--human-friendly`) |
+    | `--resolution` | Canvas preset: `landscape` (1920×1080), `portrait` (1080×1920), `landscape-4k` (3840×2160), `portrait-4k` (2160×3840). Aliases: `1080p`, `4k`, `uhd`. Default: keep template dimensions. |
     | `--video, -V` | Path to a video file (MP4, WebM, MOV) |
     | `--audio, -a` | Path to an audio file (MP3, WAV, M4A) |
     | `--tailwind` | Add Tailwind CSS browser-runtime support to scaffolded HTML |
@@ -356,6 +361,10 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
     # Single image → transparent PNG
     npx hyperframes remove-background portrait.jpg -o cutout.png
 
+    # Layer separation: cutout AND inverse-alpha background plate in one pass
+    npx hyperframes remove-background avatar.mp4 \
+      -o subject.webm --background-output plate.webm
+
     # Force CPU on a machine that has CoreML or CUDA
     npx hyperframes remove-background avatar.mp4 -o transparent.webm --device cpu
 
@@ -366,7 +375,9 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
     | Flag | Description |
     |------|-------------|
     | `--output, -o` | Output path. Format inferred from extension: `.webm` (default), `.mov`, `.png` |
+    | `--background-output, -b` | Optional second output: inverse-alpha background plate (subject region transparent, surroundings opaque). Same source RGB, complementary mask. Must be `.webm` or `.mov`. Hole-cut, not inpainted — composite something underneath to fill the hole. |
     | `--device` | Execution provider: `auto` (default), `cpu`, `coreml`, `cuda` |
+    | `--quality` | WebM encoder preset: `fast` (crf 30, smallest), `balanced` (crf 18, default), `best` (crf 12, near-lossless). Higher quality keeps the cutout's RGB closer to the source mp4 — important when overlaying the cutout on its own source for text-behind-subject effects. Applies to both `--output` and `--background-output`. Ignored for `.mov` / `.png`. |
     | `--info` | Print detected execution providers and exit (no render) |
     | `--json` | Output result as JSON |
 
@@ -594,11 +605,12 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
     | Flag | Values | Default | Description |
     |------|--------|---------|-------------|
     | `--output` | path | `renders/<name>.mp4` | Output file path |
-    | `--format` | mp4, webm, mov | mp4 | Output format (WebM/MOV render with transparency) |
+    | `--format` | mp4, webm, mov, png-sequence | mp4 | Output format (WebM/MOV render with transparency; png-sequence writes a directory of RGBA PNGs) |
     | `--fps` | 24, 30, 60 | 30 | Frames per second |
     | `--quality` | draft, standard, high | standard | Encoding quality preset (drives CRF/bitrate) |
     | `--crf` | 0-51 | — | Override encoder CRF (lower = higher quality). Mutually exclusive with `--video-bitrate` |
     | `--video-bitrate` | e.g. `10M`, `5000k` | — | Target video bitrate. Mutually exclusive with `--crf` |
+    | `--resolution` | landscape, portrait, landscape-4k, portrait-4k (aliases: `1080p`, `4k`, `uhd`) | — | Output resolution preset. Supersamples a smaller composition via Chrome `deviceScaleFactor` so the screenshot lands at the requested dimensions. Aspect ratio must match the composition; the scale must be an integer multiple. Not supported with `--hdr`. See [4K Rendering](/guides/4k-rendering) |
     | `--hdr` | — | off | Force HDR output even if no HDR sources are detected. MP4 only. See [HDR Rendering](/guides/hdr) |
     | `--sdr` | — | off | Force SDR output even if HDR sources are detected |
     | `--workers` | 1-8 | 4 | Parallel render workers |
@@ -706,7 +718,19 @@ This is suppressed in CI environments, non-TTY shells, and when `HYPERFRAMES_NO_
       ◇  All checks passed
     ```
 
+    | Flag | Description |
+    |------|-------------|
+    | `--json` | Output as JSON (includes `_meta` envelope) |
+
     Verifies CLI version, Node.js, FFmpeg, FFprobe, Chrome, and Docker availability. If a newer CLI version is available, the version row shows an upgrade hint.
+
+    **CI gating.** `hyperframes doctor --json` always exits 0 on successful execution — the command succeeded if it produced valid output. Whether the environment is healthy is carried in the `ok` field of the payload, so a new CLI release (which flips `Version.ok` to `false`) never breaks your pipeline. Pipe through `jq` to gate on the payload instead:
+
+    ```bash
+    hyperframes doctor --json | jq -e '.ok' > /dev/null || handle_failure
+    ```
+
+    Paths in `detail` and `hint` are redacted in JSON mode — the user's home directory is replaced with the literal `$HOME` so output is safe to paste into bug reports and agent contexts.
 
     ### `info`
 

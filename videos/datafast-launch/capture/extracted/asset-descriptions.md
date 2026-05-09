@@ -1,0 +1,69 @@
+# Asset Descriptions
+
+One line per file. Read this instead of opening every image individually.
+
+- 7fuhxh6bnnryewov.jpg — 48KB, 7fuhxh6bnnryewov
+- favicon.ico — 15KB, favicon
+- g-ggwzawoaadt2b.jpg — 46KB, g ggwzawoaadt2b
+- g0-zi55xwaa6dhw.jpg — 31KB, g0 zi55xwaa6dhw
+- g2jjq8ib0ae-ohk.jpg — 20KB, g2jjq8ib0ae ohk
+- g2lf4dtauaaas69.jpg — 14KB, g2lf4dtauaaas69
+- g2ustspxaaafejg.jpg — 39KB, g2ustspxaaafejg
+- g2zhatabwaau0oe.jpg — 27KB, g2zhatabwaau0oe
+- g3gkksbaiaaucz.jpg — 29KB, g3gkksbaiaaucz
+- g4ve3e-wqaajhp1.jpg — 21KB, g4ve3e wqaajhp1
+- gcm6u9-w0aewu8d.jpg — 32KB, gcm6u9 w0aewu8d
+- gcpduy6biaa4vrh.jpg — 21KB, gcpduy6biaa4vrh
+- gd8au6axyaaqpll.jpg — 26KB, gd8au6axyaaqpll
+- geakuh0wwaayma5.jpg — 16KB, geakuh0wwaayma5
+- gezzhulw0aexxt2.jpg — 33KB, gezzhulw0aexxt2
+- gffal0qxqaaum-d.jpg — 37KB, gffal0qxqaaum d
+- gffayuzwsaamqgl.jpg — 15KB, gffayuzwsaamqgl
+- gffebktwkaabqdv.jpg — 22KB, gffebktwkaabqdv
+- gfrgwe5acaa9y-u.jpg — 44KB, gfrgwe5acaa9y u
+- gh0nb4rwoaa831c.jpg — 23KB, gh0nb4rwoaa831c
+- gi6ysd6bkaavozp.jpg — 50KB, gi6ysd6bkaavozp
+- giydp6qayairp3.jpg — 25KB, giydp6qayairp3
+- gku5xgfxyaetkpb.jpg — 12KB, gku5xgfxyaetkpb
+- gl8v18mwgaaf0s.jpg — 19KB, gl8v18mwgaaf0s
+- glxyocuacaaqymw.jpg — 31KB, glxyocuacaaqymw
+- glyjb24w0aawpn5.jpg — 25KB, glyjb24w0aawpn5
+- gohsddtbeaa-ucs.jpg — 24KB, gohsddtbeaa ucs
+- gpyrwpdamaexkan.jpg — 36KB, gpyrwpdamaexkan
+- grfuy4iw4aasb-6.jpg — 28KB, grfuy4iw4aasb 6
+- gt15vynxmaad7qg.jpg — 49KB, gt15vynxmaad7qg
+- gu2dhwpxsaak3wc.jpg — 25KB, gu2dhwpxsaak3wc
+- guiz1avbgaa8nn9.jpg — 35KB, guiz1avbgaa8nn9
+- gunqs2nwgaatmek.jpg — 29KB, gunqs2nwgaatmek
+- gurfcifacaalku8.jpg — 54KB, gurfcifacaalku8
+- gv0oq6raoaayy9x.jpg — 49KB, gv0oq6raoaayy9x
+- gvkvshywaaeyi6r.jpg — 22KB, gvkvshywaaeyi6r
+- gvln57fw4aandmj.jpg — 28KB, gvln57fw4aandmj
+- gw-5qfpbuamg2r2.jpg — 44KB, gw 5qfpbuamg2r2
+- gwnjya6aeaau-pj.jpg — 28KB, gwnjya6aeaau pj
+- gxdyadawaaayuun.jpg — 17KB, gxdyadawaaayuun
+- gy1blvdwga8cwmw.jpg — 23KB, gy1blvdwga8cwmw
+- gydvshkwoaavxu5.jpg — 19KB, gydvshkwoaavxu5
+- gyjf3qfxwae3yvg.jpg — 13KB, gyjf3qfxwae3yvg
+- gywobiwacaevtiz.jpg — 172KB, gywobiwacaevtiz
+- hhlq5moxeaa8tlt.jpg — 23KB, hhlq5moxeaa8tlt
+- image-47.svg — 1KB, "DataFast logo", in: border-b border-base-content/5 bg-base-300, above fold
+- image.jpg — 31KB, "DataFast logo", in: border-b border-base-content/5 bg-base-300, above fold
+- m5d9aj6t1ocecnmj.jpg — 36KB, m5d9aj6t1ocecnmj
+- og-image.png — 174KB, "DataFast logo", in: border-b border-base-content/5 bg-base-300, above fold
+- rg6dwzx-68gfyto.jpg — 25KB, rg6dwzx 68gfyto
+- svgs/fill-base-secondary.svg — icon: fill-base-secondary
+- svgs/size-18px.svg — icon: size 18px
+- svgs/size-4.svg — icon: size-4
+- svgs/size-5.svg — icon: size-5
+- svgs/tweet-actions-copyicon-seaww.svg — icon: tweet-actions_copyIcon\_\_SEaWw
+- svgs/tweet-actions-likeicon-fhdng.svg — icon: tweet-actions_likeIcon\_\_fhDng
+- svgs/tweet-actions-replyicon-mi2tg.svg — icon: tweet-actions_replyIcon\_\_MI2tG
+- svgs/tweet-header-twittericon-m0rzu.svg — logo: tweet-header_twitterIcon\_\_m0Rzu
+- svgs/tweet-info-infoicon-s8lza.svg — icon: tweet-info_infoIcon\_\_S8lzA
+- svgs/verified-account.svg — icon: Verified account
+- fonts/020814ba533e3f09-s.woff2 — font file
+- fonts/1320665fc3a5dc9f-s.p.woff2 — font file
+- fonts/13971731025ec697-s.p.woff2 — font file
+- fonts/7ab938503e4547a1-s.woff2 — font file
+- fonts/84f71ecfcc57a235-s.woff2 — font file

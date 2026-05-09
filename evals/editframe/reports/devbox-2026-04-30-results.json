@@ -1,0 +1,244 @@
+{
+  "generatedAt": "2026-04-30T19:01:19.724Z",
+  "environment": {
+    "host": "ip-10-0-9-220",
+    "repo": "/home/ubuntu/workspaces/hyperframes-oss",
+    "chrome": "/usr/bin/google-chrome",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "node": "v22.22.2"
+  },
+  "summary": {
+    "conclusion": "HyperFrames is more reliable for the default local MP4 render path on this devbox. Editframe has a capable timeline/editor/API model and can render locally via browser VP9 on this box, but its published CLI default path hard-codes/chooses AVC and fails because this Chrome WebCodecs build does not support the AVC encoder config.",
+    "caveat": "This is not a blind final-video-quality benchmark. It is a devbox execution and workflow eval over one precise-timing fixture plus source/docs evidence."
+  },
+  "hyperframes": {
+    "commandPath": "published hyperframes@latest CLI",
+    "renderMs": 5971,
+    "ffprobe": {
+      "duration": "10.000000",
+      "size": "716525"
+    },
+    "stream": {
+      "index": 0,
+      "codec_name": "h264",
+      "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+      "profile": "Constrained Baseline",
+      "codec_type": "video",
+      "codec_time_base": "1/60",
+      "codec_tag_string": "avc1",
+      "codec_tag": "0x31637661",
+      "width": 1920,
+      "height": 1080,
+      "coded_width": 1920,
+      "coded_height": 1088,
+      "has_b_frames": 0,
+      "sample_aspect_ratio": "1:1",
+      "display_aspect_ratio": "16:9",
+      "pix_fmt": "yuv420p",
+      "level": 40,
+      "color_range": "tv",
+      "color_space": "bt709",
+      "color_transfer": "bt709",
+      "color_primaries": "bt709",
+      "chroma_location": "left",
+      "refs": 1,
+      "is_avc": "true",
+      "nal_length_size": "4",
+      "r_frame_rate": "30/1",
+      "avg_frame_rate": "30/1",
+      "time_base": "1/90000",
+      "start_pts": 0,
+      "start_time": "0.000000",
+      "duration_ts": 900000,
+      "duration": "10.000000",
+      "bit_rate": "571588",
+      "bits_per_raw_sample": "8",
+      "nb_frames": "300",
+      "disposition": {
+        "default": 1,
+        "dub": 0,
+        "original": 0,
+        "comment": 0,
+        "lyrics": 0,
+        "karaoke": 0,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0,
+        "clean_effects": 0,
+        "attached_pic": 0,
+        "timed_thumbnails": 0
+      },
+      "tags": {
+        "language": "und",
+        "handler_name": "VideoHandler"
+      }
+    },
+    "artifacts": {
+      "video": "../artifacts/devbox-2026-04-30/hyperframes/renders/hyperframes-precise.mp4",
+      "snapshots": [
+        "../artifacts/devbox-2026-04-30/hyperframes/snapshots/frame-00-at-1.2s.png",
+        "../artifacts/devbox-2026-04-30/hyperframes/snapshots/frame-01-at-5.0s.png",
+        "../artifacts/devbox-2026-04-30/hyperframes/snapshots/frame-02-at-8.5s.png",
+        "../artifacts/devbox-2026-04-30/hyperframes/snapshots/frame-03-at-9.4s.png"
+      ]
+    }
+  },
+  "editframe": {
+    "commandPath": "published @editframe/create@0.49.7 and @editframe/cli@0.49.7",
+    "cliAvcStatus": "CLI_STATUS=1",
+    "cliAvcErrorExcerpt": "- Initializing...\n✔ Ready\n- Rendering video...\n✖ Render failed\nnode:internal/process/promises:394\n    triggerUncaughtException(err, true /* fromPromise */);\n    ^\n\npage.evaluate: Error: This specific encoder configuration (avc1.640028, 8000000 bps, 1920x1080, hardware acceleration: no-preference) is not supported by this browser. Consider using another codec or changing your video parameters.\n    at http://localhost:5176/node_modules/.vite/deps/chunk-M5YSC7MS.js?v=622dd3ba:23270:17\n    at async VideoEncoderWrapper.processAndEncode (http://localhost:5176/node_modules/.vite/deps/chunk-M5YSC7MS.js?v=622dd3ba:23120:13)\n    at async VideoEncoderWrapper.add (http://localhost:5176/node_modules/.vite/deps/chunk-M5YSC7MS.js?v=622dd3ba:23073:7)\n    at async renderTimegroupToVideo (http://localhost:5176/node_modules/.vite/deps/chunk-67JHYUZS.js?v=622dd3ba:330:9)\n    at async Object.renderStreaming (http://localhost:5176/node_modules/.vite/deps/@editframe_elements.js?v=622dd3ba:34967:7)\n    at async eval (eval at evaluate (:302:30), <anonymous>:2:7)\n    at async <anonymous>:328:30\n    at /tmp/hf-editframe-eval-run/editframe-smoke/node_modules/@editframe/cli/dist/commands/render.js:132:17\n    at async withProfiling (/tmp/hf-editframe-eval-run/editframe-smoke/node_modules/@editframe/cli/dist/utils/profileRender.js:5:31)",
+    "createSkipSkillsErrorExcerpt": "\n> npx\n> create-editframe html -d should-fail -y --skip-skills\n\nnode:internal/util/parse_args/parse_args:102\n      throw new ERR_PARSE_ARGS_UNKNOWN_OPTION(\n            ^\n\nTypeError [ERR_PARSE_ARGS_UNKNOWN_OPTION]: Unknown option '--skip-skills'. To specify a positional argument starting with a '-', place it at the end of the command after '--', as in '-- \"--skip-skills\"\n    at checkOptionUsage (node:internal/util/parse_args/parse_args:102:13)\n    at node:internal/util/parse_args/parse_args:376:9\n    at Array.forEach (<anonymous>)\n    at parseArgs (node:internal/util/parse_args/parse_args:373:3)\n    at main (file:///tmp/hf-eval-npm-cache/_npx/a680ecfe04f5894d/node_modules/@editframe/create/dist/index.js:104:34) {\n  code: 'ERR_PARSE_ARGS_UNKNOWN_OPTION'\n}\n\nNode.js v22.22.2\nnpm error code 1\nnpm error path /tmp/hf-editframe-eval-run\nnpm error command failed\nnpm error command sh -c create-editframe html -d should-fail -y --skip-skills\nnpm error A complete log of this run can be found in: /tmp/hf-eval-npm-cache/_logs/2026-04-30T19_01_19_210Z-debug-0.log\n",
+    "browserVp9Render": {
+      "elapsedMs": 1280,
+      "chunks": 6,
+      "bytes": 430732,
+      "renderError": null
+    },
+    "webcodecsSupport": [
+      {
+        "name": "avc",
+        "codec": "avc1.640028",
+        "supported": false
+      },
+      {
+        "name": "vp9",
+        "codec": "vp09.00.10.08",
+        "supported": true
+      },
+      {
+        "name": "vp8",
+        "codec": "vp8",
+        "supported": true
+      },
+      {
+        "name": "av1",
+        "codec": "av01.0.05M.08",
+        "supported": true
+      }
+    ],
+    "ffprobe": {
+      "duration": "10.000000",
+      "size": "430732"
+    },
+    "stream": {
+      "index": 0,
+      "codec_name": "vp9",
+      "codec_long_name": "Google VP9",
+      "profile": "Profile 0",
+      "codec_type": "video",
+      "codec_time_base": "1/30",
+      "codec_tag_string": "vp09",
+      "codec_tag": "0x39307076",
+      "width": 1920,
+      "height": 1080,
+      "coded_width": 1920,
+      "coded_height": 1080,
+      "has_b_frames": 0,
+      "pix_fmt": "yuv420p",
+      "level": -99,
+      "color_range": "tv",
+      "color_space": "smpte170m",
+      "color_transfer": "smpte170m",
+      "color_primaries": "smpte170m",
+      "refs": 1,
+      "r_frame_rate": "30/1",
+      "avg_frame_rate": "30/1",
+      "time_base": "1/57600",
+      "start_pts": 0,
+      "start_time": "0.000000",
+      "duration_ts": 576000,
+      "duration": "10.000000",
+      "bit_rate": "342499",
+      "disposition": {
+        "default": 1,
+        "dub": 0,
+        "original": 0,
+        "comment": 0,
+        "lyrics": 0,
+        "karaoke": 0,
+        "forced": 0,
+        "hearing_impaired": 0,
+        "visual_impaired": 0,
+        "clean_effects": 0,
+        "attached_pic": 0,
+        "timed_thumbnails": 0
+      },
+      "tags": {
+        "creation_time": "2026-04-30T18:57:40.000000Z",
+        "language": "und",
+        "handler_name": "MediabunnyVideoHandler"
+      }
+    },
+    "artifacts": {
+      "video": "../artifacts/devbox-2026-04-30/editframe/renders/editframe-browser-vp9.mp4",
+      "snapshots": [
+        "../artifacts/devbox-2026-04-30/editframe/snapshots/editframe-1200ms.png",
+        "../artifacts/devbox-2026-04-30/editframe/snapshots/editframe-5000ms.png",
+        "../artifacts/devbox-2026-04-30/editframe/snapshots/editframe-8500ms.png",
+        "../artifacts/devbox-2026-04-30/editframe/snapshots/editframe-9400ms.png"
+      ]
+    }
+  },
+  "categories": [
+    {
+      "name": "Visual output quality",
+      "weight": 18,
+      "finding": "not_final",
+      "note": "Not blindly judged. Both controlled fixtures produced screenshots; this run should not decide taste/video quality."
+    },
+    {
+      "name": "Timing and motion control",
+      "weight": 14,
+      "finding": "HF edge",
+      "note": "Both can seek exact timestamps. HyperFrames validated and snapshotted the GSAP timeline through first-party CLI; Editframe snapshotted via ef-timegroup.seek and rendered through browser API."
+    },
+    {
+      "name": "Timeline and editability",
+      "weight": 12,
+      "finding": "split",
+      "note": "Editframe has richer public editor primitives; HyperFrames source remains plain HTML/data attributes and passed lint/validate."
+    },
+    {
+      "name": "Agent success rate",
+      "weight": 12,
+      "finding": "HF edge",
+      "note": "HyperFrames fresh init plus lint/validate/snapshot/render passed. Editframe fresh init passed, but advertised --skip-skills flag failed and default CLI render failed on AVC."
+    },
+    {
+      "name": "Media handling",
+      "weight": 10,
+      "finding": "not_tested",
+      "note": "This devbox run did not exercise external media, audio, captions, or alpha."
+    },
+    {
+      "name": "Render fidelity",
+      "weight": 10,
+      "finding": "HF edge",
+      "note": "HyperFrames produced default H.264 MP4 at 1920x1080/30fps/10s. Editframe CLI default failed; browser VP9 fallback produced valid 1920x1080/30fps/10s MP4."
+    },
+    {
+      "name": "Performance and cost",
+      "weight": 8,
+      "finding": "EF conditional edge",
+      "note": "Editframe VP9 browser render elapsed 1280ms; HyperFrames draft H.264 render command elapsed 5971ms. Codecs/render paths differ, so this is directional only."
+    },
+    {
+      "name": "Observability and debugging",
+      "weight": 7,
+      "finding": "HF edge",
+      "note": "HyperFrames surfaced lint/contrast checks and progress. Editframe error was clear, but the CLI left a 28-byte output file and exposes no codec flag."
+    },
+    {
+      "name": "Deployment and API ergonomics",
+      "weight": 5,
+      "finding": "EF source-doc edge",
+      "note": "Editframe public docs include cloud/API render jobs, file processing, webhooks, and CPU/GPU backend selection. This run did not authenticate to test it live."
+    },
+    {
+      "name": "Human iteration workflow",
+      "weight": 4,
+      "finding": "not_final",
+      "note": "Not exercised with human editors. Public docs suggest both have timeline/editor workflows; Editframe has broader standalone editor widgets."
+    }
+  ]
+}

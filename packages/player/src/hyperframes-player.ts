@@ -20,6 +20,149 @@ function getSharedSheet(): CSSStyleSheet | null {
 const DEFAULT_FPS = 30;
 const RUNTIME_CDN_URL =
   "https://cdn.jsdelivr.net/npm/@hyperframes/core/dist/hyperframe.runtime.iife.js";
+const SHADER_CAPTURE_SCALE_ATTR = "shader-capture-scale";
+const SHADER_LOADING_ATTR = "shader-loading";
+const SHADER_CAPTURE_SCALE_PARAM = "__hf_shader_capture_scale";
+const SHADER_LOADING_PARAM = "__hf_shader_loading";
+
+export type ShaderLoadingMode = "composition" | "player" | "none";
+
+interface ShaderTransitionState {
+  ready?: boolean;
+  progress?: number;
+  total?: number;
+  currentTransition?: number;
+  transitionTotal?: number;
+  transitionFrame?: number;
+  transitionFrames?: number;
+  phase?: "cached" | "capturing" | "finalizing";
+  loading?: boolean;
+}
+
+interface ShaderLoaderElements {
+  root: HTMLDivElement;
+  fill: HTMLDivElement;
+  title: HTMLSpanElement;
+  detail: HTMLDivElement;
+  transitionValue: HTMLSpanElement;
+  frameLabel: HTMLSpanElement;
+  frameValue: HTMLSpanElement;
+  frameRow: HTMLDivElement;
+}
+
+interface RuntimeDurationAdapter {
+  getDuration: () => number;
+}
+
+interface DirectTimelineAdapter {
+  duration: () => number;
+  time: () => number;
+  seek: (timeInSeconds: number) => unknown;
+  play: () => unknown;
+  pause: () => unknown;
+}
+
+type PlaybackDurationAdapter =
+  | { kind: "runtime"; getDuration: () => number }
+  | { kind: "direct-timeline"; timeline: DirectTimelineAdapter; getDuration: () => number };
+
+const SHADER_LOADING_PHRASES = [
+  "Preparing scene transitions",
+  "Sampling outgoing scene motion",
+  "Sampling incoming scene motion",
+  "Caching transition frames",
+  "Finalizing transition preview",
+];
+
+function normalizeShaderCaptureScale(value: string | null): string | null {
+  if (value === null) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return String(Math.min(1, Math.max(0.25, parsed)));
+}
+
+function normalizeShaderLoadingMode(value: string | null): ShaderLoadingMode {
+  if (value === null || value.trim() === "") return "composition";
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === "none" ||
+    normalized === "false" ||
+    normalized === "0" ||
+    normalized === "off"
+  ) {
+    return "none";
+  }
+  if (
+    normalized === "player" ||
+    normalized === "true" ||
+    normalized === "1" ||
+    normalized === "on"
+  ) {
+    return "player";
+  }
+  return "composition";
+}
+
+function setQueryParam(params: URLSearchParams, key: string, value: string | null): void {
+  if (value === null) params.delete(key);
+  else params.set(key, value);
+}
+
+function withShaderQueryParams(
+  src: string,
+  scale: string | null,
+  loadingMode: ShaderLoadingMode,
+): string {
+  const hashIndex = src.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? src.slice(0, hashIndex) : src;
+  const hash = hashIndex >= 0 ? src.slice(hashIndex) : "";
+  const queryIndex = beforeHash.indexOf("?");
+  const path = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const query = queryIndex >= 0 ? beforeHash.slice(queryIndex + 1) : "";
+  const params = new URLSearchParams(query);
+  setQueryParam(params, SHADER_CAPTURE_SCALE_PARAM, scale);
+  setQueryParam(params, SHADER_LOADING_PARAM, loadingMode === "composition" ? null : loadingMode);
+  const nextQuery = params.toString();
+  return `${path}${nextQuery ? `?${nextQuery}` : ""}${hash}`;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isRuntimeDurationAdapter(value: unknown): value is RuntimeDurationAdapter {
+  return isObjectRecord(value) && typeof value.getDuration === "function";
+}
+
+function isDirectTimelineAdapter(value: unknown): value is DirectTimelineAdapter {
+  return (
+    isObjectRecord(value) &&
+    typeof value.duration === "function" &&
+    typeof value.time === "function" &&
+    typeof value.seek === "function" &&
+    typeof value.play === "function" &&
+    typeof value.pause === "function"
+  );
+}
+
+function injectShaderOptionsIntoSrcdoc(
+  html: string,
+  scale: string | null,
+  loadingMode: ShaderLoadingMode,
+): string {
+  if (scale === null && loadingMode === "composition") return html;
+  const lines: string[] = [];
+  if (scale !== null) lines.push(`window.__HF_SHADER_CAPTURE_SCALE=${JSON.stringify(scale)};`);
+  if (loadingMode !== "composition") {
+    lines.push(`window.__HF_SHADER_LOADING=${JSON.stringify(loadingMode)};`);
+  }
+  const script = `<script data-hyperframes-player-shader-options>${lines.join("")}</script>`;
+  if (/<head\b[^>]*>/i.test(html))
+    return html.replace(/<head\b[^>]*>/i, (match) => `${match}${script}`);
+  if (/<html\b[^>]*>/i.test(html))
+    return html.replace(/<html\b[^>]*>/i, (match) => `${match}${script}`);
+  return `${script}${html}`;
+}
 
 class HyperframesPlayer extends HTMLElement {
   static get observedAttributes() {
@@ -30,9 +173,12 @@ class HyperframesPlayer extends HTMLElement {
       "height",
       "controls",
       "muted",
+      "volume",
       "poster",
       "playback-rate",
       "audio-src",
+      SHADER_CAPTURE_SCALE_ATTR,
+      SHADER_LOADING_ATTR,
     ];
   }
 
@@ -42,15 +188,27 @@ class HyperframesPlayer extends HTMLElement {
   private posterEl: HTMLImageElement | null = null;
   private controlsApi: ReturnType<typeof createControls> | null = null;
   private resizeObserver: ResizeObserver;
+  private shaderLoaderEl: HTMLDivElement;
+  private shaderLoaderFillEl: HTMLDivElement;
+  private shaderLoaderTitleEl: HTMLSpanElement;
+  private shaderLoaderDetailEl: HTMLDivElement;
+  private shaderLoaderTransitionValueEl: HTMLSpanElement;
+  private shaderLoaderFrameLabelEl: HTMLSpanElement;
+  private shaderLoaderFrameValueEl: HTMLSpanElement;
+  private shaderLoaderFrameRowEl: HTMLDivElement;
+  private shaderLoaderHideTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private _ready = false;
   private _duration = 0;
   private _currentTime = 0;
   private _paused = true;
+  private _volume = 1;
   private _compositionWidth = 1920;
   private _compositionHeight = 1080;
   private _probeInterval: ReturnType<typeof setInterval> | null = null;
   private _lastUpdateMs = 0;
+  private _directTimelineAdapter: DirectTimelineAdapter | null = null;
+  private _directTimelineRaf: number | null = null;
 
   /**
    * Parent-frame audio/video proxies, preloaded mirror copies of the iframe's
@@ -141,6 +299,16 @@ class HyperframesPlayer extends HTMLElement {
 
     this.container.appendChild(this.iframe);
     this.shadow.appendChild(this.container);
+    const shaderLoader = this._createShaderLoader();
+    this.shaderLoaderEl = shaderLoader.root;
+    this.shaderLoaderFillEl = shaderLoader.fill;
+    this.shaderLoaderTitleEl = shaderLoader.title;
+    this.shaderLoaderDetailEl = shaderLoader.detail;
+    this.shaderLoaderTransitionValueEl = shaderLoader.transitionValue;
+    this.shaderLoaderFrameLabelEl = shaderLoader.frameLabel;
+    this.shaderLoaderFrameValueEl = shaderLoader.frameValue;
+    this.shaderLoaderFrameRowEl = shaderLoader.frameRow;
+    this.shadow.appendChild(this.shaderLoaderEl);
 
     // Clicking the bare player surface toggles play/pause.
     // Ignore shadow-DOM control interactions so overlay clicks don't double-handle.
@@ -167,8 +335,9 @@ class HyperframesPlayer extends HTMLElement {
       this._setupParentAudioFromUrl(this.getAttribute("audio-src")!);
     // srcdoc wins over src per HTML spec when both are set; mirror both attributes
     // so the browser applies the standard precedence rules.
-    if (this.hasAttribute("srcdoc")) this.iframe.srcdoc = this.getAttribute("srcdoc")!;
-    if (this.hasAttribute("src")) this.iframe.src = this.getAttribute("src")!;
+    if (this.hasAttribute("srcdoc"))
+      this.iframe.srcdoc = this._prepareSrcdoc(this.getAttribute("srcdoc")!);
+    if (this.hasAttribute("src")) this.iframe.src = this._prepareSrc(this.getAttribute("src")!);
   }
 
   disconnectedCallback() {
@@ -176,6 +345,10 @@ class HyperframesPlayer extends HTMLElement {
     window.removeEventListener("message", this._onMessage);
     this.iframe.removeEventListener("load", this._onIframeLoad);
     if (this._probeInterval) clearInterval(this._probeInterval);
+    this._stopDirectTimelineClock();
+    this._directTimelineAdapter = null;
+    if (this.shaderLoaderHideTimeout) clearTimeout(this.shaderLoaderHideTimeout);
+    this.shaderLoaderHideTimeout = null;
     this._teardownMediaObserver();
     this.controlsApi?.destroy();
     for (const m of this._parentMedia) {
@@ -190,7 +363,7 @@ class HyperframesPlayer extends HTMLElement {
       case "src":
         if (val) {
           this._ready = false;
-          this.iframe.src = val;
+          this.iframe.src = this._prepareSrc(val);
         }
         break;
       case "srcdoc":
@@ -198,7 +371,7 @@ class HyperframesPlayer extends HTMLElement {
         // srcdoc and let src take over. Always reset readiness; the iframe will
         // load a new document either way.
         this._ready = false;
-        if (val !== null) this.iframe.srcdoc = val;
+        if (val !== null) this.iframe.srcdoc = this._prepareSrcdoc(val);
         else this.iframe.removeAttribute("srcdoc");
         break;
       case "width":
@@ -230,9 +403,24 @@ class HyperframesPlayer extends HTMLElement {
       case "muted":
         for (const m of this._parentMedia) m.el.muted = val !== null;
         this._sendControl("set-muted", { muted: val !== null });
+        this.controlsApi?.updateMuted(val !== null);
+        this.dispatchEvent(new Event("volumechange"));
         break;
+      case "volume": {
+        const v = Math.max(0, Math.min(1, parseFloat(val || "1")));
+        this._volume = v;
+        for (const m of this._parentMedia) m.el.volume = v;
+        this._sendControl("set-volume", { volume: v });
+        this.controlsApi?.updateVolume(v);
+        this.dispatchEvent(new Event("volumechange"));
+        break;
+      }
       case "audio-src":
         if (val) this._setupParentAudioFromUrl(val);
+        break;
+      case SHADER_CAPTURE_SCALE_ATTR:
+      case SHADER_LOADING_ATTR:
+        this._reloadShaderOptions();
         break;
     }
   }
@@ -266,18 +454,24 @@ class HyperframesPlayer extends HTMLElement {
 
   play() {
     this._hidePoster();
-    // Always drive the iframe runtime — it's the single source of timeline
-    // truth regardless of who owns audible output. When we own audio, the
-    // proxies join; when the runtime owns, they stay silent.
-    this._sendControl("play");
+    if (this._duration > 0 && this._currentTime >= this._duration) {
+      this.seek(0);
+    }
+    // Drive the iframe runtime when present. Same-origin standalone GSAP
+    // compositions can expose only `window.__timelines`, so they use a direct
+    // timeline adapter instead of a postMessage bridge nobody is listening to.
+    const directTimelineStarted = this._tryDirectTimelinePlay();
+    if (!directTimelineStarted) this._sendControl("play");
     if (this._audioOwner === "parent") this._playParentMedia();
     this._paused = false;
     this.controlsApi?.updatePlaying(true);
     this.dispatchEvent(new Event("play"));
+    if (directTimelineStarted) this._startDirectTimelineClock();
   }
 
   pause() {
-    this._sendControl("pause");
+    if (!this._tryDirectTimelinePause()) this._sendControl("pause");
+    this._stopDirectTimelineClock();
     if (this._audioOwner === "parent") this._pauseParentMedia();
     this._paused = true;
     this.controlsApi?.updatePlaying(false);
@@ -309,10 +503,11 @@ class HyperframesPlayer extends HTMLElement {
    * either way; the asymmetry only affects what the runtime actually paints.
    */
   seek(timeInSeconds: number) {
-    if (!this._trySyncSeek(timeInSeconds)) {
+    if (!this._trySyncSeek(timeInSeconds) && !this._tryDirectTimelineSeek(timeInSeconds)) {
       const frame = Math.round(timeInSeconds * DEFAULT_FPS);
       this._sendControl("seek", { frame });
     }
+    this._stopDirectTimelineClock();
     this._currentTime = timeInSeconds;
 
     // Mirror parent proxy currentTime only while parent owns audible output.
@@ -355,12 +550,34 @@ class HyperframesPlayer extends HTMLElement {
     this.setAttribute("playback-rate", String(r));
   }
 
+  get shaderCaptureScale() {
+    return Number(normalizeShaderCaptureScale(this.getAttribute(SHADER_CAPTURE_SCALE_ATTR)) ?? "1");
+  }
+  set shaderCaptureScale(scale: number) {
+    this.setAttribute(SHADER_CAPTURE_SCALE_ATTR, String(scale));
+  }
+
+  get shaderLoading() {
+    return normalizeShaderLoadingMode(this.getAttribute(SHADER_LOADING_ATTR));
+  }
+  set shaderLoading(mode: ShaderLoadingMode) {
+    if (mode === "composition") this.removeAttribute(SHADER_LOADING_ATTR);
+    else this.setAttribute(SHADER_LOADING_ATTR, mode);
+  }
+
   get muted() {
     return this.hasAttribute("muted");
   }
   set muted(m: boolean) {
     if (m) this.setAttribute("muted", "");
     else this.removeAttribute("muted");
+  }
+
+  get volume() {
+    return this._volume;
+  }
+  set volume(v: number) {
+    this.setAttribute("volume", String(Math.max(0, Math.min(1, v))));
   }
 
   get loop() {
@@ -382,6 +599,236 @@ class HyperframesPlayer extends HTMLElement {
     } catch {
       /* cross-origin */
     }
+  }
+
+  private _shaderCaptureScaleParam(): string | null {
+    return normalizeShaderCaptureScale(this.getAttribute(SHADER_CAPTURE_SCALE_ATTR));
+  }
+
+  private _shaderLoadingMode(): ShaderLoadingMode {
+    return normalizeShaderLoadingMode(this.getAttribute(SHADER_LOADING_ATTR));
+  }
+
+  private _prepareSrc(src: string): string {
+    return withShaderQueryParams(src, this._shaderCaptureScaleParam(), this._shaderLoadingMode());
+  }
+
+  private _prepareSrcdoc(srcdoc: string): string {
+    return injectShaderOptionsIntoSrcdoc(
+      srcdoc,
+      this._shaderCaptureScaleParam(),
+      this._shaderLoadingMode(),
+    );
+  }
+
+  private _reloadShaderOptions(): void {
+    if (this._shaderLoadingMode() !== "player") {
+      this._resetShaderLoader();
+    }
+    if (this.hasAttribute("srcdoc")) {
+      this.iframe.srcdoc = this._prepareSrcdoc(this.getAttribute("srcdoc") || "");
+      return;
+    }
+    if (this.hasAttribute("src")) {
+      this.iframe.src = this._prepareSrc(this.getAttribute("src") || "");
+    }
+  }
+
+  private _createShaderLoader(): ShaderLoaderElements {
+    const root = document.createElement("div");
+    root.className = "hfp-shader-loader";
+    root.setAttribute("role", "status");
+    root.setAttribute("aria-live", "polite");
+    root.setAttribute("aria-label", "Preparing scene transitions");
+    root.setAttribute("data-hyperframes-ignore", "");
+    root.draggable = false;
+
+    const blockOverlayInteraction = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    for (const eventName of [
+      "selectstart",
+      "dragstart",
+      "pointerdown",
+      "mousedown",
+      "click",
+      "dblclick",
+      "contextmenu",
+      "touchstart",
+    ]) {
+      root.addEventListener(eventName, blockOverlayInteraction, { capture: true });
+    }
+
+    const panel = document.createElement("div");
+    panel.className = "hfp-shader-loader-panel";
+    panel.draggable = false;
+
+    const markFrame = document.createElement("div");
+    markFrame.className = "hfp-shader-loader-mark";
+    markFrame.draggable = false;
+    markFrame.innerHTML = [
+      '<svg width="78" height="78" viewBox="0 0 100 100" fill="none" aria-hidden="true" draggable="false">',
+      '<path d="M10.1851 57.8021L33.1145 73.8313C36.2202 75.9978 41.5173 73.5433 42.4816 69.4984L51.7611 30.4271C52.7253 26.3822 48.5802 23.9277 44.4602 26.0942L13.917 42.1235C6.96677 45.7676 4.97564 54.1579 10.1851 57.8021Z" fill="url(#hfp-shader-loader-grad-left)"/>',
+      '<path d="M87.5129 57.5141L56.9696 73.5433C52.8371 75.7098 48.7046 73.2553 49.6688 69.2104L58.9483 30.1391C59.9125 26.0942 65.2097 23.6397 68.3154 25.8062L91.2447 41.8354C96.4668 45.4796 94.4631 53.8699 87.5129 57.5141Z" fill="url(#hfp-shader-loader-grad-right)"/>',
+      "<defs>",
+      '<linearGradient id="hfp-shader-loader-grad-left" x1="48.5676" y1="25" x2="44.7804" y2="71.9384" gradientUnits="userSpaceOnUse">',
+      '<stop stop-color="#06E3FA"/>',
+      '<stop offset="1" stop-color="#4FDB5E"/>',
+      "</linearGradient>",
+      '<linearGradient id="hfp-shader-loader-grad-right" x1="54.8282" y1="73.8392" x2="72.0989" y2="32.8932" gradientUnits="userSpaceOnUse">',
+      '<stop stop-color="#06E3FA"/>',
+      '<stop offset="1" stop-color="#4FDB5E"/>',
+      "</linearGradient>",
+      "</defs>",
+      "</svg>",
+    ].join("");
+
+    const title = document.createElement("div");
+    title.className = "hfp-shader-loader-title";
+    const titleText = document.createElement("span");
+    titleText.className = "hfp-shader-loader-title-text";
+    titleText.textContent = SHADER_LOADING_PHRASES[0] || "Preparing scene transitions";
+    title.appendChild(titleText);
+
+    const detail = document.createElement("div");
+    detail.className = "hfp-shader-loader-detail";
+    detail.textContent = "Rendering animated scene samples for shader transitions.";
+
+    const track = document.createElement("div");
+    track.className = "hfp-shader-loader-track";
+    track.setAttribute("aria-hidden", "true");
+    const fill = document.createElement("div");
+    fill.className = "hfp-shader-loader-fill";
+    track.appendChild(fill);
+
+    const progress = document.createElement("div");
+    progress.className = "hfp-shader-loader-progress";
+    const createProgressRow = (labelText: string) => {
+      const row = document.createElement("div");
+      row.className = "hfp-shader-loader-row";
+      const label = document.createElement("span");
+      label.className = "hfp-shader-loader-label";
+      label.textContent = labelText;
+      const value = document.createElement("span");
+      value.className = "hfp-shader-loader-value";
+      row.appendChild(label);
+      row.appendChild(value);
+      progress.appendChild(row);
+      return { row, label, value };
+    };
+    const transitionStatus = createProgressRow("transition");
+    const frameStatus = createProgressRow("transition frame");
+
+    panel.appendChild(markFrame);
+    panel.appendChild(title);
+    panel.appendChild(detail);
+    panel.appendChild(track);
+    panel.appendChild(progress);
+    root.appendChild(panel);
+
+    return {
+      root,
+      fill,
+      title: titleText,
+      detail,
+      transitionValue: transitionStatus.value,
+      frameLabel: frameStatus.label,
+      frameValue: frameStatus.value,
+      frameRow: frameStatus.row,
+    };
+  }
+
+  private _showShaderLoader(): void {
+    if (this.shaderLoaderHideTimeout) {
+      clearTimeout(this.shaderLoaderHideTimeout);
+      this.shaderLoaderHideTimeout = null;
+    }
+    this.shaderLoaderEl.classList.remove("hfp-hiding");
+    this.shaderLoaderEl.classList.add("hfp-visible");
+  }
+
+  private _hideShaderLoader(): void {
+    if (this.shaderLoaderEl.classList.contains("hfp-hiding")) {
+      if (!this.shaderLoaderHideTimeout) this._scheduleShaderLoaderHideCleanup();
+      return;
+    }
+    if (!this.shaderLoaderEl.classList.contains("hfp-visible")) return;
+    this.shaderLoaderEl.classList.add("hfp-hiding");
+    this.shaderLoaderEl.classList.remove("hfp-visible");
+    this._scheduleShaderLoaderHideCleanup();
+  }
+
+  private _scheduleShaderLoaderHideCleanup(): void {
+    if (this.shaderLoaderHideTimeout) clearTimeout(this.shaderLoaderHideTimeout);
+    this.shaderLoaderHideTimeout = setTimeout(() => {
+      this.shaderLoaderEl.classList.remove("hfp-hiding");
+      this.shaderLoaderHideTimeout = null;
+    }, 420);
+  }
+
+  private _resetShaderLoader(): void {
+    if (this.shaderLoaderHideTimeout) {
+      clearTimeout(this.shaderLoaderHideTimeout);
+      this.shaderLoaderHideTimeout = null;
+    }
+    this.shaderLoaderEl.classList.remove("hfp-visible", "hfp-hiding");
+    this.shaderLoaderFillEl.style.transform = "scaleX(0)";
+    this.shaderLoaderTransitionValueEl.textContent = "";
+    this.shaderLoaderFrameValueEl.textContent = "";
+    this.shaderLoaderFrameRowEl.style.visibility = "hidden";
+  }
+
+  private _updateShaderLoader(status: ShaderTransitionState): void {
+    if (this._shaderLoadingMode() !== "player") {
+      this._resetShaderLoader();
+      return;
+    }
+    if (status.ready || !status.loading) {
+      this._hideShaderLoader();
+      return;
+    }
+
+    const progress =
+      typeof status.progress === "number" && Number.isFinite(status.progress) ? status.progress : 0;
+    const total =
+      typeof status.total === "number" && Number.isFinite(status.total) ? status.total : 0;
+    const ratio = total > 0 ? Math.min(1, Math.max(0, progress / total)) : 0;
+    const phraseIndex = Math.min(
+      SHADER_LOADING_PHRASES.length - 1,
+      Math.floor(ratio * SHADER_LOADING_PHRASES.length),
+    );
+    this.shaderLoaderTitleEl.textContent =
+      SHADER_LOADING_PHRASES[phraseIndex] || "Preparing scene transitions";
+    this.shaderLoaderDetailEl.textContent =
+      status.phase === "cached"
+        ? "Loading cached transition frames before playback."
+        : status.phase === "finalizing"
+          ? "Uploading transition textures for smooth playback."
+          : "Rendering animated scene samples for shader transitions.";
+    this.shaderLoaderFillEl.style.transform = `scaleX(${ratio})`;
+
+    this.shaderLoaderTransitionValueEl.textContent =
+      status.currentTransition !== undefined && status.transitionTotal !== undefined
+        ? `${status.currentTransition}/${status.transitionTotal}`
+        : total > 0
+          ? `${progress}/${total}`
+          : "";
+
+    const frameValue =
+      status.transitionFrame !== undefined && status.transitionFrames !== undefined
+        ? `${status.transitionFrame}/${status.transitionFrames}`
+        : "";
+    this.shaderLoaderFrameLabelEl.textContent =
+      status.phase === "cached"
+        ? "cached transition frames"
+        : status.phase === "finalizing"
+          ? "finalizing transition frames"
+          : "rendering transition frames";
+    this.shaderLoaderFrameValueEl.textContent = frameValue;
+    this.shaderLoaderFrameRowEl.style.visibility = frameValue ? "visible" : "hidden";
+    this.shaderLoaderEl.setAttribute("aria-valuenow", String(Math.round(ratio * 100)));
+    this._showShaderLoader();
   }
 
   /**
@@ -415,6 +862,150 @@ class HyperframesPlayer extends HTMLElement {
     }
   }
 
+  private _tryDirectTimelineSeek(timeInSeconds: number): boolean {
+    const timeline = this._directTimelineAdapter || this._resolveDirectTimelineAdapter();
+    if (!timeline) return false;
+    try {
+      timeline.seek(timeInSeconds);
+      // GSAP seek() preserves play state; the player seek() contract lands paused.
+      timeline.pause();
+      this._directTimelineAdapter = timeline;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private _tryDirectTimelinePlay(): boolean {
+    const timeline = this._directTimelineAdapter || this._resolveDirectTimelineAdapter();
+    if (!timeline) return false;
+    try {
+      timeline.play();
+      this._directTimelineAdapter = timeline;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private _tryDirectTimelinePause(): boolean {
+    const timeline = this._directTimelineAdapter || this._resolveDirectTimelineAdapter();
+    if (!timeline) return false;
+    try {
+      timeline.pause();
+      this._directTimelineAdapter = timeline;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private _startDirectTimelineClock(): void {
+    this._stopDirectTimelineClock();
+
+    const tick = () => {
+      const timeline = this._directTimelineAdapter;
+      if (!timeline || this._paused) {
+        this._directTimelineRaf = null;
+        return;
+      }
+
+      let currentTime: number;
+      try {
+        currentTime = timeline.time();
+      } catch {
+        this._directTimelineRaf = null;
+        return;
+      }
+
+      if (this._duration > 0) currentTime = Math.min(currentTime, this._duration);
+      this._currentTime = currentTime;
+      const completedPlayback = this._duration > 0 && currentTime >= this._duration;
+      const now = performance.now();
+      if (now - this._lastUpdateMs > 100 || completedPlayback) {
+        this._lastUpdateMs = now;
+        this.controlsApi?.updateTime(this._currentTime, this._duration);
+        this.dispatchEvent(
+          new CustomEvent("timeupdate", { detail: { currentTime: this._currentTime } }),
+        );
+      }
+
+      if (completedPlayback) {
+        if (this.loop) {
+          this.seek(0);
+          this.play();
+          return;
+        }
+        timeline.pause();
+        if (this._audioOwner === "parent") this._pauseParentMedia();
+        this._paused = true;
+        this.controlsApi?.updatePlaying(false);
+        this.dispatchEvent(new Event("ended"));
+        this._directTimelineRaf = null;
+        return;
+      }
+
+      this._directTimelineRaf = requestAnimationFrame(tick);
+    };
+
+    this._directTimelineRaf = requestAnimationFrame(tick);
+  }
+
+  private _stopDirectTimelineClock(): void {
+    if (this._directTimelineRaf === null) return;
+    cancelAnimationFrame(this._directTimelineRaf);
+    this._directTimelineRaf = null;
+  }
+
+  private _resolveDirectTimelineAdapter(): DirectTimelineAdapter | null {
+    try {
+      const win = this.iframe.contentWindow;
+      if (!win) return null;
+      return this._resolveDirectTimelineAdapterFromWindow(win);
+    } catch {
+      return null;
+    }
+  }
+
+  private _resolveDirectTimelineAdapterFromWindow(win: Window): DirectTimelineAdapter | null {
+    if (this._hasRuntimeBridge(win)) return null;
+
+    const timelines = Reflect.get(win, "__timelines");
+    if (!isObjectRecord(timelines)) return null;
+
+    const keys = Object.keys(timelines);
+    if (keys.length === 0) return null;
+
+    const rootId = this.iframe.contentDocument
+      ?.querySelector("[data-composition-id]")
+      ?.getAttribute("data-composition-id");
+    const key = rootId && rootId in timelines ? rootId : keys[keys.length - 1];
+    const timeline = timelines[key];
+    return isDirectTimelineAdapter(timeline) ? timeline : null;
+  }
+
+  private _hasRuntimeBridge(win: Window): boolean {
+    return Reflect.get(win, "__hf") !== undefined || isObjectRecord(Reflect.get(win, "__player"));
+  }
+
+  private _resolvePlaybackDurationAdapter(win: Window): PlaybackDurationAdapter | null {
+    const runtimePlayer = Reflect.get(win, "__player");
+    if (isRuntimeDurationAdapter(runtimePlayer)) {
+      return { kind: "runtime", getDuration: () => runtimePlayer.getDuration() };
+    }
+
+    const timeline = this._resolveDirectTimelineAdapterFromWindow(win);
+    if (timeline) {
+      return {
+        kind: "direct-timeline",
+        timeline,
+        getDuration: () => timeline.duration(),
+      };
+    }
+
+    return null;
+  }
+
   private _isControlsClick(event: Event) {
     return event
       .composedPath()
@@ -425,6 +1016,18 @@ class HyperframesPlayer extends HTMLElement {
     if (e.source !== this.iframe.contentWindow) return;
     const data = e.data;
     if (!data || data.source !== "hf-preview") return;
+
+    if (data.type === "shader-transition-state") {
+      const state: ShaderTransitionState =
+        data.state && typeof data.state === "object" ? data.state : {};
+      this._updateShaderLoader(state);
+      this.dispatchEvent(
+        new CustomEvent("shadertransitionstate", {
+          detail: { compositionId: data.compositionId, state },
+        }),
+      );
+      return;
+    }
 
     if (data.type === "state") {
       this._currentTime = (data.frame ?? 0) / DEFAULT_FPS;
@@ -501,6 +1104,9 @@ class HyperframesPlayer extends HTMLElement {
   private _onIframeLoad() {
     let attempts = 0;
     this._runtimeInjected = false;
+    this._directTimelineAdapter = null;
+    this._stopDirectTimelineClock();
+    this._resetShaderLoader();
     // A fresh iframe means a fresh runtime — `mediaOutputMuted` and the
     // autoplay-blocked latch are both reset inside it. The web component's
     // `_audioOwner` must reset to match, otherwise a composition switch on
@@ -559,31 +1165,12 @@ class HyperframesPlayer extends HTMLElement {
           return;
         }
 
-        const getAdapter = () => {
-          if (win.__player && typeof win.__player.getDuration === "function") return win.__player;
-          if (win.__timelines) {
-            const keys = Object.keys(win.__timelines);
-            if (keys.length > 0) {
-              // Resolve the root composition id from the DOM — the outermost
-              // `[data-composition-id]` element is the master. Bundled previews
-              // register the root composition alongside sub-compositions, and
-              // without this lookup Object.keys() order would make a
-              // sub-composition's duration hijack the overall video length.
-              const rootId = this.iframe.contentDocument
-                ?.querySelector("[data-composition-id]")
-                ?.getAttribute("data-composition-id");
-              const key = rootId && rootId in win.__timelines ? rootId : keys[keys.length - 1];
-              const tl = win.__timelines[key];
-              return { getDuration: () => tl.duration() };
-            }
-          }
-          return null;
-        };
-
-        const adapter = getAdapter();
+        const adapter = this._resolvePlaybackDurationAdapter(win);
         if (adapter && adapter.getDuration() > 0) {
           clearInterval(this._probeInterval!);
           this._duration = adapter.getDuration();
+          this._directTimelineAdapter =
+            adapter.kind === "direct-timeline" ? adapter.timeline : null;
           this._ready = true;
           this.controlsApi?.updateTime(0, this._duration);
           this.dispatchEvent(new CustomEvent("ready", { detail: { duration: this._duration } }));
@@ -664,6 +1251,12 @@ class HyperframesPlayer extends HTMLElement {
       onSpeedChange: (speed) => {
         this.playbackRate = speed;
       },
+      onMuteToggle: () => {
+        this.muted = !this.muted;
+      },
+      onVolumeChange: (volume) => {
+        this.volume = volume;
+      },
     };
     const presetsAttr = this.getAttribute("speed-presets");
     const speedPresets = presetsAttr
@@ -673,6 +1266,8 @@ class HyperframesPlayer extends HTMLElement {
           .filter((n) => !isNaN(n) && n > 0)
       : undefined;
     this.controlsApi = createControls(this.shadow, callbacks, { speedPresets });
+    this.controlsApi.updateMuted(this.muted);
+    this.controlsApi.updateVolume(this._volume);
   }
 
   private _setupPoster() {
@@ -845,6 +1440,7 @@ class HyperframesPlayer extends HTMLElement {
     el.src = src;
     el.load();
     el.muted = this.muted;
+    el.volume = this._volume;
     if (this.playbackRate !== 1) el.playbackRate = this.playbackRate;
 
     const entry = { el, start, duration, driftSamples: 0 };

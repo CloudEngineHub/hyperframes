@@ -1,0 +1,1539 @@
+[
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon.3a869d3d.png&w=64&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast logo",
+    "description": "DataFast logo",
+    "sectionClasses": "border-b border-base-content/5 bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fjack.38e84582.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Jack",
+    "description": "Jack",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fedwin.ce7436db.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Edwin",
+    "description": "Edwin",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fadam.d9b0a2ec.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Adam",
+    "description": "Adam",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Frj.b6037c6f.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "RJ",
+    "description": "RJ",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fserg.30bade2d.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Serg",
+    "description": "Serg",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsergiu.d5c9f098.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Sergiu",
+    "description": "Sergiu",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fstephon.be6be4f3.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Stephon",
+    "description": "Stephon",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fkatt.b681a8ed.jpg&w=128&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Katt",
+    "description": "Katt",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fdemo.8f89df2b.jpg&w=1080&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast Analytics Dashboard Demo - Revenue Analytics Tool",
+    "description": "DataFast Analytics Dashboard Demo - Revenue Analytics Tool",
+    "nearestHeading": "Revenue-first analytics",
+    "sectionClasses": "mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-14 overflow-hidden px-0.5 pb-12 pt-8 max-xl:px-4 ",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2030672021462388737%2FAyD_-La6_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Mike Strives",
+    "description": "Mike Strives",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G2UsTSpXAAAfejG?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1754025659180187649%2FAAG78n19_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Nico",
+    "description": "Nico",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GywOBiwacAEvtIZ?format=png&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1951458340527079424%2FGvUWqrYp_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Wanderson Jackson",
+    "description": "Wanderson Jackson",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GuRfcifacAAlkU8?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2028152333213880320%2F0c03bLN7_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "jack friks",
+    "description": "jack friks",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GfFaYUzWsAAmqgL?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GfFal0QXQAAUm-D?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1945971285923672064%2Fw8gZDL-D_normal.png&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Kai Jiabo Feng",
+    "description": "Kai Jiabo Feng",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1963776751433359360%2FDNNB2f31_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "kir0shi",
+    "description": "kir0shi",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G2LF4DTaUAAas69?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1905054657971728384%2FM9JF7NHU_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Magiobus 🧑‍💻",
+    "description": "Magiobus 🧑‍💻",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GeAKUH0WwAAymA5?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1744341682668081152%2FOwwFvCWn_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Katt 💎buildthekeyword.com",
+    "description": "Katt 💎buildthekeyword.com",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GfFeBktWkAAbqdv?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1846285407077421056%2F-nESsbOX_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "wozu",
+    "description": "wozu",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GcM6u9_W0AEWu8D?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1869431171202826240%2F3aoBwvU-_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Adam",
+    "description": "Adam",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1919136135978053632%2FttJzyq58_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Pablo Yáñez",
+    "description": "Pablo Yáñez",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1938107642829774848%2FXZHZ4sbT_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Serg",
+    "description": "Serg",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1924194410893361152%2FmQf8XUXP_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "RJ McCollam",
+    "description": "RJ McCollam",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GfRGwE5acAA9y-u?format=png&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2010392291958001664%2FJMWg_jUP_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "edwin",
+    "description": "edwin",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gcpduy6bIAA4VRh?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1804657931884916736%2FZcD8jck8_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Marco Elizalde",
+    "description": "Marco Elizalde",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GoHsdDtbEAA-Ucs?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1998756219943596032%2Fm9-oRjvf_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Dev Neill",
+    "description": "Dev Neill",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gd8au6AXYAAQplL?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1808894379253510146%2F_SFe0D22_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Corey Chiu",
+    "description": "Corey Chiu",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gw_5QFpbUAMg2R2?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1906760195708948480%2F3RtOu3jg_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Abdo El-Mobayad",
+    "description": "Abdo El-Mobayad",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GxDyadAWAAAYUUn?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1593245414139973633%2FfF7kEiQb_normal.png&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Brock Briggs",
+    "description": "Brock Briggs",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GpYrwpdaMAEXKAN?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1969592013868974084%2F-io8_jw0_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Hieu Dinh",
+    "description": "Hieu Dinh",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gv0oQ6raoAAYY9x?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1580521063787659267%2FAp5JTfCh_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Sergiu 🤖 AI Directories",
+    "description": "Sergiu 🤖 AI Directories",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GY1bLvdWgA8CWMw?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2010542860555411456%2FUtbBTI4r_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Keith S",
+    "description": "Keith S",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gh0nb4RWoAA831c?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1859116502299144192%2FNHHXMbHZ_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Christopher Woggon",
+    "description": "Christopher Woggon",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GiYdp6QaYAIrP3-?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1923342767658323970%2Fc5Kt8iHf_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DevOps Daily",
+    "description": "DevOps Daily",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GvkvShyWAAEYI6R?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1778434561556320256%2FknBJT1OR_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Dan Kulkov",
+    "description": "Dan Kulkov",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gi6ySd6bkAAVozp?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2003199026993479680%2FCUmvF9p4_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Chris DeWeese",
+    "description": "Chris DeWeese",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gl8V18MWgAAf0S-?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Datafast dashboard for Air Fry Pro",
+    "description": "Datafast dashboard for Air Fry Pro",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2009283914133852162%2FODgpqEoM_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Kevin Rousseau",
+    "description": "Kevin Rousseau",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GyJf3QFXwAE3yvG?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2008499619836370944%2Fx9ImnOhg_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Theo Stowell",
+    "description": "Theo Stowell",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GydVsHKWoAAVxU5?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1865674710530355200%2F4h4IeZAm_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Erikas Mališauskas",
+    "description": "Erikas Mališauskas",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GwNJYA6aEAAU-Pj?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1960086357855907840%2Fdo5mTRoS_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Krzysztof Cichy",
+    "description": "Krzysztof Cichy",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GkU5xgFXYAETKpb?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2023418897576374273%2FBIHwXWmf_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Nigel Yong",
+    "description": "Nigel Yong",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GlxYoCUacAAQymW?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1818398683974578177%2FPkw9BfPg_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "NickelandDime",
+    "description": "NickelandDime",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GyFklVfXUAAUmjH?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/profile_images/2028152333213880320/0c03bLN7_normal.jpg",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "jack friks",
+    "description": "jack friks",
+    "sectionClasses": "quoted-tweet-container_article__FoJQN",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1916886419999531008%2FZU9KVvrn_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Alex Ovardov",
+    "description": "Alex Ovardov",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gvln57fW4AAnDmj?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2045088823055364096%2FL1qGGqP1_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Arthur",
+    "description": "Arthur",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Glyjb24W0AAWPN5?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1978046378468098048%2FSnUeFmIZ_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Yuval Fishbine",
+    "description": "Yuval Fishbine",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gu2dHwPXsAAK3wC?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1677119101494349829%2FVdEgIOeM_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "OSU Dev",
+    "description": "OSU Dev",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GrfUY4IW4AASb-6?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1502571795551031299%2FBeOmqTNl_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Alexander Belogubov 🇺🇦",
+    "description": "Alexander Belogubov 🇺🇦",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G4VE3e-WQAAJHP1?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2041977427946016768%2FpanPietO_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "⌭ ROSS",
+    "description": "⌭ ROSS",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1983927885262934017%2FBOKzJbEW_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Nabeel",
+    "description": "Nabeel",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G2Jjq8Ib0AE_oHK?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2007631230771081216%2FlA78_n77_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Utkarsh",
+    "description": "Utkarsh",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/profile_images/1514863683574599681/9k7PqDTA_normal.jpg",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Marc Lou",
+    "description": "Marc Lou",
+    "sectionClasses": "quoted-tweet-container_article__FoJQN",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GuIz1AVbgAA8Nn9?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "quoted-tweet-container_article__FoJQN",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2027534029931876354%2FJxGOsSQL_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Mohd Anas",
+    "description": "Mohd Anas",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GuNQs2NWgAAtMek?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1842561177299120128%2FijjBFrLC_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Miguel Pieras",
+    "description": "Miguel Pieras",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G0-Zi55XwAA6dHW?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1621545925029281792%2F4F8vvby9_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Hridoy Rehman",
+    "description": "Hridoy Rehman",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2041171225767251969%2F2BfY7U31_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "uaghazade",
+    "description": "uaghazade",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/Gt15vyNXMAAD7QG?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2008167189992390656%2FFMfQFdJN_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Stephon Cooper-Miller",
+    "description": "Stephon Cooper-Miller",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/GeZzHUlW0AEXxt2?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1602541464851980288%2FStnr4-Bl_normal.png&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "George from 🕹prodmgmt.world",
+    "description": "George from 🕹prodmgmt.world",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2008828007968833536%2FAQ_7mS6t_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Luke",
+    "description": "Luke",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1961448575889715201%2FtBsTkyU__normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "ChairmanKaga",
+    "description": "ChairmanKaga",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G3GkksbaIAAucz-?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1277492092676145152%2FkmEJVcrt_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Bhanu Teja P",
+    "description": "Bhanu Teja P",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G2ZhATAbwAAU0oe?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/G-gGWzAWoAADT2B?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1998922183192752132%2FPXsvOsHR_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Rohan Gilkes, CFA",
+    "description": "Rohan Gilkes, CFA",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1969200492614934528%2FYWXtuPzb_normal.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Sami Hindi",
+    "description": "Sami Hindi",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://pbs.twimg.com/media/HHLQ5MoXEAA8tLt?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "Image",
+    "description": "Image",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fcode.eed7e4ea.png&w=3840&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast script demo",
+    "description": "DataFast script demo",
+    "nearestHeading": "Find revenue opportunities in 3 steps",
+    "sectionClasses": "bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Frevenue_2.d41716c4.png&w=3840&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Stripe, LemonSqueezy, and Polar logo",
+    "description": "Stripe, LemonSqueezy, and Polar logo",
+    "nearestHeading": "Find revenue opportunities in 3 steps",
+    "sectionClasses": "bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fopportunities.30c8dfe6.jpg&w=3840&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast dashboard",
+    "description": "DataFast dashboard",
+    "nearestHeading": "Find revenue opportunities in 3 steps",
+    "sectionClasses": "bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fwozu.45cffdf1.jpg&w=96&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Wozu testimonial for DataFast",
+    "description": "Wozu testimonial for DataFast",
+    "sectionClasses": "mx-auto my-12 max-w-md space-y-4 max-lg:px-4 md:my-24 md:space-y-6 lg:max-w-lg",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fsiya.ef0cc018.png&w=96&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Siya testimonial for DataFast",
+    "description": "Siya testimonial for DataFast",
+    "sectionClasses": "mx-auto my-12 max-w-md space-y-4 max-lg:px-4 md:my-24 md:space-y-6 lg:max-w-lg",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fkai.daee511e.png&w=96&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Kai testimonial for DataFast",
+    "description": "Kai testimonial for DataFast",
+    "sectionClasses": "mx-auto my-12 max-w-md space-y-4 max-lg:px-4 md:my-24 md:space-y-6 lg:max-w-lg",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-nextjs.3a58dc60.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Next.js",
+    "description": "DataFast works with Next.js",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-expressjs.6e4a13ee.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Express.js",
+    "description": "DataFast works with Express.js",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-php.858345a0.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with PHP",
+    "description": "DataFast works with PHP",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-flask.6e846093.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Flask",
+    "description": "DataFast works with Flask",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-fastapi.adfa24d0.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with FastAPI",
+    "description": "DataFast works with FastAPI",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-vuejs.010f3bde.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Vue.js",
+    "description": "DataFast works with Vue.js",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-nginx.ede5ab41.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Nginx",
+    "description": "DataFast works with Nginx",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-laravel.dd822c6e.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Laravel",
+    "description": "DataFast works with Laravel",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-caddy.8d202f7e.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Caddy",
+    "description": "DataFast works with Caddy",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-reactrouter.b724a1f1.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with React Router",
+    "description": "DataFast works with React Router",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-django.1260bac6.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Django",
+    "description": "DataFast works with Django",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-npm.c6795874.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with npm",
+    "description": "DataFast works with npm",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-gtm.d7fc830d.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Google Tag Manager",
+    "description": "DataFast works with Google Tag Manager",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-webflow.baf6b80a.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Webflow",
+    "description": "DataFast works with Webflow",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-wp.e47770d1.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with WordPress",
+    "description": "DataFast works with WordPress",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-ghostcms.36b39cb0.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Ghost CMS",
+    "description": "DataFast works with Ghost CMS",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-framer.06f8bb07.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Framer",
+    "description": "DataFast works with Framer",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-bubble.c8b7a238.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Bubble",
+    "description": "DataFast works with Bubble",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-podia.b5977fc1.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Podia",
+    "description": "DataFast works with Podia",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-kajabi.0cbc47ac.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Kajabi",
+    "description": "DataFast works with Kajabi",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-wix.34f61b06.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Wix",
+    "description": "DataFast works with Wix",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-squarespace.0cda12b3.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with SquareSpace",
+    "description": "DataFast works with SquareSpace",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-lovable.618fffcb.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Lovable",
+    "description": "DataFast works with Lovable",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-shopify.a664161d.png&w=256&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast works with Shopify",
+    "description": "DataFast works with Shopify",
+    "nearestHeading": "Works with your favorite tools",
+    "sectionClasses": "bg-base-300 py-16",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fmaker-of-the-year-2023.285fe739.png&w=640&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Marc Lou — Product Hunt Maker of the Year 2023",
+    "description": "Marc Lou — Product Hunt Maker of the Year 2023",
+    "sectionClasses": "space-y-12 bg-base-300 py-24 max-md:px-4",
+    "aboveFold": true
+  },
+  {
+    "url": "https://purecatamphetamine.github.io/country-flag-icons/3x2/US.svg",
+    "type": "Image",
+    "contexts": ["img[src]"],
+    "notes": "United States flag",
+    "description": "United States flag",
+    "sectionClasses": "space-y-12 bg-base-300 py-24 max-md:px-4",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fosudev.6e88d616.jpg&w=96&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Osu Dev testimonial for DataFast",
+    "description": "Osu Dev testimonial for DataFast",
+    "sectionClasses": "mx-auto my-12 max-w-md space-y-4 max-lg:px-4 md:my-24 md:space-y-6 lg:max-w-lg",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2Fappstore-icon.png&w=384&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Download on the App Store",
+    "description": "Download on the App Store",
+    "sectionClasses": "bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2Fgoogleplay-icon.png&w=384&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Get it on Google Play",
+    "description": "Get it on Google Play",
+    "sectionClasses": "bg-base-300",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2030672021462388737%2FAyD_-La6_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Mike Strives",
+    "description": "Mike Strives",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F2028152333213880320%2F0c03bLN7_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "jack friks",
+    "description": "jack friks",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1905054657971728384%2FM9JF7NHU_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Magiobus 🧑‍💻",
+    "description": "Magiobus 🧑‍💻",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1869431171202826240%2F3aoBwvU-_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Adam",
+    "description": "Adam",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": false
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1754025659180187649%2FAAG78n19_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Nico",
+    "description": "Nico",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1945971285923672064%2Fw8gZDL-D_bigger.png&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Kai Jiabo Feng",
+    "description": "Kai Jiabo Feng",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1744341682668081152%2FOwwFvCWn_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Katt 💎buildthekeyword.com",
+    "description": "Katt 💎buildthekeyword.com",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1919136135978053632%2FttJzyq58_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Pablo Yáñez",
+    "description": "Pablo Yáñez",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": false
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1951458340527079424%2FGvUWqrYp_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Wanderson Jackson",
+    "description": "Wanderson Jackson",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1963776751433359360%2FDNNB2f31_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "kir0shi",
+    "description": "kir0shi",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1846285407077421056%2F-nESsbOX_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "wozu",
+    "description": "wozu",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": true
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1938107642829774848%2FXZHZ4sbT_bigger.jpg&w=96&q=100",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "Serg",
+    "description": "Serg",
+    "sectionClasses": "tweet-container_article__0ERPK",
+    "aboveFold": false
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fchart.3ff767a4.png&w=1080&q=50",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "DataFast chart",
+    "description": "DataFast chart",
+    "nearestHeading": "Find revenue hiding in your traffic",
+    "sectionClasses": "custom-card relative mx-auto max-w-3xl rounded-box",
+    "aboveFold": false
+  },
+  {
+    "url": "https://datafa.st/_next/image?url=%2Fshipfast.png&w=48&q=75",
+    "type": "Image",
+    "contexts": ["img[src]", "img[srcset]"],
+    "notes": "ShipFast logo",
+    "description": "ShipFast logo",
+    "sectionClasses": "border-t border-base-content/5 bg-base-300",
+    "aboveFold": false
+  },
+  {
+    "url": "https://video.twimg.com/amplify_video/1943341884228665344/vid/avc1/640x360/9yZLIvHcgbnZriJk.mp4?tag=14",
+    "type": "Video",
+    "contexts": ["video source[src]"],
+    "notes": null
+  },
+  {
+    "url": "https://video.twimg.com/amplify_video/1952684385171382272/vid/avc1/1280x720/PSzj6xnZAmtudtyQ.mp4",
+    "type": "Video",
+    "contexts": ["video source[src]"],
+    "notes": null
+  },
+  {
+    "url": "https://video.twimg.com/amplify_video/1922977846730911744/vid/avc1/1770x1080/CHIymnQLRBT6PqhV.mp4",
+    "type": "Video",
+    "contexts": ["video source[src]"],
+    "notes": null
+  },
+  {
+    "url": "https://pbs.twimg.com/amplify_video_thumb/1943341884228665344/img/m5d9Aj6T1OceCNMJ?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["video[poster]"],
+    "notes": null
+  },
+  {
+    "url": "https://pbs.twimg.com/amplify_video_thumb/1952684385171382272/img/7FUHxH6BNnrYEWoV?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["video[poster]"],
+    "notes": null
+  },
+  {
+    "url": "https://pbs.twimg.com/amplify_video_thumb/1922977846730911744/img/-Rg6DwZx_68gfYtO?format=jpg&name=small",
+    "type": "Image",
+    "contexts": ["video[poster]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/favicon.ico",
+    "type": "Icon",
+    "contexts": ["link[rel=\"icon\"]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/icon.png?3a869d3d4374401f",
+    "type": "Icon",
+    "contexts": ["link[rel=\"icon\"]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/apple-icon.png?0a21bd0e320985f8",
+    "type": "Icon",
+    "contexts": ["link[rel=\"apple-touch-icon\"]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/opengraph-image.png",
+    "type": "Image",
+    "contexts": ["meta[og:image]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/twitter-image.png",
+    "type": "Image",
+    "contexts": ["meta[twitter:image]"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/_next/static/media/7ab938503e4547a1-s.woff2",
+    "type": "Font",
+    "contexts": ["css url()"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/_next/static/media/13971731025ec697-s.p.woff2",
+    "type": "Font",
+    "contexts": ["css url()"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/_next/static/media/84f71ecfcc57a235-s.woff2",
+    "type": "Font",
+    "contexts": ["css url()"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/_next/static/media/020814ba533e3f09-s.woff2",
+    "type": "Font",
+    "contexts": ["css url()"],
+    "notes": null
+  },
+  {
+    "url": "https://datafa.st/_next/static/media/1320665fc3a5dc9f-s.p.woff2",
+    "type": "Font",
+    "contexts": ["css url()"],
+    "notes": null
+  }
+]

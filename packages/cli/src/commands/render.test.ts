@@ -26,6 +26,19 @@ vi.mock("../telemetry/events.js", () => ({
 
 describe("renderLocal browser GPU config", () => {
   const savedEnv = new Map<string, string | undefined>();
+  // Pre-resolve once. The first dynamic `import("./render.js")` in this file
+  // takes >5 s on Windows runners (cold module load) — long enough to blow
+  // vitest's default 5 s timeout in whichever test happens to be first. When
+  // that test times out, its leaked late `createRenderJob` call lands AFTER
+  // the next test's `beforeEach` clears `producerState.createdJobs`, shifting
+  // index 0 and corrupting unrelated assertions. Importing once in
+  // `beforeAll` keeps every test fast and isolated.
+  let renderLocal: typeof import("./render.js").renderLocal;
+  let resolveBrowserGpuForCli: typeof import("./render.js").resolveBrowserGpuForCli;
+
+  beforeAll(async () => {
+    ({ renderLocal, resolveBrowserGpuForCli } = await import("./render.js"));
+  });
 
   function setEnv(key: string, value: string) {
     savedEnv.set(key, process.env[key]);
@@ -54,13 +67,12 @@ describe("renderLocal browser GPU config", () => {
   it("passes an explicit software override for --no-browser-gpu even when env requests hardware", async () => {
     setEnv("PRODUCER_BROWSER_GPU_MODE", "hardware");
 
-    const { renderLocal } = await import("./render.js");
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: 30,
       quality: "standard",
       format: "mp4",
       gpu: false,
-      browserGpu: false,
+      browserGpuMode: "software",
       hdrMode: "auto",
       quiet: true,
     });
@@ -70,16 +82,33 @@ describe("renderLocal browser GPU config", () => {
       browserGpuMode: "software",
       resolved: true,
     });
-  });
+  }, 15_000);
 
-  it("passes an explicit hardware override for default local browser GPU", async () => {
-    const { renderLocal } = await import("./render.js");
+  it("forwards browserGpuMode='auto' into producer config (probe-then-choose)", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: 30,
       quality: "standard",
       format: "mp4",
       gpu: false,
-      browserGpu: true,
+      browserGpuMode: "auto",
+      hdrMode: "auto",
+      quiet: true,
+    });
+
+    expect(producerState.resolveConfigCalls).toContainEqual({ browserGpuMode: "auto" });
+    expect(producerState.createdJobs[0]?.producerConfig).toMatchObject({
+      browserGpuMode: "auto",
+      resolved: true,
+    });
+  });
+
+  it("passes an explicit hardware override for default local browser GPU", async () => {
+    await renderLocal("/tmp/project", "/tmp/out.mp4", {
+      fps: 30,
+      quality: "standard",
+      format: "mp4",
+      gpu: false,
+      browserGpuMode: "hardware",
       hdrMode: "auto",
       quiet: true,
     });
@@ -91,25 +120,28 @@ describe("renderLocal browser GPU config", () => {
     });
   });
 
-  it("resolves browser GPU from CLI flags, Docker mode, and env fallback", async () => {
-    const { resolveBrowserGpuForCli } = await import("./render.js");
-
-    expect(resolveBrowserGpuForCli(false, undefined, undefined)).toBe(true);
-    expect(resolveBrowserGpuForCli(false, undefined, "hardware")).toBe(true);
-    expect(resolveBrowserGpuForCli(false, undefined, "software")).toBe(false);
-    expect(resolveBrowserGpuForCli(false, true, "software")).toBe(true);
-    expect(resolveBrowserGpuForCli(false, false, "hardware")).toBe(false);
-    expect(resolveBrowserGpuForCli(true, undefined, "hardware")).toBe(false);
+  it("resolves browser GPU from CLI flags, Docker mode, and env fallback", () => {
+    // Default (no flag, no env): auto — engine probes and chooses.
+    expect(resolveBrowserGpuForCli(false, undefined, undefined)).toBe("auto");
+    // Env override
+    expect(resolveBrowserGpuForCli(false, undefined, "hardware")).toBe("hardware");
+    expect(resolveBrowserGpuForCli(false, undefined, "software")).toBe("software");
+    expect(resolveBrowserGpuForCli(false, undefined, "auto")).toBe("auto");
+    // Explicit CLI flag wins over env
+    expect(resolveBrowserGpuForCli(false, true, "software")).toBe("hardware");
+    expect(resolveBrowserGpuForCli(false, false, "hardware")).toBe("software");
+    // Docker forces software regardless of flags/env
+    expect(resolveBrowserGpuForCli(true, undefined, "hardware")).toBe("software");
+    expect(resolveBrowserGpuForCli(true, undefined, "auto")).toBe("software");
   });
 
   it("forwards parsed --variables payload to createRenderJob", async () => {
-    const { renderLocal } = await import("./render.js");
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: 30,
       quality: "standard",
       format: "mp4",
       gpu: false,
-      browserGpu: false,
+      browserGpuMode: "software",
       hdrMode: "auto",
       quiet: true,
       variables: { title: "Hello", count: 3 },
@@ -118,19 +150,90 @@ describe("renderLocal browser GPU config", () => {
     expect(producerState.createdJobs[0]?.variables).toEqual({ title: "Hello", count: 3 });
   });
 
+  it("forwards format: png-sequence through to createRenderJob", async () => {
+    await renderLocal("/tmp/project", "/tmp/frames", {
+      fps: 30,
+      quality: "standard",
+      format: "png-sequence",
+      gpu: false,
+      browserGpuMode: "software",
+      hdrMode: "auto",
+      quiet: true,
+    });
+
+    expect(producerState.createdJobs[0]?.format).toBe("png-sequence");
+  });
+
   it("omits variables from createRenderJob when not provided", async () => {
-    const { renderLocal } = await import("./render.js");
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: 30,
       quality: "standard",
       format: "mp4",
       gpu: false,
-      browserGpu: false,
+      browserGpuMode: "software",
       hdrMode: "auto",
       quiet: true,
     });
 
     expect(producerState.createdJobs[0]?.variables).toBeUndefined();
+  });
+
+  it("forwards entryFile to createRenderJob when --composition is set", async () => {
+    await renderLocal("/tmp/project", "/tmp/out.mp4", {
+      fps: 30,
+      quality: "standard",
+      format: "mp4",
+      gpu: false,
+      browserGpuMode: "software",
+      hdrMode: "auto",
+      quiet: true,
+      entryFile: "compositions/intro.html",
+    });
+
+    expect(producerState.createdJobs[0]?.entryFile).toBe("compositions/intro.html");
+  });
+
+  it("omits entryFile from createRenderJob when --composition is not set", async () => {
+    await renderLocal("/tmp/project", "/tmp/out.mp4", {
+      fps: 30,
+      quality: "standard",
+      format: "mp4",
+      gpu: false,
+      browserGpuMode: "software",
+      hdrMode: "auto",
+      quiet: true,
+    });
+
+    expect(producerState.createdJobs[0]?.entryFile).toBeUndefined();
+  });
+
+  it("forwards outputResolution to createRenderJob when --resolution is set", async () => {
+    await renderLocal("/tmp/project", "/tmp/out.mp4", {
+      fps: 30,
+      quality: "standard",
+      format: "mp4",
+      gpu: false,
+      browserGpuMode: "software",
+      hdrMode: "auto",
+      quiet: true,
+      outputResolution: "landscape-4k",
+    });
+
+    expect(producerState.createdJobs[0]?.outputResolution).toBe("landscape-4k");
+  });
+
+  it("omits outputResolution from createRenderJob by default", async () => {
+    await renderLocal("/tmp/project", "/tmp/out.mp4", {
+      fps: 30,
+      quality: "standard",
+      format: "mp4",
+      gpu: false,
+      browserGpuMode: "software",
+      hdrMode: "auto",
+      quiet: true,
+    });
+
+    expect(producerState.createdJobs[0]?.outputResolution).toBeUndefined();
   });
 
   it("can force the CLI process to exit after a successful local render", async () => {
@@ -140,14 +243,13 @@ describe("renderLocal browser GPU config", () => {
       .mockImplementation((code?: string | number | null): never => {
         throw new Error(`process.exit:${code ?? ""}`);
       });
-    const { renderLocal } = await import("./render.js");
 
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: 30,
       quality: "standard",
       format: "mp4",
       gpu: false,
-      browserGpu: true,
+      browserGpuMode: "hardware",
       hdrMode: "auto",
       quiet: true,
       exitAfterComplete: true,

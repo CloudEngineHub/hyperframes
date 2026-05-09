@@ -19,12 +19,49 @@ export interface Asset {
 export type TimelineElementType = "video" | "image" | "text" | "audio" | "composition";
 export type MediaElementType = "video" | "image" | "audio";
 
-export type CanvasResolution = "landscape" | "portrait";
-
 export const CANVAS_DIMENSIONS = {
   landscape: { width: 1920, height: 1080 },
   portrait: { width: 1080, height: 1920 },
+  "landscape-4k": { width: 3840, height: 2160 },
+  "portrait-4k": { width: 2160, height: 3840 },
 } as const;
+
+// Single source of truth: derive the type from the table so adding a preset
+// extends the union automatically. Avoids the prior `as readonly CanvasResolution[]`
+// cast on `VALID_CANVAS_RESOLUTIONS` quietly drifting if the table grew but
+// the union didn't.
+export type CanvasResolution = keyof typeof CANVAS_DIMENSIONS;
+
+// `Object.keys` ordering matches insertion order in `CANVAS_DIMENSIONS` on
+// every supported JS engine; tests pin the order in `index.test.ts`. Reorder
+// the table above with care.
+export const VALID_CANVAS_RESOLUTIONS = Object.keys(
+  CANVAS_DIMENSIONS,
+) as readonly CanvasResolution[];
+
+const RESOLUTION_ALIASES: Record<string, CanvasResolution> = {
+  "1080p": "landscape",
+  hd: "landscape",
+  "1080p-portrait": "portrait",
+  "portrait-1080p": "portrait",
+  "4k": "landscape-4k",
+  uhd: "landscape-4k",
+  "4k-portrait": "portrait-4k",
+};
+
+/**
+ * Map a user-facing resolution string (canonical name or alias) to a
+ * `CanvasResolution`. Returns undefined for unknown values so callers
+ * can produce their own "invalid" UX (CLI exit, route validation, etc.).
+ */
+export function normalizeResolutionFlag(input: string | undefined): CanvasResolution | undefined {
+  if (!input) return undefined;
+  const lowered = input.toLowerCase();
+  if ((VALID_CANVAS_RESOLUTIONS as readonly string[]).includes(lowered)) {
+    return lowered as CanvasResolution;
+  }
+  return RESOLUTION_ALIASES[lowered];
+}
 
 export interface TimelineElementBase {
   id: string;

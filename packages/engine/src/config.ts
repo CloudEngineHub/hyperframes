@@ -32,10 +32,15 @@ export interface EngineConfig {
   chromePath?: string;
   disableGpu: boolean;
   /**
-   * Chrome/WebGL rendering backend. "software" keeps the existing SwiftShader
-   * path for reproducible output; "hardware" lets Chrome use the host GPU.
+   * Chrome/WebGL rendering backend.
+   * - "software": SwiftShader (CPU-only). Always works; ~5-50× slower than GPU.
+   * - "hardware": host GPU via platform-native ANGLE backend (Metal/D3D11/EGL).
+   *   Errors if no usable GPU is reachable from Chrome.
+   * - "auto": probe Chrome for WebGL availability on first launch in this
+   *   process; fall back to software if hardware-mode WebGL is unavailable.
+   *   Cost: one extra Chrome launch (~1-2 s) per process; result cached.
    */
-  browserGpuMode: "software" | "hardware";
+  browserGpuMode: "software" | "hardware" | "auto";
   enableBrowserPool: boolean;
   browserTimeout: number;
   protocolTimeout: number;
@@ -71,7 +76,21 @@ export interface EngineConfig {
 
   // ── Media ────────────────────────────────────────────────────────────
   audioGain: number;
+  /**
+   * Hard upper bound on entries kept in the video frame data URI cache.
+   * Acts as a sanity cap; the byte budget below normally fires first on
+   * high-resolution renders. At 1080p with ~6 MB per JPEG frame the default
+   * 256 entries fit inside ~1.5 GB. At 4K the byte budget evicts long
+   * before this cap is reached.
+   */
   frameDataUriCacheLimit: number;
+  /**
+   * Memory budget for the cache, in megabytes. Eviction kicks in once the
+   * sum of cached data-URI string lengths exceeds this. Sized so a worker
+   * stays comfortably under a few GB even at 4K (where each PNG frame is
+   * ~25 MB and the base64 data URI is ~33 MB).
+   */
+  frameDataUriCacheBytesLimitMb: number;
 
   // ── Timeouts ─────────────────────────────────────────────────────────
   playerReadyTimeout: number;
@@ -144,6 +163,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 
   audioGain: 1,
   frameDataUriCacheLimit: 256,
+  frameDataUriCacheBytesLimitMb: 1500,
 
   playerReadyTimeout: 45_000,
   renderReadyTimeout: 15_000,
@@ -173,7 +193,7 @@ export function resolveConfig(overrides?: Partial<EngineConfig>): EngineConfig {
   };
   const envBrowserGpuMode = (): EngineConfig["browserGpuMode"] => {
     const raw = env("PRODUCER_BROWSER_GPU_MODE");
-    if (raw === "hardware" || raw === "software") return raw;
+    if (raw === "hardware" || raw === "software" || raw === "auto") return raw;
     return DEFAULT_CONFIG.browserGpuMode;
   };
 
@@ -240,6 +260,13 @@ export function resolveConfig(overrides?: Partial<EngineConfig>): EngineConfig {
     frameDataUriCacheLimit: Math.max(
       32,
       envNum("PRODUCER_FRAME_DATA_URI_CACHE_LIMIT", DEFAULT_CONFIG.frameDataUriCacheLimit),
+    ),
+    frameDataUriCacheBytesLimitMb: Math.max(
+      64,
+      envNum(
+        "PRODUCER_FRAME_DATA_URI_CACHE_BYTES_MB",
+        DEFAULT_CONFIG.frameDataUriCacheBytesLimitMb,
+      ),
     ),
 
     playerReadyTimeout: envNum(

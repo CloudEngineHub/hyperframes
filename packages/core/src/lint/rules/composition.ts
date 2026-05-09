@@ -16,6 +16,10 @@ function countPhysicalLines(source: string): number {
   return withoutFinalNewline.split("\n").length;
 }
 
+function countStructuralLines(source: string): number {
+  return countPhysicalLines(source.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "<style></style>"));
+}
+
 function isRegistrySourceFile(filePath?: string): boolean {
   if (!filePath) return false;
 
@@ -38,7 +42,7 @@ export const compositionRules: Array<(ctx: LintContext) => HyperframeLintFinding
   ({ rawSource, options }) => {
     if (isRegistrySourceFile(options.filePath) || isRegistryInstalledFile(rawSource)) return [];
 
-    const lineCount = countPhysicalLines(rawSource);
+    const lineCount = countStructuralLines(rawSource);
     if (lineCount <= MAX_COMPOSITION_LINES) return [];
 
     const splitTarget = options.isSubComposition
@@ -49,7 +53,7 @@ export const compositionRules: Array<(ctx: LintContext) => HyperframeLintFinding
       {
         code: "composition_file_too_large",
         severity: "warning",
-        message: `This HTML composition file has ${lineCount} lines. Agents produce better results when large scenes are split into smaller sub-compositions.`,
+        message: `This HTML composition file has ${lineCount} lines. Smaller sub-compositions are easier to read, iterate on, and diff.`,
         fixHint: `${splitTarget}, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently.`,
       },
     ];
@@ -77,7 +81,7 @@ export const compositionRules: Array<(ctx: LintContext) => HyperframeLintFinding
       findings.push({
         code: "timeline_track_too_dense",
         severity: "warning",
-        message: `Track ${track} has ${count} timed elements in this HTML file. Agents produce better timelines when dense tracks are split into smaller sub-compositions.`,
+        message: `Track ${track} has ${count} timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.`,
         fixHint: `${splitTarget} and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate.`,
       });
     }

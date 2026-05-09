@@ -1,0 +1,687 @@
+[
+  {
+    "text": "86%.",
+    "start": 0.2,
+    "end": 1.41
+  },
+  {
+    "text": "That's",
+    "start": 2.27,
+    "end": 2.4
+  },
+  {
+    "text": "how",
+    "start": 2.48,
+    "end": 2.6
+  },
+  {
+    "text": "much",
+    "start": 2.72,
+    "end": 2.87
+  },
+  {
+    "text": "of",
+    "start": 2.87,
+    "end": 2.96
+  },
+  {
+    "text": "render",
+    "start": 3.03,
+    "end": 3.4
+  },
+  {
+    "text": "time",
+    "start": 3.42,
+    "end": 3.68
+  },
+  {
+    "text": "Chrome",
+    "start": 3.68,
+    "end": 4.16
+  },
+  {
+    "text": "spends",
+    "start": 4.16,
+    "end": 4.52
+  },
+  {
+    "text": "just",
+    "start": 4.52,
+    "end": 4.75
+  },
+  {
+    "text": "taking",
+    "start": 4.82,
+    "end": 5.14
+  },
+  {
+    "text": "screenshots.",
+    "start": 5.14,
+    "end": 5.84
+  },
+  {
+    "text": "The",
+    "start": 6.04,
+    "end": 6.11
+  },
+  {
+    "text": "native",
+    "start": 6.11,
+    "end": 6.65
+  },
+  {
+    "text": "renderer",
+    "start": 6.65,
+    "end": 7.22
+  },
+  {
+    "text": "changes",
+    "start": 7.22,
+    "end": 8.32
+  },
+  {
+    "text": "that.",
+    "start": 8.32,
+    "end": 8.64
+  },
+  {
+    "text": "HTML",
+    "start": 8.64,
+    "end": 9.09
+  },
+  {
+    "text": "stays",
+    "start": 9.09,
+    "end": 9.66
+  },
+  {
+    "text": "the",
+    "start": 9.66,
+    "end": 10
+  },
+  {
+    "text": "authoring",
+    "start": 10,
+    "end": 11.02
+  },
+  {
+    "text": "format.",
+    "start": 11.02,
+    "end": 11.76
+  },
+  {
+    "text": "A",
+    "start": 11.76,
+    "end": 12.28
+  },
+  {
+    "text": "Rust",
+    "start": 12.28,
+    "end": 12.48
+  },
+  {
+    "text": "and",
+    "start": 12.48,
+    "end": 12.69
+  },
+  {
+    "text": "Skia",
+    "start": 12.72,
+    "end": 13.03
+  },
+  {
+    "text": "IR",
+    "start": 13.03,
+    "end": 13.18
+  },
+  {
+    "text": "replaces",
+    "start": 13.18,
+    "end": 13.47
+  },
+  {
+    "text": "the",
+    "start": 13.82,
+    "end": 14.06
+  },
+  {
+    "text": "per-frame",
+    "start": 14.06,
+    "end": 14.76
+  },
+  {
+    "text": "browser",
+    "start": 14.8,
+    "end": 15.31
+  },
+  {
+    "text": "path",
+    "start": 15.31,
+    "end": 15.6
+  },
+  {
+    "text": "for",
+    "start": 15.69,
+    "end": 15.87
+  },
+  {
+    "text": "the",
+    "start": 15.87,
+    "end": 16.11
+  },
+  {
+    "text": "subset",
+    "start": 16.11,
+    "end": 16.57
+  },
+  {
+    "text": "we",
+    "start": 16.57,
+    "end": 16.74
+  },
+  {
+    "text": "control.",
+    "start": 16.74,
+    "end": 17.6
+  },
+  {
+    "text": "The",
+    "start": 17.8,
+    "end": 17.86
+  },
+  {
+    "text": "auto",
+    "start": 17.86,
+    "end": 18.21
+  },
+  {
+    "text": "back",
+    "start": 18.21,
+    "end": 18.56
+  },
+  {
+    "text": "end",
+    "start": 18.56,
+    "end": 18.82
+  },
+  {
+    "text": "chooses",
+    "start": 18.82,
+    "end": 19
+  },
+  {
+    "text": "transparently",
+    "start": 20.08,
+    "end": 20.56
+  },
+  {
+    "text": "native",
+    "start": 20.56,
+    "end": 21.11
+  },
+  {
+    "text": "when",
+    "start": 21.12,
+    "end": 21.28
+  },
+  {
+    "text": "the",
+    "start": 21.28,
+    "end": 21.43
+  },
+  {
+    "text": "compiler",
+    "start": 21.54,
+    "end": 22
+  },
+  {
+    "text": "can",
+    "start": 22,
+    "end": 22.12
+  },
+  {
+    "text": "prove",
+    "start": 22.19,
+    "end": 22.48
+  },
+  {
+    "text": "support",
+    "start": 22.48,
+    "end": 23.04
+  },
+  {
+    "text": "Chrome",
+    "start": 23.24,
+    "end": 23.32
+  },
+  {
+    "text": "when",
+    "start": 23.32,
+    "end": 23.51
+  },
+  {
+    "text": "it",
+    "start": 23.51,
+    "end": 23.6
+  },
+  {
+    "text": "can't.",
+    "start": 23.6,
+    "end": 24
+  },
+  {
+    "text": "Every",
+    "start": 24,
+    "end": 24.42
+  },
+  {
+    "text": "decision",
+    "start": 24.42,
+    "end": 25.52
+  },
+  {
+    "text": "is",
+    "start": 25.52,
+    "end": 25.53
+  },
+  {
+    "text": "logged.",
+    "start": 25.53,
+    "end": 26.48
+  },
+  {
+    "text": "Nothing",
+    "start": 26.48,
+    "end": 27.29
+  },
+  {
+    "text": "changes",
+    "start": 27.29,
+    "end": 28.1
+  },
+  {
+    "text": "silently.",
+    "start": 28.1,
+    "end": 29.04
+  },
+  {
+    "text": "Adapters",
+    "start": 30.15,
+    "end": 30.6
+  },
+  {
+    "text": "compile",
+    "start": 30.6,
+    "end": 31.13
+  },
+  {
+    "text": "known",
+    "start": 31.13,
+    "end": 31.38
+  },
+  {
+    "text": "primitives",
+    "start": 31.81,
+    "end": 32.26
+  },
+  {
+    "text": "into",
+    "start": 32.48,
+    "end": 32.56
+  },
+  {
+    "text": "a",
+    "start": 32.56,
+    "end": 32.59
+  },
+  {
+    "text": "deterministic",
+    "start": 32.64,
+    "end": 33.62
+  },
+  {
+    "text": "IR",
+    "start": 33.62,
+    "end": 33.77
+  },
+  {
+    "text": "GSAP",
+    "start": 33.77,
+    "end": 34.07
+  },
+  {
+    "text": "stays",
+    "start": 34.07,
+    "end": 34.45
+  },
+  {
+    "text": "canonical.",
+    "start": 34.45,
+    "end": 35.2
+  },
+  {
+    "text": "Text",
+    "start": 35.4,
+    "end": 35.54
+  },
+  {
+    "text": "runs",
+    "start": 35.54,
+    "end": 35.88
+  },
+  {
+    "text": "through",
+    "start": 35.88,
+    "end": 36.47
+  },
+  {
+    "text": "Chrome",
+    "start": 36.47,
+    "end": 36.6
+  },
+  {
+    "text": "once,",
+    "start": 36.98,
+    "end": 37.48
+  },
+  {
+    "text": "cached",
+    "start": 37.69,
+    "end": 37.99
+  },
+  {
+    "text": "as",
+    "start": 37.99,
+    "end": 38.16
+  },
+  {
+    "text": "glyph",
+    "start": 38.16,
+    "end": 38.58
+  },
+  {
+    "text": "clips,",
+    "start": 38.58,
+    "end": 39.2
+  },
+  {
+    "text": "then",
+    "start": 39.2,
+    "end": 39.45
+  },
+  {
+    "text": "composited.",
+    "start": 39.54,
+    "end": 40.16
+  },
+  {
+    "text": "7",
+    "start": 40.36,
+    "end": 40.82
+  },
+  {
+    "text": "phases.",
+    "start": 40.82,
+    "end": 42.47
+  },
+  {
+    "text": "Starting",
+    "start": 42.65,
+    "end": 43.3
+  },
+  {
+    "text": "with",
+    "start": 43.3,
+    "end": 43.68
+  },
+  {
+    "text": "proof",
+    "start": 43.77,
+    "end": 44.24
+  },
+  {
+    "text": "infrastructure,",
+    "start": 44.24,
+    "end": 45.12
+  },
+  {
+    "text": "not",
+    "start": 45.19,
+    "end": 45.33
+  },
+  {
+    "text": "speed",
+    "start": 45.33,
+    "end": 45.68
+  },
+  {
+    "text": "claims.",
+    "start": 45.68,
+    "end": 46.16
+  },
+  {
+    "text": "Can",
+    "start": 46.36,
+    "end": 46.44
+  },
+  {
+    "text": "we",
+    "start": 46.44,
+    "end": 46.63
+  },
+  {
+    "text": "detect",
+    "start": 46.63,
+    "end": 47.2
+  },
+  {
+    "text": "support",
+    "start": 47.2,
+    "end": 47.54
+  },
+  {
+    "text": "accurately?",
+    "start": 48.64,
+    "end": 49.12
+  },
+  {
+    "text": "Can",
+    "start": 49.12,
+    "end": 49.42
+  },
+  {
+    "text": "we",
+    "start": 49.42,
+    "end": 49.62
+  },
+  {
+    "text": "prove",
+    "start": 49.62,
+    "end": 50.13
+  },
+  {
+    "text": "quality",
+    "start": 50.13,
+    "end": 50.84
+  },
+  {
+    "text": "gates?",
+    "start": 50.84,
+    "end": 51.68
+  },
+  {
+    "text": "Can",
+    "start": 51.88,
+    "end": 51.98
+  },
+  {
+    "text": "the",
+    "start": 51.98,
+    "end": 52.28
+  },
+  {
+    "text": "auto",
+    "start": 52.28,
+    "end": 52.68
+  },
+  {
+    "text": "back",
+    "start": 52.68,
+    "end": 53.01
+  },
+  {
+    "text": "end",
+    "start": 53.04,
+    "end": 53.11
+  },
+  {
+    "text": "be",
+    "start": 53.11,
+    "end": 54.16
+  },
+  {
+    "text": "trusted?",
+    "start": 54.16,
+    "end": 54.64
+  },
+  {
+    "text": "Then",
+    "start": 54.64,
+    "end": 55.14
+  },
+  {
+    "text": "we",
+    "start": 55.14,
+    "end": 55.39
+  },
+  {
+    "text": "grow",
+    "start": 55.39,
+    "end": 55.87
+  },
+  {
+    "text": "the",
+    "start": 55.89,
+    "end": 56.2
+  },
+  {
+    "text": "subset.",
+    "start": 56.27,
+    "end": 57.04
+  },
+  {
+    "text": "One",
+    "start": 57.04,
+    "end": 58.36
+  },
+  {
+    "text": "fixture",
+    "start": 58.36,
+    "end": 58.83
+  },
+  {
+    "text": "at",
+    "start": 58.83,
+    "end": 58.96
+  },
+  {
+    "text": "a",
+    "start": 58.96,
+    "end": 58.98
+  },
+  {
+    "text": "time.",
+    "start": 59.1,
+    "end": 59.49
+  },
+  {
+    "text": "Native",
+    "start": 59.52,
+    "end": 59.59
+  },
+  {
+    "text": "rendering",
+    "start": 60.65,
+    "end": 61.52
+  },
+  {
+    "text": "isn't",
+    "start": 61.52,
+    "end": 61.82
+  },
+  {
+    "text": "replacing",
+    "start": 61.82,
+    "end": 62.39
+  },
+  {
+    "text": "Chrome.",
+    "start": 62.4,
+    "end": 62.8
+  },
+  {
+    "text": "It's",
+    "start": 62.97,
+    "end": 63.14
+  },
+  {
+    "text": "giving",
+    "start": 63.14,
+    "end": 63.62
+  },
+  {
+    "text": "the",
+    "start": 63.74,
+    "end": 63.9
+  },
+  {
+    "text": "best",
+    "start": 63.9,
+    "end": 64.13
+  },
+  {
+    "text": "hyperframes",
+    "start": 64.23,
+    "end": 65.17
+  },
+  {
+    "text": "work",
+    "start": 65.29,
+    "end": 65.48
+  },
+  {
+    "text": "a",
+    "start": 65.52,
+    "end": 65.59
+  },
+  {
+    "text": "faster",
+    "start": 65.59,
+    "end": 66.1
+  },
+  {
+    "text": "lane.",
+    "start": 66.1,
+    "end": 66.63
+  },
+  {
+    "text": "Let's",
+    "start": 66.74,
+    "end": 68.54
+  },
+  {
+    "text": "build",
+    "start": 68.62,
+    "end": 70.39
+  },
+  {
+    "text": "it",
+    "start": 70.39,
+    "end": 71.12
+  },
+  {
+    "text": "right.",
+    "start": 71.12,
+    "end": 74.08
+  }
+]

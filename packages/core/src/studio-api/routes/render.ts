@@ -3,6 +3,9 @@ import { streamSSE } from "hono/streaming";
 import { existsSync, readFileSync, mkdirSync, unlinkSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { StudioApiAdapter, RenderJobState } from "../types.js";
+import { VALID_CANVAS_RESOLUTIONS, type CanvasResolution } from "../../core.types.js";
+
+const VALID_RESOLUTIONS = new Set<string>(VALID_CANVAS_RESOLUTIONS);
 
 export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void {
   // Scoped job store — not shared across createStudioApi() calls
@@ -50,6 +53,7 @@ export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void
       fps?: number;
       quality?: string;
       format?: string;
+      resolution?: string;
     };
     const VALID_FORMATS = new Set(["mp4", "webm", "mov"]);
     const FORMAT_EXT: Record<string, string> = { mp4: ".mp4", webm: ".webm", mov: ".mov" };
@@ -58,6 +62,9 @@ export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void
     const quality = ["draft", "standard", "high"].includes(body.quality ?? "")
       ? (body.quality as string)
       : "standard";
+    const outputResolution = VALID_RESOLUTIONS.has(body.resolution ?? "")
+      ? (body.resolution as CanvasResolution)
+      : undefined;
 
     const now = new Date();
     const datePart = now.toISOString().slice(0, 10);
@@ -75,6 +82,7 @@ export function registerRenderRoutes(api: Hono, adapter: StudioApiAdapter): void
       fps,
       quality,
       jobId,
+      outputResolution,
     });
     (jobState as RenderJobState & { createdAt: number }).createdAt = Date.now();
     renderJobs.set(jobId, jobState as RenderJobState & { createdAt: number });
