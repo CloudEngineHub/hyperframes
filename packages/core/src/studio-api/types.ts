@@ -88,4 +88,7 @@ export interface StudioApiAdapter {
 
   /** Optional: resolve session ID to project (multi-project mode). */
   resolveSession?: (sessionId: string) => Promise<{ projectId: string; title: string } | null>;
+
+  /** Optional: read a file from a registry block. Returns null if not found. */
+  readRegistryBlockFile?: (blockName: string, fileName: string) => Promise<string | null>;
 }

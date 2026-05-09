@@ -63,6 +63,8 @@ import { buildProjectHash, parseProjectIdFromHash } from "./utils/projectRouting
 import { Camera } from "./icons/SystemIcons";
 import { PropertyPanel } from "./components/editor/PropertyPanel";
 import { MotionPanel } from "./components/editor/MotionPanel";
+import { BlocksPanel } from "./components/editor/BlocksPanel";
+import type { BlockEntry } from "./components/editor/blockCatalog";
 import { googleFontStylesheetUrl } from "./components/editor/fontCatalog";
 import {
   fontFamilyFromAssetPath,
@@ -155,7 +157,7 @@ function getTimelineElementLabel(element: TimelineElement): string {
   return element.label || element.id || element.tag;
 }
 
-type RightPanelTab = "design" | "motion" | "renders";
+type RightPanelTab = "design" | "motion" | "blocks" | "renders";
 
 const GENERIC_FONT_FAMILIES = new Set([
   "inherit",
@@ -880,6 +882,7 @@ export function StudioApp() {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(true);
   const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("renders");
+  const [addingBlock, setAddingBlock] = useState<string | null>(null);
   const [domEditSelection, setDomEditSelection] = useState<DomEditSelection | null>(null);
   const [domEditGroupSelections, setDomEditGroupSelections] = useState<DomEditSelection[]>([]);
   const [domEditHoverSelection, setDomEditHoverSelection] = useState<DomEditSelection | null>(null);
@@ -3394,6 +3397,38 @@ export function StudioApp() {
     if (data.files) setFileTree(data.files);
   }, []);
 
+  const handleAddBlock = useCallback(
+    async (block: BlockEntry) => {
+      const pid = projectIdRef.current;
+      if (!pid) return;
+      setAddingBlock(block.name);
+      try {
+        const res = await fetch(
+          `/api/registry/blocks/${block.name}/files/${encodeURIComponent(block.file)}`,
+        );
+        if (!res.ok) {
+          showToast(`Failed to fetch block: ${block.title}`);
+          return;
+        }
+        const data = await res.json();
+        if (typeof data.content !== "string") {
+          showToast(`Invalid block content: ${block.title}`);
+          return;
+        }
+        const targetPath = `compositions/${block.file}`;
+        await writeProjectFile(targetPath, data.content);
+        await refreshFileTree();
+        setRefreshKey((k) => k + 1);
+        showToast(`Added ${block.title}`);
+      } catch {
+        showToast(`Failed to add block: ${block.title}`);
+      } finally {
+        setAddingBlock(null);
+      }
+    },
+    [refreshFileTree, showToast, writeProjectFile],
+  );
+
   const uploadProjectFiles = useCallback(
     async (files: Iterable<File>, dir?: string): Promise<string[]> => {
       const pid = projectIdRef.current;
@@ -3823,6 +3858,7 @@ export function StudioApp() {
   const designPanelActive = STUDIO_INSPECTOR_PANELS_ENABLED && rightPanelTab === "design";
   const motionPanelActive =
     STUDIO_INSPECTOR_PANELS_ENABLED && STUDIO_MOTION_PANEL_ENABLED && rightPanelTab === "motion";
+  const blocksPanelActive = rightPanelTab === "blocks";
   const inspectorPanelActive = designPanelActive || motionPanelActive;
   const shouldShowSelectedDomBounds =
     inspectorPanelActive &&
@@ -4200,6 +4236,17 @@ export function StudioApp() {
                     )}
                     <button
                       type="button"
+                      onClick={() => setRightPanelTab("blocks")}
+                      className={`h-8 rounded-xl px-3 text-[11px] font-medium transition-colors ${
+                        rightPanelTab === "blocks"
+                          ? "bg-neutral-800 text-white"
+                          : "text-neutral-500 hover:bg-neutral-800/70 hover:text-neutral-200"
+                      }`}
+                    >
+                      Blocks
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setRightPanelTab("renders")}
                       className={`h-8 rounded-xl px-3 text-[11px] font-medium transition-colors ${
                         rightPanelTab === "renders"
@@ -4238,6 +4285,8 @@ export function StudioApp() {
                         onSetMotion={handleDomMotionCommit}
                         onClearMotion={handleDomMotionClear}
                       />
+                    ) : blocksPanelActive ? (
+                      <BlocksPanel onAddBlock={handleAddBlock} adding={addingBlock} />
                     ) : (
                       <RenderQueue
                         jobs={renderQueue.jobs}

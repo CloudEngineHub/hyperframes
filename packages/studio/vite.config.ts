@@ -445,6 +445,15 @@ function createViteAdapter(dataDir: string, server: ViteDevServer): StudioApiAda
       }
       return null;
     },
+
+    readRegistryBlockFile(blockName: string, fileName: string): Promise<string | null> {
+      const blockFile = join(__dirname, "..", "..", "registry", "blocks", blockName, fileName);
+      try {
+        return Promise.resolve(readFileSync(blockFile, "utf-8"));
+      } catch {
+        return Promise.resolve(null);
+      }
+    },
   };
 }
 
