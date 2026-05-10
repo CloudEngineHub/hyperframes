@@ -2,17 +2,31 @@ import { memo, useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { StoryboardCard } from "./StoryboardCard";
 import { MiniMap } from "./MiniMap";
 import { TimeRuler } from "./TimeRuler";
+import { CardContextMenu } from "./CardContextMenu";
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
 const PPS = 160; // pixels per second
-const CARD_WIDTH = 320;
 const CARD_HEIGHT = 180;
 const CARD_GAP_Y = 24;
 const CARD_Y_OFFSET = 40; // below the time ruler
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4.0;
 const ZOOM_STEP = 1.5;
+const SNAP_TOLERANCE = 5; // px for snap guides
+const MIN_CARD_WIDTH = 160;
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Parse a composition path into a clean display title. */
+export function formatCompositionTitle(path: string): string {
+  if (path === "index.html") return "Master";
+  // Strip directory prefix and extension.
+  const filename = path.split("/").pop() ?? path;
+  const name = filename.replace(/\.(html|htm)$/i, "");
+  // Convert kebab-case / snake_case to Title Case.
+  return name.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,6 +46,10 @@ export interface StoryboardCanvasProps {
   currentTime: number;
   isPlaying: boolean;
   totalDuration: number;
+  onReorderComposition?: (id: string, newStart: number) => void;
+  onDuplicateComposition?: (id: string) => void;
+  onDeleteComposition?: (id: string) => void;
+  onEditSource?: (id: string, path: string) => void;
 }
 
 // ── Layout: assign cards to non-overlapping tracks ──────────────────────────
@@ -41,6 +59,7 @@ interface LayoutCard extends StoryboardComposition {
   y: number;
   width: number;
   height: number;
+  displayTitle: string;
 }
 
 function layoutCards(compositions: StoryboardComposition[]): LayoutCard[] {
@@ -51,8 +70,9 @@ function layoutCards(compositions: StoryboardComposition[]): LayoutCard[] {
   const trackEnds: number[] = [];
 
   return sorted.map((comp) => {
+    const width = Math.max(MIN_CARD_WIDTH, comp.duration * PPS);
     const x = comp.start * PPS;
-    const right = (comp.start + comp.duration) * PPS;
+    const right = x + width;
 
     // Find the first track where this card doesn't overlap.
     let track = trackEnds.findIndex((end) => x >= end + 12); // 12px gap
@@ -68,10 +88,95 @@ function layoutCards(compositions: StoryboardComposition[]): LayoutCard[] {
       ...comp,
       x,
       y,
-      width: CARD_WIDTH,
+      width,
       height: CARD_HEIGHT,
+      displayTitle: formatCompositionTitle(comp.path),
     };
   });
+}
+
+// ── Gap detection for gap visualization ─────────────────────────────────────
+
+interface Gap {
+  start: number; // seconds
+  duration: number; // seconds
+  track: number;
+}
+
+function findGaps(cards: LayoutCard[]): Gap[] {
+  if (cards.length < 2) return [];
+
+  // Group cards by track (y position).
+  const trackMap = new Map<number, LayoutCard[]>();
+  for (const c of cards) {
+    const existing = trackMap.get(c.y) ?? [];
+    existing.push(c);
+    trackMap.set(c.y, existing);
+  }
+
+  const gaps: Gap[] = [];
+  let trackIdx = 0;
+  for (const [, trackCards] of trackMap) {
+    const sorted = [...trackCards].sort((a, b) => a.start - b.start);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const endTime = sorted[i]!.start + sorted[i]!.duration;
+      const nextStart = sorted[i + 1]!.start;
+      if (nextStart - endTime > 0.1) {
+        gaps.push({ start: endTime, duration: nextStart - endTime, track: trackIdx });
+      }
+    }
+    trackIdx++;
+  }
+
+  return gaps;
+}
+
+// ── Snap guide computation ──────────────────────────────────────────────────
+
+function computeSnapPositions(
+  cards: LayoutCard[],
+  excludeId: string,
+  totalDuration: number,
+): number[] {
+  const positions: number[] = [];
+
+  // Other cards' start/end positions.
+  for (const c of cards) {
+    if (c.id === excludeId) continue;
+    positions.push(c.x);
+    positions.push(c.x + c.width);
+  }
+
+  // Time ruler major tick positions (every second for short, every 5s for longer).
+  const interval = totalDuration > 30 ? 5 : 1;
+  for (let t = 0; t <= totalDuration; t += interval) {
+    positions.push(t * PPS);
+  }
+
+  return positions;
+}
+
+function findSnap(dragX: number, snapPositions: number[], tolerance: number): number | null {
+  let closest: number | null = null;
+  let closestDist = tolerance + 1;
+  for (const pos of snapPositions) {
+    const dist = Math.abs(dragX - pos);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = pos;
+    }
+  }
+  return closestDist <= tolerance ? closest : null;
+}
+
+// ── Context menu state ──────────────────────────────────────────────────────
+
+interface ContextMenuState {
+  x: number;
+  y: number;
+  cardId: string;
+  cardPath: string;
+  cardTitle: string;
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -82,7 +187,12 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
   selectedId,
   onSelectComposition,
   currentTime,
+  isPlaying,
   totalDuration,
+  onReorderComposition,
+  onDuplicateComposition,
+  onDeleteComposition,
+  onEditSource,
 }: StoryboardCanvasProps) {
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
@@ -100,9 +210,32 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // ── Drag state ────────────────────────────────────────────────────────────
+
+  const [dragState, setDragState] = useState<{
+    cardId: string;
+    offsetX: number;
+    offsetY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
+
+  const [activeSnapLine, setActiveSnapLine] = useState<number | null>(null);
+
+  // ── Context menu state ────────────────────────────────────────────────────
+
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+
   // ── Derived layout ──────────────────────────────────────────────────────
 
   const cards = useMemo(() => layoutCards(compositions), [compositions]);
+  const gaps = useMemo(() => findGaps(cards), [cards]);
+
+  // Snap positions for dragging.
+  const snapPositions = useMemo(
+    () => (dragState ? computeSnapPositions(cards, dragState.cardId, totalDuration) : []),
+    [cards, dragState, totalDuration],
+  );
 
   // ── Zoom helper ─────────────────────────────────────────────────────────
 
@@ -156,6 +289,9 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      // Close context menu on any click.
+      if (contextMenu) setContextMenu(null);
+
       if (e.button === 1 || (spaceHeld && e.button === 0)) {
         e.preventDefault();
         panDragRef.current = {
@@ -168,24 +304,115 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
     },
-    [spaceHeld, panX, panY],
+    [spaceHeld, panX, panY, contextMenu],
   );
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const drag = panDragRef.current;
-    if (!drag?.active) return;
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
-    setPanX(drag.startPanX + dx);
-    setPanY(drag.startPanY + dy);
-  }, []);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      // Pan drag.
+      const drag = panDragRef.current;
+      if (drag?.active) {
+        const dx = e.clientX - drag.startX;
+        const dy = e.clientY - drag.startY;
+        setPanX(drag.startPanX + dx);
+        setPanY(drag.startPanY + dy);
+        return;
+      }
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (panDragRef.current?.active) {
-      panDragRef.current = null;
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    }
-  }, []);
+      // Card drag.
+      if (dragState) {
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const canvasX = (e.clientX - rect.left - panX) / zoom;
+        const canvasY = (e.clientY - rect.top - panY) / zoom;
+
+        // Check snap.
+        const snapX = findSnap(canvasX, snapPositions, SNAP_TOLERANCE / zoom);
+        setActiveSnapLine(snapX);
+
+        setDragState((prev) =>
+          prev ? { ...prev, currentX: snapX ?? canvasX, currentY: canvasY } : null,
+        );
+      }
+    },
+    [dragState, panX, panY, zoom, snapPositions],
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (panDragRef.current?.active) {
+        panDragRef.current = null;
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        return;
+      }
+
+      // Card drag drop.
+      if (dragState) {
+        const newStart = Math.max(0, dragState.currentX / PPS);
+        onReorderComposition?.(dragState.cardId, newStart);
+        setDragState(null);
+        setActiveSnapLine(null);
+      }
+    },
+    [dragState, onReorderComposition],
+  );
+
+  // ── Card drag start handler ─────────────────────────────────────────────
+
+  const handleCardDragStart = useCallback(
+    (cardId: string, offsetX: number, offsetY: number) => {
+      const card = cards.find((c) => c.id === cardId);
+      if (!card) return;
+      setDragState({
+        cardId,
+        offsetX,
+        offsetY,
+        currentX: card.x,
+        currentY: card.y,
+      });
+    },
+    [cards],
+  );
+
+  // ── Context menu handlers ─────────────────────────────────────────────
+
+  const handleCardContextMenu = useCallback(
+    (cardId: string, clientX: number, clientY: number) => {
+      const card = cards.find((c) => c.id === cardId);
+      if (!card) return;
+      setContextMenu({
+        x: clientX,
+        y: clientY,
+        cardId: card.id,
+        cardPath: card.path,
+        cardTitle: card.displayTitle,
+      });
+    },
+    [cards],
+  );
+
+  const handleContextMenuClose = useCallback(() => setContextMenu(null), []);
+
+  const handleContextMenuPreview = useCallback(() => {
+    if (!contextMenu) return;
+    onSelectComposition(contextMenu.cardId, contextMenu.cardPath);
+  }, [contextMenu, onSelectComposition]);
+
+  const handleContextMenuDuplicate = useCallback(() => {
+    if (!contextMenu) return;
+    onDuplicateComposition?.(contextMenu.cardId);
+  }, [contextMenu, onDuplicateComposition]);
+
+  const handleContextMenuDelete = useCallback(() => {
+    if (!contextMenu) return;
+    onDeleteComposition?.(contextMenu.cardId);
+  }, [contextMenu, onDeleteComposition]);
+
+  const handleContextMenuEditSource = useCallback(() => {
+    if (!contextMenu) return;
+    onEditSource?.(contextMenu.cardId, contextMenu.cardPath);
+  }, [contextMenu, onEditSource]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────
 
@@ -216,7 +443,42 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
       }
 
       if (e.key === "Escape") {
+        if (contextMenu) {
+          setContextMenu(null);
+          return;
+        }
         onSelectComposition("", "");
+        return;
+      }
+
+      // Enter: open selected card in Preview.
+      if (e.key === "Enter" && selectedId) {
+        e.preventDefault();
+        const card = cards.find((c) => c.id === selectedId);
+        if (card) onSelectComposition(card.id, card.path);
+        return;
+      }
+
+      // Delete/Backspace: delete selected card.
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+        onDeleteComposition?.(selectedId);
+        return;
+      }
+
+      // Cmd+A: select all.
+      if (modKey && e.key === "a") {
+        e.preventDefault();
+        // Log for now — multi-select is future work.
+        console.log("[Storyboard] Select all cards");
+        return;
+      }
+
+      // Cmd+D: duplicate selected.
+      if (modKey && e.key === "d" && selectedId) {
+        e.preventDefault();
+        onDuplicateComposition?.(selectedId);
         return;
       }
 
@@ -238,7 +500,7 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
       window.removeEventListener("keyup", handleKeyUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compositions, selectedId]);
+  }, [compositions, selectedId, contextMenu, cards]);
 
   // ── Fit all cards into view ─────────────────────────────────────────────
 
@@ -308,6 +570,24 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
     [cards, selectedId, onSelectComposition],
   );
 
+  // ── Auto-scroll playhead into view ────────────────────────────────────
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const playheadCanvasX = currentTime * PPS;
+    const playheadScreenX = playheadCanvasX * zoom + panX;
+
+    // If the playhead is outside the visible area, scroll to keep it in view.
+    const margin = 100;
+    if (playheadScreenX < margin || playheadScreenX > rect.width - margin) {
+      setPanX(-playheadCanvasX * zoom + rect.width * 0.3);
+    }
+  }, [currentTime, isPlaying, zoom, panX]);
+
   // ── Container dimensions for minimap ────────────────────────────────────
 
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
@@ -349,6 +629,9 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
     [cards, selectedId],
   );
 
+  // Find the card being dragged for ghost rendering.
+  const dragCard = dragState ? cards.find((c) => c.id === dragState.cardId) : null;
+
   return (
     <div
       ref={containerRef}
@@ -382,21 +665,61 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
         {/* Time ruler */}
         <TimeRuler duration={totalDuration} pixelsPerSecond={PPS} />
 
+        {/* Playhead line */}
+        {isPlaying && (
+          <div
+            className="absolute top-0 w-px bg-emerald-400 z-30 pointer-events-none"
+            style={{
+              left: currentTime * PPS,
+              height: CARD_Y_OFFSET + 6 * (CARD_HEIGHT + CARD_GAP_Y), // tall enough for several tracks
+            }}
+          />
+        )}
+
+        {/* Gap visualizations */}
+        {gaps.map((gap) => {
+          const gapX = gap.start * PPS;
+          const gapW = gap.duration * PPS;
+          const gapY = CARD_Y_OFFSET + gap.track * (CARD_HEIGHT + CARD_GAP_Y);
+          return (
+            <div
+              key={`gap-${gap.start}-${gap.track}`}
+              className="absolute flex items-center justify-center"
+              style={{ left: gapX, width: gapW, top: gapY, height: CARD_HEIGHT }}
+            >
+              <div className="border border-dashed border-neutral-800 rounded-lg w-full h-full flex items-center justify-center">
+                <button
+                  type="button"
+                  className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-500 hover:text-neutral-300 transition-colors"
+                  onClick={() =>
+                    console.log(`[Storyboard] Add composition at ${gap.start.toFixed(1)}s`)
+                  }
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
         {/* Composition cards */}
         {cards.map((card) => {
           const isCurrent = currentTime >= card.start && currentTime < card.start + card.duration;
           const progress = isCurrent ? ((currentTime - card.start) / card.duration) * 100 : 0;
+
+          // If this card is being dragged, show a ghost at the original position.
+          const isBeingDragged = dragState?.cardId === card.id;
 
           return (
             <StoryboardCard
               key={card.id}
               id={card.id}
               path={card.path}
-              title={card.title}
+              title={card.displayTitle}
               start={card.start}
               duration={card.duration}
-              x={card.x}
-              y={card.y}
+              x={isBeingDragged ? dragState!.currentX : card.x}
+              y={isBeingDragged ? dragState!.currentY - CARD_HEIGHT / 2 : card.y}
               width={card.width}
               height={card.height}
               isSelected={card.id === selectedId}
@@ -405,9 +728,35 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
               zoom={zoom}
               progress={progress}
               onClick={() => onSelectComposition(card.id, card.path)}
+              onDragStart={handleCardDragStart}
+              onContextMenu={handleCardContextMenu}
             />
           );
         })}
+
+        {/* Ghost for dragged card (semi-transparent at original position) */}
+        {dragCard && dragState && (
+          <div
+            className="absolute rounded-xl border-2 border-dashed border-neutral-700 bg-neutral-800/30 pointer-events-none"
+            style={{
+              left: dragCard.x,
+              top: dragCard.y,
+              width: dragCard.width,
+              height: dragCard.height,
+            }}
+          />
+        )}
+
+        {/* Snap guide lines */}
+        {activeSnapLine != null && dragState && (
+          <div
+            className="absolute top-0 w-px bg-cyan-400/60 z-40 pointer-events-none"
+            style={{
+              left: activeSnapLine,
+              height: CARD_Y_OFFSET + 6 * (CARD_HEIGHT + CARD_GAP_Y),
+            }}
+          />
+        )}
       </div>
 
       {/* MiniMap overlay (bottom-right) */}
@@ -450,6 +799,24 @@ export const StoryboardCanvas = memo(function StoryboardCanvas({
           Fit
         </button>
       </div>
+
+      {/* Context menu */}
+      {contextMenu && (
+        <CardContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          card={{
+            id: contextMenu.cardId,
+            path: contextMenu.cardPath,
+            title: contextMenu.cardTitle,
+          }}
+          onClose={handleContextMenuClose}
+          onOpenPreview={handleContextMenuPreview}
+          onDuplicate={handleContextMenuDuplicate}
+          onDelete={handleContextMenuDelete}
+          onEditSource={handleContextMenuEditSource}
+        />
+      )}
     </div>
   );
 });

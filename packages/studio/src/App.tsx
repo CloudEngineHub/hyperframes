@@ -1083,6 +1083,7 @@ export function StudioApp() {
         duration: el.duration,
       }));
   }, [timelineElements]);
+
   const toggleLeftSidebar = useCallback(() => {
     setLeftCollapsed((collapsed) => !collapsed);
   }, []);
@@ -1726,6 +1727,39 @@ export function StudioApp() {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setAppToast({ message, tone });
     toastTimerRef.current = setTimeout(() => setAppToast(null), 4000);
+  }, []);
+
+  // ── Storyboard editing handlers ──────────────────────────────────────────
+
+  const handleStoryboardReorder = useCallback(
+    (compositionId: string, newStart: number) => {
+      // For now, just log — actual HTML patching is complex.
+      console.log(`[Storyboard] Reorder: ${compositionId} → start=${newStart.toFixed(2)}s`);
+      showToast(`Moved to ${newStart.toFixed(1)}s`, "info");
+    },
+    [showToast],
+  );
+
+  const handleStoryboardDuplicate = useCallback(
+    (compositionId: string) => {
+      console.log(`[Storyboard] Duplicate: ${compositionId}`);
+      showToast("Duplicated composition", "info");
+    },
+    [showToast],
+  );
+
+  const handleStoryboardDelete = useCallback(
+    (compositionId: string) => {
+      console.log(`[Storyboard] Delete: ${compositionId}`);
+      showToast("Deleted composition", "info");
+    },
+    [showToast],
+  );
+
+  const handleStoryboardEditSource = useCallback((_compositionId: string, path: string) => {
+    console.log(`[Storyboard] Edit source: ${_compositionId} (${path})`);
+    setActiveCompPath(path || null);
+    setViewMode("preview");
   }, []);
 
   const handleCaptureFrameClick = useCallback(
@@ -4244,6 +4278,10 @@ export function StudioApp() {
               currentTime={currentTime}
               isPlaying={isPlaying}
               totalDuration={effectiveTimelineDuration}
+              onReorderComposition={handleStoryboardReorder}
+              onDuplicateComposition={handleStoryboardDuplicate}
+              onDeleteComposition={handleStoryboardDelete}
+              onEditSource={handleStoryboardEditSource}
             />
           )}
         </div>
