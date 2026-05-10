@@ -67,21 +67,31 @@ All beats are full-frame divs stacked at position (0,0). GSAP controls visibilit
 
 ### Beat Sequencing
 
-```javascript
-var beats = [
-  { id: "b01", at: 0, dur: 1.8 }, // Statement
-  { id: "b02", at: 1.8, dur: 1.0 }, // Emphasis
-  { id: "b03", at: 2.8, dur: 0.9 }, // Full-bleed image
-  // ...
-];
+The composition ID in `data-composition-id` MUST match the key in `window.__timelines`.
 
-beats.forEach(function (b) {
-  var el = document.getElementById(b.id);
-  tl.set(el, { opacity: 1 }, b.at);
-  gsap.set(el, { scale: 1.012 });
-  tl.to(el, { scale: 1, duration: 0.25, ease: "power2.out" }, b.at);
-  tl.set(el, { opacity: 0 }, b.at + b.dur);
-});
+```javascript
+(function () {
+  window.__timelines = window.__timelines || {};
+  var tl = gsap.timeline({ paused: true });
+
+  var beats = [
+    { id: "b01", at: 0, dur: 1.8 }, // Statement
+    { id: "b02", at: 1.8, dur: 1.0 }, // Emphasis
+    { id: "b03", at: 2.8, dur: 0.9 }, // Full-bleed image
+    // ...
+  ];
+
+  beats.forEach(function (b) {
+    var el = document.getElementById(b.id);
+    tl.set(el, { opacity: 1 }, b.at);
+    gsap.set(el, { scale: 1.012 });
+    tl.to(el, { scale: 1, duration: 0.25, ease: "power2.out" }, b.at);
+    tl.set(el, { opacity: 0 }, b.at + b.dur);
+  });
+
+  // CRITICAL: register with the EXACT data-composition-id
+  window.__timelines["launch"] = tl;
+})();
 ```
 
 ## Beat Types
@@ -266,6 +276,7 @@ tl.from(el, { opacity: 0, duration: 0.3, ease: "power1.out" }, t);
 - [ ] Scale pulse (1.012→1.0) on every beat entry
 - [ ] Contact sheet generated and reviewed
 - [ ] No dead/blank frames between beats
+- [ ] First beat has `style="opacity:1"` inline (GSAP `set` at t=0 can miss frame 0)
 - [ ] CTA beat holds for 3+ seconds at the end
 - [ ] Deterministic — no Math.random(), no Date.now()
 - [ ] Paused timeline registered to `window.__timelines`
