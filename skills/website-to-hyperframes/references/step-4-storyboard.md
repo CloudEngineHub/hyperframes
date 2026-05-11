@@ -85,6 +85,10 @@ Before writing any beats, audit every captured asset. Print this table:
 
 Read [beat-direction.md](../../hyperframes/references/beat-direction.md) for the general beat template: concept, mood, animation choreography (energy verbs), transitions (shader vs CSS vs hard cut decision matrix), depth layers, SFX cues, rhythm planning, and velocity-matched transitions.
 
+**Important:** The agent decides the number of beats and their durations based on the script and brand — there is no fixed beat count. Some videos need 4 beats, others need 8. Let the content dictate structure.
+
+**CTA / closing beats** are consistently the weakest in auto-generated videos. Agents treat them as "logo + tagline + done" with minimal animation. A good CTA beat should be as visually rich as any other beat — the logo entrance should be an event (SVG path draw, scale bounce with overshoot), the background should have ambient motion, and the hold period should have continuous breathing/pulsing so no frame is static. Plan at least 15 GSAP calls for CTA beats, same as feature beats.
+
 In the capture pipeline, each beat also includes:
 
 ### VO cue
