@@ -27,7 +27,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "build": "bun run build:fonts && bun run --cwd ../.. build:hyperframes-runtime:modular && node build.mjs",
+    "build": "bun run build:fonts && bun run --cwd ../.. build:hyperframes-runtime:modular && bun build.mjs",
     "build:fonts": "node -e \"const fs=require('fs');if(!fs.existsSync('src/services/fontData.generated.ts')){const {execSync}=require('child_process');execSync('node --experimental-strip-types scripts/generate-font-data.ts',{stdio:'inherit'})}else{console.log('[build:fonts] skipped — fontData.generated.ts already exists')}\"",
     "typecheck": "tsc --noEmit",
     "parity:check": "tsx src/parity-harness.ts",
