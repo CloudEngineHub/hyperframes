@@ -6,7 +6,7 @@
  */
 
 import { build } from "esbuild";
-import { mkdirSync, rmSync, readFileSync } from "fs";
+import { mkdirSync, rmSync, readFileSync, copyFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -65,7 +65,6 @@ await Promise.all([
 ]);
 
 // Copy core runtime artifacts so the producer can find them at dist/
-import { copyFileSync, existsSync } from "fs";
 const coreDistDir = resolve(scriptDir, "../core/dist");
 try {
   const manifestSrc = resolve(coreDistDir, "hyperframe.manifest.json");
@@ -80,12 +79,39 @@ try {
   console.warn("[Build] Warning: Could not copy runtime artifacts:", e.message);
 }
 
-// Generate .d.ts declarations (esbuild doesn't emit them).
-// Use "bun x tsc" so Bun's module resolver handles node_modules junctions
-// on Windows instead of Node.js's realpathSync (which returns EPERM).
-import { execSync } from "child_process";
-execSync("bun x tsc --emitDeclarationOnly --declaration --declarationMap", {
-  stdio: "inherit",
+// Generate .d.ts declarations via the TypeScript compiler API (imported directly
+// so Bun's junction-aware module resolver is used instead of spawning a Node.js
+// child process, which fails on Windows with EPERM when stat-ing junctions).
+import ts from "typescript";
+
+const configPath = ts.findConfigFile(scriptDir, ts.sys.fileExists, "tsconfig.json");
+if (!configPath) throw new Error("tsconfig.json not found");
+
+const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+if (error) throw new Error(ts.formatDiagnostic(error, ts.createCompilerHost({})));
+
+const { options, fileNames, errors } = ts.parseJsonConfigFileContent(
+  config,
+  ts.sys,
+  dirname(configPath),
+);
+if (errors.length) {
+  throw new Error(ts.formatDiagnostics(errors, ts.createCompilerHost(options)));
+}
+
+const program = ts.createProgram(fileNames, {
+  ...options,
+  declaration: true,
+  declarationMap: true,
+  emitDeclarationOnly: true,
+  noEmit: false,
 });
+
+const { diagnostics, emitSkipped } = program.emit();
+const allDiags = [...ts.getPreEmitDiagnostics(program), ...diagnostics];
+if (allDiags.length) {
+  console.error(ts.formatDiagnosticsWithColorAndContext(allDiags, ts.createCompilerHost(options)));
+}
+if (emitSkipped) process.exit(1);
 
 console.log("[Build] Complete: dist/index.js, dist/public-server.js, *.d.ts");
