@@ -247,9 +247,11 @@ export const NLELayout = memo(function NLELayout({
   const currentLevel = compositionStack[compositionStack.length - 1];
   const directUrl = compositionStack.length > 1 ? currentLevel.previewUrl : undefined;
 
+  const onIframeRefStable = useRef(onIframeRef);
+  onIframeRefStable.current = onIframeRef;
   useEffect(() => {
-    onIframeRef?.(iframeRef.current);
-  }, [compositionStack.length, onIframeRef, refreshKey, iframeRef]);
+    onIframeRefStable.current?.(iframeRef.current);
+  }, [compositionStack.length, refreshKey, iframeRef]);
 
   // Resize divider handlers
   const handleDividerPointerDown = useCallback(
