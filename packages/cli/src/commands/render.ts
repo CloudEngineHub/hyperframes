@@ -18,7 +18,7 @@ export const examples: Example[] = [
   ["High quality at 60fps", "hyperframes render --fps 60 --quality high --output hd.mp4"],
   ["Deterministic render via Docker", "hyperframes render --docker --output deterministic.mp4"],
   ["Parallel rendering with 6 workers", "hyperframes render --workers 6 --output fast.mp4"],
-  ["Opt out of browser GPU render", "hyperframes render --no-browser-gpu --output cpu.mp4"],
+  ["Opt in to browser GPU render", "hyperframes render --browser-gpu --output gpu-browser.mp4"],
   ["HDR output (auto-detected)", "hyperframes render --output hdr-output.mp4"],
   [
     "Override composition variables (parametrized render)",
@@ -180,7 +180,7 @@ export default defineCommand({
     "browser-gpu": {
       type: "boolean",
       description:
-        "Force host GPU acceleration for Chrome/WebGL capture. Default: auto (probe on first launch; fall back to software if no GPU). Use --no-browser-gpu to force software (SwiftShader).",
+        "Force host GPU acceleration for Chrome/WebGL capture. Default: software (SwiftShader) for stable cross-platform frame capture. Set PRODUCER_BROWSER_GPU_MODE=auto to probe hardware availability.",
     },
     quiet: {
       type: "boolean",
@@ -570,8 +570,8 @@ interface RenderOptions {
   gpu: boolean;
   /**
    * Chrome WebGL backend mode. "auto" probes on first launch and falls back
-   * to "software" if no usable GPU. Defaults to "software" when omitted to
-   * stay backwards-compatible with callers that pre-date the tri-state.
+   * to "software" if no usable GPU. Defaults to "software" when omitted for
+   * deterministic local frame capture.
    */
   browserGpuMode?: "auto" | "hardware" | "software";
   hdrMode: "auto" | "force-hdr" | "force-sdr";
@@ -734,12 +734,13 @@ export function validateVariablesAgainstProject(
  *      `--no-browser-gpu` → "software".
  *   3. Env var `PRODUCER_BROWSER_GPU_MODE` accepts "hardware" / "software" /
  *      "auto".
- *   4. Default = "auto" — engine probes WebGL availability on first launch
- *      and falls back to software if the host lacks a usable GPU.
+ *   4. Default = "software" — deterministic SwiftShader capture unless the
+ *      user explicitly opts into host GPU rendering.
  *
- * Returning "auto" by default lets local renders Just Work whether or not the
- * host has a GPU, while preserving the explicit overrides for CI / power
- * users who want failure-on-misconfig.
+ * Plain DOM renders can hit platform-specific GPU compositor bugs on local
+ * Chrome, especially on older Apple Silicon. Keep the default aligned with
+ * the engine's conservative software mode, while preserving explicit hardware
+ * and env-driven auto probing for power users.
  */
 export function resolveBrowserGpuForCli(
   useDocker: boolean,
@@ -750,7 +751,7 @@ export function resolveBrowserGpuForCli(
   if (browserGpuArg === true) return "hardware";
   if (browserGpuArg === false) return "software";
   if (envMode === "hardware" || envMode === "software" || envMode === "auto") return envMode;
-  return "auto";
+  return "software";
 }
 
 const DOCKER_IMAGE_PREFIX = "hyperframes-renderer";

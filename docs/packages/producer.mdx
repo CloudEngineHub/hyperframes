@@ -226,7 +226,7 @@ When GPU encoding is enabled, Hyperframes detects the available FFmpeg hardware 
 npx hyperframes doctor
 ```
 
-The CLI enables local Chrome/WebGL GPU capture automatically and supports `--no-browser-gpu` as an opt-out. When using the producer API directly, pass an engine config override:
+The CLI uses software Chrome/WebGL capture by default for stable cross-platform frame output. Use `--browser-gpu` to opt into host GPU capture, or set `PRODUCER_BROWSER_GPU_MODE=auto` to probe hardware availability and fall back to software. When using the producer API directly, pass an engine config override:
 
 ```typescript
 import { resolveConfig } from '@hyperframes/producer';

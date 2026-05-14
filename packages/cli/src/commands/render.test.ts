@@ -84,7 +84,7 @@ describe("renderLocal browser GPU config", () => {
     });
   }, 15_000);
 
-  it("forwards browserGpuMode='auto' into producer config (probe-then-choose)", async () => {
+  it("forwards browserGpuMode='auto' into producer config when explicitly requested by a caller", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: { num: 30, den: 1 },
       quality: "standard",
@@ -102,7 +102,7 @@ describe("renderLocal browser GPU config", () => {
     });
   });
 
-  it("passes an explicit hardware override for default local browser GPU", async () => {
+  it("passes an explicit hardware override for --browser-gpu", async () => {
     await renderLocal("/tmp/project", "/tmp/out.mp4", {
       fps: { num: 30, den: 1 },
       quality: "standard",
@@ -121,8 +121,8 @@ describe("renderLocal browser GPU config", () => {
   });
 
   it("resolves browser GPU from CLI flags, Docker mode, and env fallback", () => {
-    // Default (no flag, no env): auto — engine probes and chooses.
-    expect(resolveBrowserGpuForCli(false, undefined, undefined)).toBe("auto");
+    // Default (no flag, no env): software for stable cross-platform captures.
+    expect(resolveBrowserGpuForCli(false, undefined, undefined)).toBe("software");
     // Env override
     expect(resolveBrowserGpuForCli(false, undefined, "hardware")).toBe("hardware");
     expect(resolveBrowserGpuForCli(false, undefined, "software")).toBe("software");

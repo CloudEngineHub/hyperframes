@@ -20,13 +20,13 @@ Requires: Docker installed and running.
 - `--crf` — Override encoder CRF (mutually exclusive with `--video-bitrate`)
 - `--video-bitrate` — Target video bitrate such as `10M` (mutually exclusive with `--crf`)
 - `--gpu` — Use GPU encoding (NVENC, VideoToolbox, VAAPI, QSV)
-- `--browser-gpu` / `--no-browser-gpu` — Force host GPU or software (SwiftShader) for Chrome/WebGL capture. Default for local renders is `auto` — probe WebGL availability on first launch and fall back to software if no GPU is reachable. Docker mode always uses software.
+- `--browser-gpu` / `--no-browser-gpu` — Force host GPU or software (SwiftShader) for Chrome/WebGL capture. Local renders default to software for stable cross-platform capture. Set `PRODUCER_BROWSER_GPU_MODE=auto` to probe hardware availability. Docker mode always uses software.
 - `-o, --output` — Custom output path
 
 ## Tips
 
 - Use `draft` quality for fast previews during development
-- Local renders auto-detect GPU on first launch; use `--browser-gpu` to force hardware (errors if no GPU) or `--no-browser-gpu` to force SwiftShader
+- Local renders use software Chrome capture by default; use `--browser-gpu` to force hardware (errors if no GPU) or `PRODUCER_BROWSER_GPU_MODE=auto` to probe and fall back to SwiftShader
 - Use `--gpu` when a local render also benefits from hardware FFmpeg encoding
 - Use `npx hyperframes benchmark` to find optimal settings
 - 4 workers is usually the sweet spot for most compositions
