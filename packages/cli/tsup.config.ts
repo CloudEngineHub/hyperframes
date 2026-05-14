@@ -52,6 +52,12 @@ var __dirname = __hf_dirname(__filename);`,
     "esbuild",
     "giget",
     "postcss",
+    // `webgpu` (Dawn) ships a 70+ MB native .dawn.node binary per
+    // platform. Keeping it external means tsup won't try to inline it
+    // and the CLI install resolves it (or doesn't, if the optionalDep
+    // skipped) from the user's node_modules. The shader-blend worker
+    // dynamically `import("webgpu")` and falls back to CPU on absence.
+    "webgpu",
   ],
   noExternal: [
     "@hyperframes/core",

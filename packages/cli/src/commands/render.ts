@@ -182,6 +182,15 @@ export default defineCommand({
       description:
         "Force host GPU acceleration for Chrome/WebGL capture. Default: auto (probe on first launch; fall back to software if no GPU). Use --no-browser-gpu to force software (SwiftShader).",
     },
+    "gpu-shader-blend": {
+      type: "boolean",
+      default: false,
+      description:
+        "EXPERIMENTAL. Use the native WebGPU (Dawn) compositor for shader-transition blends when a GPU is available. " +
+        "Falls back to CPU when Dawn isn't installed or no GPU adapter is present. " +
+        "Determinism: PSNR ≥ 50dB vs the CPU canonical path, not byte-equal. " +
+        "Currently ports a subset of shaders (crossfade); unsupported shaders transparently fall back to CPU.",
+    },
     quiet: {
       type: "boolean",
       description: "Suppress verbose output",
@@ -291,6 +300,17 @@ export default defineCommand({
         process.exit(1);
       }
       workers = parsed;
+    }
+
+    // ── GPU shader-blend (Dawn/WebGPU, EXPERIMENTAL) ────────────────────
+    // The flag flips an env var that the shader-blend worker reads on first
+    // message. We pipe through an env var (rather than threading the flag
+    // through render orchestrator → captureHdrStage → captureHdrHybridLoop
+    // → pool → worker) because env vars survive the worker_threads boundary
+    // unchanged and require zero plumbing. The worker logs once whether it
+    // could acquire a GPU; if not, the existing CPU path runs as before.
+    if (args["gpu-shader-blend"] === true) {
+      process.env.HF_DAWN_WEBGPU = "1";
     }
 
     // ── Validate max-concurrent-renders ─────────────────────────────────

@@ -58,6 +58,21 @@ import { parentPort } from "node:worker_threads";
 //    redirects `@hyperframes/engine/shader-transitions` to the same TS
 //    source and bundles it inline, so behavior is identical.
 import { TRANSITIONS, crossfade } from "@hyperframes/engine/shader-transitions";
+// Native WebGPU compositor (Dawn). Opt-in via HF_DAWN_WEBGPU=1. The module
+// gracefully reports back when Dawn isn't available; this worker falls back
+// to the CPU shader path in that case (and for any shader without a WGSL
+// implementation). See `shaderTransitionGpu.ts` for the design.
+//
+// Import strategy: a *dynamic* import is used rather than a top-level
+// import because raw-TS worker_threads execution (vitest + tsx) cannot
+// rewrite sibling `.js` relative specifiers through the Worker boundary —
+// the tsx `.js → .ts` resolver hook applies on the parent's module graph
+// but not on `new Worker(<ts-file>)`'s independent graph. A *dynamic*
+// `import(...)` defers resolution to first use, and is also gated by the
+// HF_DAWN_WEBGPU flag — when off (the default), the GPU module is never
+// loaded at all, so the test/dev path never trips. Under tsup, both forms
+// inline the module into the bundle identically.
+import type { GpuCompositor } from "./shaderTransitionGpu.js";
 
 interface ShaderJobRequest {
   shader: string;
@@ -86,6 +101,115 @@ interface ShaderJobErr {
 
 export type ShaderJobResult = ShaderJobOk | ShaderJobErr;
 
+/**
+ * GPU init state for this worker. Resolves once on first message if the
+ * HF_DAWN_WEBGPU flag is set. After resolution it's either a usable
+ * compositor or a permanent disable (logged once). The flag is read on
+ * first use so tests can flip it without spawning a new worker.
+ */
+type GpuState =
+  | { kind: "uninit" }
+  | { kind: "initing"; promise: Promise<GpuState> }
+  | { kind: "off"; reason: string }
+  | { kind: "on"; compositor: GpuCompositor };
+let gpuState: GpuState = { kind: "uninit" };
+
+async function ensureGpuState(): Promise<GpuState> {
+  if (gpuState.kind === "on" || gpuState.kind === "off") return gpuState;
+  if (gpuState.kind === "initing") return gpuState.promise;
+  if (process.env.HF_DAWN_WEBGPU !== "1") {
+    gpuState = { kind: "off", reason: "HF_DAWN_WEBGPU not set" };
+    return gpuState;
+  }
+  const initPromise: Promise<GpuState> = (async () => {
+    // Dynamic import (see top-of-file comment): defer GPU module load to
+    // first use, and gate it on HF_DAWN_WEBGPU so the dev/test path
+    // never trips the worker_threads `.js` resolver. The relative
+    // specifier resolves through the tsup bundle inlining in
+    // production and the tsx loader in dev (which DOES handle the
+    // dynamic-import path via its `--import` esm-loader registration,
+    // unlike top-level worker-internal sibling `.js` imports).
+    try {
+      const mod =
+        (await import("./shaderTransitionGpu.js")) as typeof import("./shaderTransitionGpu.js");
+      const result = await mod.initGpuCompositor();
+      if (result.ok) {
+        gpuState = { kind: "on", compositor: result.compositor };
+        // eslint-disable-next-line no-console
+        console.log("[shaderTransitionWorker] GPU compositor active (Dawn/WebGPU)");
+      } else {
+        gpuState = { kind: "off", reason: result.reason };
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[shaderTransitionWorker] GPU compositor unavailable, falling back to CPU: ${result.reason}`,
+        );
+      }
+    } catch (err) {
+      // Module load itself failed (e.g. raw-TS worker boundary rejected
+      // the sibling .js specifier). Treat as a clean "no GPU" — the CPU
+      // path runs as before.
+      const reason = err instanceof Error ? err.message : String(err);
+      gpuState = { kind: "off", reason: `GPU module load failed: ${reason}` };
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[shaderTransitionWorker] GPU module not loadable, falling back to CPU: ${reason}`,
+      );
+    }
+    return gpuState;
+  })();
+  gpuState = { kind: "initing", promise: initPromise };
+  return initPromise;
+}
+
+async function runBlend(msg: ShaderJobRequest): Promise<void> {
+  const { shader, bufferA, bufferB, output, width, height, progress } = msg;
+  const bufA = Buffer.from(bufferA);
+  const bufB = Buffer.from(bufferB);
+  const out = Buffer.from(output);
+
+  let usedGpu = false;
+  try {
+    const state = await ensureGpuState();
+    if (state.kind === "on" && state.compositor.supportsShader(shader)) {
+      try {
+        await state.compositor.blend(shader, bufA, bufB, out, width, height, progress);
+        usedGpu = true;
+      } catch (err) {
+        // Mid-flight GPU failure — disable the GPU path for the rest of
+        // this worker's life rather than thrashing init on every frame, and
+        // fall through to CPU below so the current frame still completes.
+        const reason = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[shaderTransitionWorker] GPU blend failed mid-render, disabling GPU path: ${reason}`,
+        );
+        await state.compositor.dispose().catch(() => undefined);
+        gpuState = { kind: "off", reason: `mid-render failure: ${reason}` };
+      }
+    }
+    if (!usedGpu) {
+      const fn = TRANSITIONS[shader] ?? crossfade;
+      fn(bufA, bufB, out, width, height, progress);
+    }
+    const reply: ShaderJobOk = {
+      ok: true,
+      bufferA,
+      bufferB,
+      output,
+    };
+    parentPort!.postMessage(reply, [bufferA, bufferB, output]);
+  } catch (err) {
+    const reply: ShaderJobErr = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      bufferA,
+      bufferB,
+      output,
+    };
+    parentPort!.postMessage(reply, [bufferA, bufferB, output]);
+  }
+}
+
 if (!parentPort) {
   // Defensive — this module is only meaningful inside a worker_thread.
   // If imported on the main thread (e.g. by an accidental top-level test),
@@ -94,34 +218,7 @@ if (!parentPort) {
   console.warn("[shaderTransitionWorker] no parentPort; module loaded on main thread");
 } else {
   parentPort.on("message", (msg: ShaderJobRequest) => {
-    const { shader, bufferA, bufferB, output, width, height, progress } = msg;
-    // Re-wrap the transferred ArrayBuffers as Node Buffers. Buffer.from(ab)
-    // is a zero-copy view over the same underlying memory — no allocation,
-    // no data copy. The shader functions are typed to take Buffer and use
-    // its readUInt16LE/writeUInt16LE API.
-    const bufA = Buffer.from(bufferA);
-    const bufB = Buffer.from(bufferB);
-    const out = Buffer.from(output);
-
-    try {
-      const fn = TRANSITIONS[shader] ?? crossfade;
-      fn(bufA, bufB, out, width, height, progress);
-      const reply: ShaderJobOk = {
-        ok: true,
-        bufferA,
-        bufferB,
-        output,
-      };
-      parentPort!.postMessage(reply, [bufferA, bufferB, output]);
-    } catch (err) {
-      const reply: ShaderJobErr = {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        bufferA,
-        bufferB,
-        output,
-      };
-      parentPort!.postMessage(reply, [bufferA, bufferB, output]);
-    }
+    // Fire-and-forget — runBlend handles its own reply + error path.
+    void runBlend(msg);
   });
 }
