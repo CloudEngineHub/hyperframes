@@ -300,6 +300,41 @@ function applyPal(slug) {
   style.textContent = css;
 }
 
+function getSlides(doc) {
+  var deckStage = doc.querySelector("deck-stage");
+  if (deckStage) {
+    var root = deckStage.shadowRoot || deckStage;
+    var s = root.querySelectorAll("section.slide, .slide");
+    if (s.length === 0) s = deckStage.querySelectorAll("section.slide, section, .slide");
+    return {slides: s, mode: "deckstage"};
+  }
+  var slides = doc.querySelectorAll("section.slide, div.slide, .slide");
+  if (slides.length === 0) return {slides: [], mode: "none"};
+  var first = slides[0];
+  var parent = first.parentElement;
+  var ps = parent ? getComputedStyle(parent) : null;
+  if (ps && (ps.display === "flex" || ps.display === "inline-flex") && ps.flexWrap === "nowrap" && ps.overflowX !== "hidden") {
+    return {slides: slides, mode: "scroll"};
+  }
+  var cs = first.ownerDocument.defaultView.getComputedStyle(first);
+  if (cs.flex && cs.flex.indexOf("100vw") !== -1) {
+    return {slides: slides, mode: "scroll"};
+  }
+  return {slides: slides, mode: "active"};
+}
+
+function showSlide(doc, slides, mode, idx) {
+  if (mode === "scroll") {
+    var target = slides[idx];
+    if (target) target.scrollIntoView({behavior: "instant", inline: "start", block: "start"});
+  } else {
+    slides.forEach(function(sl, i) {
+      if (i === idx) { sl.classList.add("active"); sl.style.display = ""; sl.style.visibility = "visible"; sl.style.opacity = "1"; }
+      else { sl.classList.remove("active"); sl.style.display = "none"; }
+    });
+  }
+}
+
 function goSlide(slug, delta) {
   var s = states[slug];
   if (!s) return;
@@ -310,11 +345,8 @@ function goSlide(slug, delta) {
 
   var ifr = document.getElementById("ifr-" + slug);
   if (!ifr || !ifr.contentDocument) return;
-  var slides = ifr.contentDocument.querySelectorAll(".slide");
-  slides.forEach(function(sl, i) {
-    if (i === n) { sl.classList.add("active"); sl.style.display = "flex"; }
-    else { sl.classList.remove("active"); sl.style.display = "none"; }
-  });
+  var info = getSlides(ifr.contentDocument);
+  showSlide(ifr.contentDocument, info.slides, info.mode, n);
 
   var num = document.getElementById("num-" + slug);
   if (num) num.textContent = (n+1) + "/" + s.tot;
@@ -326,15 +358,25 @@ function onLoad(slug) {
   var ifr = document.getElementById("ifr-" + slug);
   if (!ifr || !ifr.contentDocument) return;
   var doc = ifr.contentDocument;
-  var slides = doc.querySelectorAll(".slide");
-  states[slug] = { cur: 0, tot: slides.length };
-
-  slides.forEach(function(sl, i) {
-    if (i === 0) { sl.classList.add("active"); sl.style.display = "flex"; }
-    else { sl.classList.remove("active"); sl.style.display = "none"; }
-  });
 
   doc.querySelectorAll("script").forEach(function(s) { s.remove(); });
+
+  var info = getSlides(doc);
+  var slides = info.slides;
+  states[slug] = { cur: 0, tot: slides.length, mode: info.mode };
+
+  if (info.mode === "scroll") {
+    var container = slides[0] ? slides[0].parentElement : null;
+    if (container) {
+      container.style.overflow = "hidden";
+      container.scrollLeft = 0;
+      if (container.parentElement) container.parentElement.style.overflow = "hidden";
+    }
+    doc.body.style.overflow = "hidden";
+    doc.documentElement.style.overflow = "hidden";
+  } else {
+    showSlide(doc, slides, info.mode, 0);
+  }
 
   var card = ifr.closest(".cprev");
   if (card) {
