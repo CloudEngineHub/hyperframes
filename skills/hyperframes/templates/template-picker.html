@@ -414,7 +414,7 @@ function showSlide(doc, slides, mode, idx) {
       }
     });
   } else {
-    // Scroll-stacked: position via scrollTop, all slides stay visible
+    // Scroll-stacked: translate container to show target slide
     slides.forEach(function(sl, i) {
       sl.style.visibility = "visible";
       sl.style.opacity = "1";
@@ -428,11 +428,10 @@ function showSlide(doc, slides, mode, idx) {
         sl.classList.remove("active");
       }
     });
-    // Scroll container to target
     var parent = target.parentElement;
-    if (parent) { parent.scrollTop = target.offsetTop; parent.scrollLeft = target.offsetLeft; }
-    doc.documentElement.scrollTop = target.offsetTop;
-    doc.body.scrollTop = target.offsetTop;
+    if (parent) {
+      parent.style.transform = "translateY(-" + target.offsetTop + "px)";
+    }
   }
 }
 
@@ -495,9 +494,17 @@ function onLoad(slug) {
   var slides = info.slides;
   states[slug] = { cur: 0, tot: slides.length, mode: info.mode };
 
-  // Lock overflow so only one slide is visible at a time
-  doc.body.style.overflow = "hidden";
-  doc.documentElement.style.overflow = "hidden";
+  // For scroll-mode: find the slides container and clip it to one slide height
+  if (info.mode === "scroll" && slides[0]) {
+    var container = slides[0].parentElement;
+    if (container) {
+      container.style.height = "1080px";
+      container.style.overflow = "hidden";
+      container.style.position = "relative";
+    }
+    doc.body.style.overflow = "hidden";
+    doc.documentElement.style.overflow = "hidden";
+  }
   showSlide(doc, slides, info.mode, 0);
 
   var card = ifr.closest(".cprev");
