@@ -107,6 +107,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         function mulberry32(seed) {
           return function () {
             seed |= 0;
@@ -179,13 +192,16 @@
           grp.className = "wp-group";
           grp.id = "wp-grp-" + gi;
 
+          var groupText = groupWords.map(function (w) { return w.text.toUpperCase(); }).join(" ");
+          var computedSize = fitFontSize(groupText, 88, "800", "Poppins", 1720);
+
           groupWords.forEach(function (w, i) {
             var wi = g.wordStart + i;
             var span = document.createElement("span");
             span.className = "wp-word";
             span.id = "wp-w-" + wi;
             span.textContent = w.text.toUpperCase();
-            span.style.fontSize = "88px";
+            span.style.fontSize = computedSize + "px";
             grp.appendChild(span);
           });
 

@@ -293,6 +293,19 @@
         });
       }
 
+      var _fitCanvas = document.createElement("canvas");
+      var _fitCtx = _fitCanvas.getContext("2d");
+      function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+        var size = baseFontSize;
+        var minSize = Math.floor(baseFontSize * 0.45);
+        while (size > minSize) {
+          _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+          if (_fitCtx.measureText(text).width <= maxWidth) return size;
+          size -= 2;
+        }
+        return minSize;
+      }
+
       var measureCanvas = document.createElement("canvas");
       var measureContext = measureCanvas.getContext("2d");
 
@@ -382,6 +395,8 @@
       function buildCaptions(groups) {
         var stage = document.getElementById("caption-stage");
         groups.forEach(function (group, groupIndex) {
+          var groupText = group.words.map(function (w) { return w.text.toUpperCase(); }).join(" ");
+          var computedSize = fitFontSize(groupText, CAPTION_FONT_SIZE, "900", "Gabarito", SAFE_ZONE_WIDTH);
           var groupEl = document.createElement("div");
           groupEl.id = "caption-group-" + groupIndex;
           groupEl.className = "caption-group";
@@ -401,6 +416,7 @@
             wordEl.className = "caption-word";
             wordEl.textContent = word.text.toUpperCase();
             wordEl.style.color = color;
+            wordEl.style.fontSize = computedSize + "px";
             wordEl.style.textShadow = shadowForColor(color);
             lineEl.appendChild(wordEl);
           });

@@ -247,6 +247,19 @@
         { text: "cinema.", start: 7.3, end: 7.7 },
       ];
 
+      var _fitCanvas = document.createElement("canvas");
+      var _fitCtx = _fitCanvas.getContext("2d");
+      function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+        var size = baseFontSize;
+        var minSize = Math.floor(baseFontSize * 0.45);
+        while (size > minSize) {
+          _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+          if (_fitCtx.measureText(text).width <= maxWidth) return size;
+          size -= 2;
+        }
+        return minSize;
+      }
+
       gsap.registerPlugin && gsap.registerPlugin();
 
       function cleanText(text) {
@@ -378,7 +391,8 @@
 
       function makeGroup(words, groupIndex) {
         var colors = assignWordColors(words, groupIndex);
-        var fontSize = BASE_FONT_SIZE;
+        var groupText = words.map(function (w) { return w.text.toUpperCase(); }).join(" ");
+        var fontSize = fitFontSize(groupText, BASE_FONT_SIZE, "800", "Montserrat", SAFE_ZONE_WIDTH);
         while (fontSize > MIN_FONT_SIZE && !splitLinesForGroup(words, colors, fontSize)) {
           fontSize -= 2;
         }

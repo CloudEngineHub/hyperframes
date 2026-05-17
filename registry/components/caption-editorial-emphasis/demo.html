@@ -152,6 +152,19 @@
       var ENTRY_DUR = 0.1;
       var SLIDE_DUR = 0.2;
 
+      var _fitCanvas = document.createElement("canvas");
+      var _fitCtx = _fitCanvas.getContext("2d");
+      function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+        var size = baseFontSize;
+        var minSize = Math.floor(baseFontSize * 0.45);
+        while (size > minSize) {
+          _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+          if (_fitCtx.measureText(text).width <= maxWidth) return size;
+          size -= 2;
+        }
+        return minSize;
+      }
+
       // Generic transcript words
       var W = [
         { text: "Every", start: 0.0, end: 0.3 },
@@ -260,6 +273,16 @@
 
       var CLASS_MAP = { n: "word word--normal", i: "word word--italic", e: "word word--emphasis" };
 
+      function computeLineSize(linePairs) {
+        var hasEmphasis = linePairs.some(function (p) { return p[1] === "e"; });
+        if (hasEmphasis) {
+          var lineText = linePairs.map(function (p) { return W[p[0]].text; }).join(" ");
+          return fitFontSize(lineText, 180, "800", "Playfair Display", SAFE_WIDTH);
+        }
+        var lineText = linePairs.map(function (p) { return W[p[0]].text; }).join(" ");
+        return fitFontSize(lineText, 86, "400", "Inter", SAFE_WIDTH);
+      }
+
       function buildBlocks() {
         var stage = document.getElementById("caption-stage");
         BLOCKS.forEach(function (block, bi) {
@@ -267,6 +290,7 @@
           el.className = "caption-block";
           el.id = "b" + bi;
 
+          var l1Size = computeLineSize(block.line1);
           var l1 = document.createElement("div");
           l1.className = "caption-line";
           l1.id = "b" + bi + "L1";
@@ -275,11 +299,17 @@
             span.className = CLASS_MAP[pair[1]];
             span.id = "b" + bi + "L1w" + wi;
             span.textContent = W[pair[0]].text;
+            if (pair[1] === "e") {
+              span.style.fontSize = l1Size + "px";
+            } else {
+              span.style.fontSize = l1Size + "px";
+            }
             l1.appendChild(span);
           });
           el.appendChild(l1);
 
           if (block.line2) {
+            var l2Size = computeLineSize(block.line2);
             var l2 = document.createElement("div");
             l2.className = "caption-line";
             l2.id = "b" + bi + "L2";
@@ -288,6 +318,11 @@
               span.className = CLASS_MAP[pair[1]];
               span.id = "b" + bi + "L2w" + wi;
               span.textContent = W[pair[0]].text;
+              if (pair[1] === "e") {
+                span.style.fontSize = l2Size + "px";
+              } else {
+                span.style.fontSize = l2Size + "px";
+              }
               l2.appendChild(span);
             });
             el.appendChild(l2);

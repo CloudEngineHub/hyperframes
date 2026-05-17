@@ -106,6 +106,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         var WORDS = [
           { text: "Every", start: 0.0, end: 0.3 },
           { text: "great", start: 0.3, end: 0.55 },
@@ -158,6 +171,8 @@
 
         GROUPS.forEach(function (g, gi) {
           var groupWords = WORDS.slice(g.wordStart, g.wordEnd + 1);
+          var groupText = groupWords.map(function (w) { return w.text.toUpperCase(); }).join(" ");
+          var fontSize = fitFontSize(groupText, 96, "900", "'Outfit', sans-serif", 1760);
           var grp = document.createElement("div");
           grp.className = "ne-group";
           grp.id = "ne-grp-" + gi;
@@ -168,7 +183,7 @@
             span.className = "ne-word";
             span.id = "ne-w-" + wi;
             span.textContent = w.text;
-            span.style.fontSize = "96px";
+            span.style.fontSize = fontSize + "px";
             grp.appendChild(span);
           });
 

@@ -94,6 +94,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         function mulberry32(seed) {
           return function () {
             seed |= 0;
@@ -145,7 +158,7 @@
           el.className = "kt-word";
           el.id = "kt-w-" + wi;
           el.textContent = w.text.toUpperCase();
-          el.style.fontSize = "220px";
+          el.style.fontSize = fitFontSize(w.text.toUpperCase(), 220, "400", "'Anton', sans-serif", 1720) + "px";
           if (KEYWORDS.has(wi)) el.style.color = "#FFD700";
           container.appendChild(el);
 

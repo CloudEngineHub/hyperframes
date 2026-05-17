@@ -115,6 +115,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         function mulberry32(seed) {
           return function () {
             seed |= 0;
@@ -185,6 +198,8 @@
 
         GROUPS.forEach(function (g, gi) {
           var groupWords = WORDS.slice(g.wordStart, g.wordEnd + 1);
+          var groupText = groupWords.map(function (w) { return w.text; }).join(" ");
+          var fontSize = fitFontSize(groupText, 96, "700", "'Space Grotesk', sans-serif", 1760);
           var grp = document.createElement("div");
           grp.className = "sc-group";
           grp.id = "sc-grp-" + gi;
@@ -194,7 +209,7 @@
             var wordWrap = document.createElement("span");
             wordWrap.className = "sc-word-wrap";
             wordWrap.id = "sc-ww-" + wi;
-            wordWrap.style.fontSize = "96px";
+            wordWrap.style.fontSize = fontSize + "px";
 
             var real = document.createElement("span");
             real.className = "sc-real";

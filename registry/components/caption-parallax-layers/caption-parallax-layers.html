@@ -65,7 +65,7 @@
 
       .behind-safe-zone {
         position: absolute;
-        top: 240px;
+        top: 40px;
         left: 0;
         width: 1920px;
         height: 500px;
@@ -101,7 +101,7 @@
 
       .caption-line--behind {
         transform: scaleY(2.8);
-        transform-origin: 50% 100%;
+        transform-origin: 50% 0%;
       }
 
       .word {
@@ -181,6 +181,19 @@
       var ENTRY_DUR = 0.1;
       var SLIDE_DUR = 0.2;
 
+      var _fitCanvas = document.createElement("canvas");
+      var _fitCtx = _fitCanvas.getContext("2d");
+      function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+        var size = baseFontSize;
+        var minSize = Math.floor(baseFontSize * 0.45);
+        while (size > minSize) {
+          _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+          if (_fitCtx.measureText(text).width <= maxWidth) return size;
+          size -= 2;
+        }
+        return minSize;
+      }
+
       var W = [
         { text: "Every", start: 0.0, end: 0.3 },
         { text: "great", start: 0.3, end: 0.55 },
@@ -234,6 +247,8 @@
         bEl.className = "caption-block";
         bEl.id = "bb" + bi;
         if (block.behind) {
+          var behindText = block.behind.map(function (wi_arr) { return W[wi_arr[0]].text; }).join(" ");
+          var behindSize = fitFontSize(behindText, 220, "400", "Instrument Serif", BEHIND_WIDTH);
           var bLine = document.createElement("div");
           bLine.className = "caption-line caption-line--behind";
           block.behind.forEach(function (wi_arr, wi) {
@@ -241,6 +256,7 @@
             span.className = "word word--behind";
             span.id = "bb" + bi + "w" + wi;
             span.textContent = W[wi_arr[0]].text;
+            span.style.fontSize = behindSize + "px";
             bLine.appendChild(span);
           });
           bEl.appendChild(bLine);
@@ -251,6 +267,8 @@
         fEl.className = "caption-block";
         fEl.id = "fb" + bi;
         if (block.front) {
+          var frontText = block.front.map(function (wi_arr) { return W[wi_arr[0]].text; }).join(" ");
+          var frontSize = fitFontSize(frontText, 130, "400", "Instrument Serif", FRONT_WIDTH);
           var fLine = document.createElement("div");
           fLine.className = "caption-line";
           block.front.forEach(function (wi_arr, wi) {
@@ -259,6 +277,7 @@
             span.className = "word " + (isItalic ? "word--front-italic" : "word--front-normal");
             span.id = "fb" + bi + "w" + wi;
             span.textContent = W[wi_arr[0]].text;
+            span.style.fontSize = frontSize + "px";
             fLine.appendChild(span);
           });
           fEl.appendChild(fLine);

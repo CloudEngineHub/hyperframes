@@ -117,6 +117,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         function mulberry32(seed) {
           return function () {
             seed |= 0;
@@ -198,6 +211,8 @@
 
         GROUPS.forEach(function (g, gi) {
           var groupWords = WORDS.slice(g.wordStart, g.wordEnd + 1);
+          var groupText = groupWords.map(function (w) { return w.text.toUpperCase(); }).join(" ");
+          var fontSize = fitFontSize(groupText, 88, "900", "'Outfit', sans-serif", 1720);
           var grp = document.createElement("div");
           grp.className = "bs-group";
           grp.id = "bs-grp-" + gi;
@@ -208,7 +223,7 @@
             span.className = "bs-word";
             span.id = "bs-w-" + wi;
             span.textContent = w.text.toUpperCase();
-            span.style.fontSize = "88px";
+            span.style.fontSize = fontSize + "px";
             grp.appendChild(span);
           });
 

@@ -96,6 +96,26 @@
         "tab": "Catalog",
         "groups": [
           {
+            "group": "Captions",
+            "pages": [
+              "catalog/components/caption-pill-karaoke",
+              "catalog/components/caption-neon-accent",
+              "catalog/components/caption-weight-shift",
+              "catalog/components/caption-emoji-pop",
+              "catalog/components/caption-editorial-emphasis",
+              "catalog/components/caption-parallax-layers",
+              "catalog/components/caption-glitch-rgb",
+              "catalog/components/caption-typewriter",
+              "catalog/components/caption-matrix-decode",
+              "catalog/components/caption-particle-burst",
+              "catalog/components/caption-texture-lava",
+              "catalog/components/caption-clip-wipe",
+              "catalog/components/caption-kinetic-slam",
+              "catalog/components/caption-gradient-fill",
+              "catalog/components/caption-neon-glow"
+            ]
+          },
+          {
             "group": "HTML-in-Canvas",
             "pages": [
               "catalog/blocks/vfx-iphone-device",

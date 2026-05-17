@@ -126,6 +126,19 @@
       (function () {
         window.__timelines = window.__timelines || {};
 
+        var _fitCanvas = document.createElement("canvas");
+        var _fitCtx = _fitCanvas.getContext("2d");
+        function fitFontSize(text, baseFontSize, fontWeight, fontFamily, maxWidth) {
+          var size = baseFontSize;
+          var minSize = Math.floor(baseFontSize * 0.45);
+          while (size > minSize) {
+            _fitCtx.font = fontWeight + " " + size + "px " + fontFamily;
+            if (_fitCtx.measureText(text).width <= maxWidth) return size;
+            size -= 2;
+          }
+          return minSize;
+        }
+
         var WORDS = [
           { text: "Every", start: 0.0, end: 0.3 },
           { text: "great", start: 0.3, end: 0.55 },
@@ -164,7 +177,7 @@
 
         WORDS.forEach(function (w, wi) {
           var txt = w.text.toUpperCase();
-          var fontSize = 200;
+          var fontSize = fitFontSize(txt, 200, "400", "'Anton', sans-serif", 1720);
 
           var shadow = document.createElement("div");
           shadow.className = "lv-shadow";
