@@ -2338,7 +2338,7 @@
           sel("bg_mode", i, bgOpts);
           shaderEditor.style.display = i > 0 ? "block" : "none";
           renderBgControls(i > 0 ? p : null);
-          window._lastBgKey = null;
+          window._lastBgModeKey = null;
           if (typeof window._sgUpdateBg === "function") window._sgUpdateBg();
         };
         bgOpts.appendChild(el);
@@ -2547,11 +2547,12 @@
         if (window._templatePreviewInline) {
           var overrideCss = ":root {\n";
 
-          // Palette
+          // Palette (skip --tp-secondary when shader bg is active — shader makes it transparent)
+          var _shaderActive = picks.bg_mode !== null && picks.bg_mode > 0;
           if (picks.palette !== null && picks.palette > 0) {
             overrideCss +=
               "  --tp-primary: " + p.primary + " !important;\n" +
-              "  --tp-secondary: " + p.secondary + " !important;\n" +
+              (_shaderActive ? "" : "  --tp-secondary: " + p.secondary + " !important;\n") +
               "  --tp-tertiary: " + p.tertiary + " !important;\n" +
               "  --tp-accent: " + p.accent + " !important;\n";
           }
@@ -2672,11 +2673,13 @@
           tpAnimateHero(easeObj);
         }
 
-        // ── Shader background (only rebuild if preset or palette changed) ──
-        var _bgKey = (picks.bg_mode || 0) + "-" + (picks.palette || 0);
-        if (window._lastBgKey !== _bgKey) {
-          window._lastBgKey = _bgKey;
+        // ── Shader background ──
+        var _bgModeKey = picks.bg_mode || 0;
+        if (window._lastBgModeKey !== _bgModeKey) {
+          window._lastBgModeKey = _bgModeKey;
           if (typeof window._sgUpdateBg === "function") window._sgUpdateBg();
+        } else if (_bgModeKey > 0 && typeof window._sgUpdateColors === "function") {
+          window._sgUpdateColors();
         }
 
         // ── Motion ──
@@ -3470,6 +3473,15 @@ void main(){
       activeRenderers = [];
     }
 
+    window._sgUpdateColors = function() {
+      const colors = window.getBgColors ? window.getBgColors() : ["#ffffff","#888888","#444444"];
+      activeRenderers.forEach(s => {
+        s.uniforms.uColor1.value.set(colors[0]);
+        s.uniforms.uColor2.value.set(colors[1]);
+        s.uniforms.uColor3.value.set(colors[2]);
+      });
+    };
+
     window._sgToggleGrain = function(disable) {
       activeRenderers.forEach(s => {
         if (s.htPass && s.htPass.uniforms && s.htPass.uniforms.disable) {
@@ -3519,7 +3531,7 @@ void main(){
 
       const colors = window.getBgColors ? window.getBgColors() : ["#ffffff","#888888","#444444"];
       // Target: hero wrapper + specimen cells
-      const containers = document.querySelectorAll('#sc-scene-grid > div, .specimen-cell');
+      const containers = document.querySelectorAll('#sc-scene-grid > div');
       if (containers.length === 0) return;
 
       containers.forEach(container => {
