@@ -14,6 +14,10 @@ Capture a website, then produce a professional video from it — collaboratively
 
 **Autonomous mode exception:** If the user says "decide for me", "just build it", "surprise me", or gives any signal they don't want to be asked questions — skip ALL 💬 gates. Make all creative decisions yourself (video type, style, voice, storyboard), and present the finished result for feedback at the end. Do not ask four separate questions across four separate steps. Read the room once and commit.
 
+**Sub-agent mode (default):** Step 5 dispatches one sub-agent per beat. Each sub-agent reads [beat-builder-guide.md](references/beat-builder-guide.md), builds, lints, snapshots, and verifies its own beat before reporting back. The main agent assembles the final video and does a final check.
+
+**No sub-agents:** If the user says "no sub-agents", "build it yourself", or the runtime doesn't support parallel agents — the main agent builds all compositions sequentially using the same beat-builder-guide workflow. Same quality, just slower.
+
 **This skill requires image-viewing capability** for the validate step (Step 6). If your agent cannot view PNG files, the snapshot review will be blind. Contact sheets (Step 0 and Step 6) are designed to minimize the number of images needed — but some visual verification is unavoidable.
 
 ---

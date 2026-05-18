@@ -268,103 +268,47 @@ The Studio preview server rewrites base URLs to the project root — `../` paths
 
 In either case, use the template. Do not skip it and build from memory.
 
-Each sub-agent gets the full context it needs to build independently. Paste the COMPLETE storyboard sections — don't summarize or extract pieces. **Also paste the brand values inline** — do not tell sub-agents to re-read DESIGN.md in full. You already have DESIGN.md in context; extract the relevant values and paste them directly. This cuts each sub-agent's startup time by 30-40%.
+Each sub-agent reads [beat-builder-guide.md](beat-builder-guide.md) — it has everything: rules, easing, file references, validation commands, and the report-back protocol. **Do not try to paste all rules into the prompt yourself.** Instead, tell the sub-agent to read the guide file. You paste only the beat-specific context: the storyboard sections, brand values, and asset paths.
 
 ```
 Build the composition for Beat N. Save to compositions/beat-N-name.html.
 
+FIRST: Read skills/website-to-hyperframes/references/beat-builder-guide.md
+It has your full workflow, all rules, easing vocabulary, validation commands,
+file references to read, and the report-back protocol.
+
 ═══ PREVIOUS BEAT (Beat N-1) ═══
-[paste the FULL previous beat section from STORYBOARD.md — concept, VO,
-visual description, animation sequence, SFX, everything. The sub-agent
-needs to see what was just on screen to build a matching entrance.]
+[paste the FULL previous beat section from STORYBOARD.md]
 
 ═══ THIS BEAT (Beat N) ═══
-[paste the FULL beat section from STORYBOARD.md — concept, VO, visual
-description with all animation sequences/timings/CSS values, SFX cues,
-techniques referenced. This IS the build spec.]
+[paste the FULL beat section from STORYBOARD.md — this IS the build spec]
 
 ═══ NEXT BEAT (Beat N+1) ═══
-[paste the FULL next beat section from STORYBOARD.md — so the sub-agent
-knows what's coming and can build an exit that sets it up.]
+[paste the FULL next beat section from STORYBOARD.md]
 
-═══ BRAND VALUES (from DESIGN.md — use these exactly) ═══
+═══ BRAND VALUES (from DESIGN.md) ═══
 Colors:
   --bg:        #[hex]   primary background
   --fg:        #[hex]   primary text
   --accent:    #[hex]   CTA / highlights
   --surface:   #[hex]   card / panel backgrounds
-  [add 2-3 more if used in this beat]
+  [add more if needed]
 
 Fonts:
   Headlines: [font family], [weight]
   Body:      [font family], [weight]
-  [brand-specific font path if needed: capture/assets/fonts/Brand.woff2]
+  [brand font path if needed: capture/assets/fonts/Brand.woff2]
 
-Key component styles for this beat:
-  [paste 3-5 relevant lines from DESIGN.md for components this beat uses,
-   e.g. button radius, card shadow, heading letter-spacing]
-
-Do NOT read DESIGN.md. The values above are everything you need.
+Key component styles:
+  [paste relevant lines from DESIGN.md]
 
 ═══ CAPTURED ASSETS FOR THIS BEAT ═══
-[Paste the ACTUAL file paths from capture/extracted/asset-descriptions.md for
-every asset assigned to this beat. Include the one-line description so the
-sub-agent knows what each file shows. Format:
+[Paste ACTUAL file paths + descriptions from asset-descriptions.md:
 
-- capture/assets/hero-dashboard.png — full-bleed product dashboard screenshot, dark theme
+- capture/assets/hero-dashboard.png — full-bleed product dashboard, dark theme
 - capture/assets/logo.svg — brand wordmark, white on transparent
-- capture/assets/feature-card.jpg — feature comparison grid, 3 columns
 
-DO NOT just say "see asset-descriptions.md". Paste the relevant entries here.
-The sub-agent has ZERO context — if you don't paste the path, it will build
-CSS recreations instead of using the real captured assets.
-
-If you don't know which assets to assign yet, read capture/extracted/asset-descriptions.md
-NOW (before dispatching) and decide. Then paste the relevant ones here.]
-
-═══ IMPORTANT: YOU START WITH ZERO CONTEXT ═══
-You have no knowledge of HyperFrames, GSAP, or this project. Before writing
-ANY code, read these — targeted reads only, not full files:
-
-1. Load the `hyperframes` skill — data attributes, timeline contracts,
-   deterministic rendering rules (this is non-negotiable, read the whole skill)
-2. capabilities.md — read the Table of Contents first (lines 1-40), then
-   read ONLY the sections relevant to this beat's techniques:
-   [paste the section names/line ranges from capabilities.md that apply,
-    e.g. "Section 3: Canvas 2D (lines 89-134)" or "Section 7: Shader Transitions"]
-3. techniques.md — read ONLY the techniques this beat uses:
-   [paste the technique names/line ranges from techniques.md that apply,
-    e.g. "Technique 4: Kinetic Typography (lines 156-210)"]
-4. If this beat uses HTML-in-Canvas/WebGL: read html-in-canvas-patterns.md in full
-5. If this beat uses screenshots: VIEW them before placing text on them
-
-Brand values are in the BRAND VALUES section above — no need to read DESIGN.md.
-
-═══ RULES ═══
-- ROOT ELEMENT: the root div inside every sub-composition template MUST have `data-composition-id`, `data-width`, and `data-height` attributes matching the host div's values. Sub-agents consistently miss these. Example: `<div id="beat-2-features" data-composition-id="beat-2-features" data-width="1920" data-height="1080">`. Without them the composition fails to register and lint errors fire.
-- GSAP FROM TRAP: never use `gsap.from(el, {opacity:0})` when the element also has CSS `opacity:0`. GSAP reads the current CSS value as the animation target — it animates 0→0, not 0→1. The beat stays invisible. Always use `tl.fromTo(el, {opacity:0}, {opacity:1, ...})` or remove the CSS opacity and let GSAP control it entirely.
-- CHARACTER SPANS AND SPACES: when splitting text into per-character `<span>` elements with `display:inline-block`, NEVER apply inline-block to space characters — they collapse to zero width. "What if your Mac" becomes "WhatifyourMac". Solution: use `&nbsp;` for spaces, or split at word level (per-word spans) instead of per-character.
-- SVG CURRENTCOLOR VIA IMG: SVGs that use `fill="currentColor"` render black (invisible on dark backgrounds) when loaded via `<img src="logo.svg">`. The img tag cannot inherit CSS color into the SVG. Either: (a) inline the SVG directly in the HTML, (b) use `filter: brightness(0) invert(1)` for simple single-color SVGs you want white, or (c) hardcode the fill color in the SVG file.
-- SCRIPT PLACEMENT: scripts MUST be inside the <template> element, not after </template>. The <template> content is inert until HyperFrames injects it — scripts outside see no DOM, every querySelector returns null, GSAP silently does nothing. This is the single most common cause of "all compositions completely static."
-- STYLE PLACEMENT: CSS `<style>` blocks inside `<template>` are injected into the document and apply correctly. However, avoid setting `opacity: 0` on elements via CSS if GSAP will animate them — the interaction between CSS initial states and the render engine's GSAP seeking can produce black frames in some cases. Setting initial states via GSAP `tl.fromTo(el, {opacity:0,...}, {opacity:1,...})` FROM values is the safest pattern (matches how v4 compositions worked). Background colors, positioning, and layout styles in `<style>` blocks are fine.
-- DATA-START: never set data-start="0" on all beat host divs. Each beat's GSAP timeline is seeked to global_time - data_start. With all data-start=0, a beat with a 5.5s GSAP timeline is seeked to t=10 at global t=10 — past its end, engine marks it invisible. Set each beat's data-start to its HyperShader transition point. data-duration = beat's GSAP timeline length. Use sequential data-track-index values (1, 2, 3...) to avoid linter overlap errors.
-- HYPERSHADER TIMELINE: never pass `timeline: tl` to HyperShader.init(). Let HyperShader create the timeline. Add all tweens to the returned tl AFTER init(). Passing an existing timeline breaks the scrubber and pre-warming.
-- PROXY+ONUPDATE: never use `tl.fromTo(proxy, {}, {val, onUpdate: () => el.textContent = proxy.val})` for counter animations. The onUpdate callback doesn't fire when the render engine seeks directly to a time. Use discrete tl.set(el, {textContent: value}, timestamp) calls instead.
-- SHADER NAMES: block name ≠ shader name. `npx hyperframes add domain-warp-dissolve` installs the BLOCK but the HyperShader runtime name is `domain-warp`. After installing any block, open its showcase HTML in `compositions/` to find the exact shader name used in `HyperShader.init()`. Then delete the showcase file — it triggers lint warnings and isn't part of the video.
-- CSS CENTERING: never use `transform: translate(-50%, -50%)` for centering elements you'll also animate with GSAP. GSAP overwrites the entire CSS transform, breaking the centering. Use `xPercent: -50, yPercent: -50` in the GSAP tween instead, or use flexbox centering.
-- HYPERFRAMER LAST SCENE: HyperShader renders the final entry in `scenes[]` as black in some contexts. If your CTA beat is the last scene and appears black, add a dummy invisible scene after it: `scenes: [..., "beat-5-cta", "s-end"]` with a dummy `<div id="s-end">` and a 0.1s transition at the video's end.
-- ASSET PATHS: always project-root-relative. capture/assets/file.png ✅  ../capture/assets/file.png ❌
-- FONTS: if brand fonts are listed above with a capture/assets/fonts/ path, add @font-face at the top of your CSS. Without it everything falls back to system-ui.
-- QUERYSELECTOR: never use document.querySelector("#host #child") — the host isn't in main DOM at script time. Use document.getElementById("child") with null guards. Never call .getTotalLength() or any DOM method without a null check first — one uncaught TypeError crashes the entire beat script before the timeline registers.
-- If you want to place text over a screenshot: VIEW it first
-- Use captured screenshots at full size, NOT CSS recreations unless you
-  can recreate something almost pixel perfect
-- Register timeline: window.__timelines["beat-N-name"] = tl
-- No Math.random, no repeat:-1, no callbacks, no RAF
-- Use tl.fromTo() not tl.from() for entrance animations
-- No CSS transform for centering — use flexbox
-- Never stack two transform tweens on same element
-- EASING: do NOT use power2.out on everything. Pick per intent: hero text → power4.out (snap), numbers/badges → back.out(1.7) (whip overshoot), gentle entrances → expo.out (soft land), code/terminal → power1.out (mechanical), counters/CTA pills → elastic.out(1, 0.5) (bounce), hero reveals → expo.inOut (dramatic), background drift → "none" (linear). Staggered items: power4.out with 0.08-0.15s stagger.
+Do NOT say "see asset-descriptions.md". Paste the paths here.]
 ```
 
 The storyboard beat already contains everything — the concept, the visual choreography with exact timings, the CSS values, the SFX cues. The sub-agent's job is to translate that description into working HTML/CSS/GSAP, not to re-invent the creative direction. If you want, you can also paste any other relative and useful context to subagents if think it's good, why not.
