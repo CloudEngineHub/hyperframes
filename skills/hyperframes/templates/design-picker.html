@@ -2492,6 +2492,8 @@
         var name = (PROMPT && PROMPT.title) || "Untitled";
 
         // Read native palette from template.html and set as Template Default
+        // Design pages use primary=light/text, secondary=dark/canvas
+        // Templates may use the opposite convention — detect and swap if needed
         if (PALETTES[0].name !== "Template Default" || !PALETTES[0]._native) {
           var txhr = new XMLHttpRequest();
           txhr.open("GET", "templates/" + slug + "/template.html?t=" + Date.now(), false);
@@ -2502,8 +2504,13 @@
             var rmatch = txhr.responseText.match(/--tp-tertiary:\s*(#[0-9a-fA-F]{3,8})/);
             var amatch = txhr.responseText.match(/--tp-accent:\s*(#[0-9a-fA-F]{3,8})/);
             if (tmatch && smatch) {
-              PALETTES[0].primary = tmatch[1];
-              PALETTES[0].secondary = smatch[1];
+              var pHex = tmatch[1], sHex = smatch[1];
+              // Check luminance — if primary is darker than secondary, swap
+              var pLum = parseInt(pHex.slice(1,3),16);
+              var sLum = parseInt(sHex.slice(1,3),16);
+              if (pLum < sLum) { var tmp = pHex; pHex = sHex; sHex = tmp; }
+              PALETTES[0].primary = pHex;
+              PALETTES[0].secondary = sHex;
               PALETTES[0].tertiary = rmatch ? rmatch[1] : "#555";
               PALETTES[0].accent = amatch ? amatch[1] : "#888";
               PALETTES[0].name = "Template Default";
