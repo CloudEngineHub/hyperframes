@@ -2625,7 +2625,7 @@
             tmplCss = tmplCss.replace(/--tp-tertiary:\s*[^;]+;/g, "--tp-tertiary: var(--tertiary);");
             tmplCss = tmplCss.replace(/--tp-accent:\s*[^;]+;/g, "--tp-accent: var(--accent);");
             var scoped = tmplCss.replace(/:root\s*\{/g, ".ds-slide-frame {").replace(/^\s*\*\s*,/gm, ".ds-slide-frame *,").replace(/^\s*\*\s*\{/gm, ".ds-slide-frame * {").replace(/\*::before/g, ".ds-slide-frame *::before").replace(/\*::after/g, ".ds-slide-frame *::after").replace(/^(\s*)(\.[\w-])/gm, "$1.ds-slide-frame $2").replace(/^(\s*)(section|h1|h2|h3|p|ul|li|a|span|svg|div)(\s*[{,.])/gm, "$1.ds-slide-frame $2$3").replace(/\.ds-slide-frame \.ds-slide-frame/g, ".ds-slide-frame");
-            scoped += "\n.ds-slide-frame .slide,.ds-slide-frame section{display:flex!important;opacity:1!important;position:relative!important;width:1920px!important;height:1080px!important}";
+            scoped += "\n.ds-slide-frame .slide,.ds-slide-frame section{display:flex!important;flex-direction:column!important;opacity:1!important;position:relative!important;width:1920px!important;height:1080px!important}";
             scoped += "\n.ds-slide-frame .slide.dark{background:" + p.secondary + "!important;color:" + p.primary + "!important}";
             scoped += "\n.ds-slide-frame .slide.orange{background:" + p.accent + "!important}";
             scoped += "\n.ds-slide-frame .slide.light{background:" + p.primary + "!important;color:" + p.secondary + "!important}";
