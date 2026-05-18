@@ -14,11 +14,11 @@
 <style id="ds-tokens">
 :root{
   --primary:__PRIMARY__; --secondary:__SECONDARY__; --tertiary:__TERTIARY__; --accent:__ACCENT__;
-  --ivory:var(--secondary); --ink:#111111;
+  --ivory:var(--secondary); --ink:var(--primary);
   --grey-1:#5A5752;
   --grey-2:#9A968D;
   --grey-3:#C9C4B6;
-  --hairline:#D8D2C3;
+  --hairline:color-mix(in srgb,var(--primary) 12%,transparent);
   --f-disp:"Lora",serif;
   --f-body:"Jost",sans-serif;
   --f-mono:"JetBrains Mono",monospace;

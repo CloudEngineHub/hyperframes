@@ -15,9 +15,9 @@
 :root{
   --primary:__PRIMARY__; --secondary:__SECONDARY__; --tertiary:__TERTIARY__; --accent:__ACCENT__;
   --bg-2:var(--secondary);
-  --ink-dim:#9A9A9A;
-  --ink-fade:#5A5A5A;
-  --hairline:#262626;
+  --ink-dim:color-mix(in srgb,var(--primary) 55%,var(--secondary));
+  --ink-fade:color-mix(in srgb,var(--primary) 28%,var(--secondary));
+  --hairline:color-mix(in srgb,var(--primary) 12%,transparent);
   --f-disp:"Anton",sans-serif;
   --f-head:"Inter",sans-serif;
   --f-mono:"JetBrains Mono",monospace;
