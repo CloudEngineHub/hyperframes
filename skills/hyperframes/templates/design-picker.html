@@ -2535,7 +2535,23 @@
           el.classList.add("selected");
           picks.easing = i;
           checkReady();
+          // Force hero re-animation on next render
+          window._lastEaseKey = null;
+          window._lastHeroEasing = null;
           renderPreview();
+          // Snap preview iframe to top so the hero entrance animation is visible
+          setTimeout(function () {
+            var dif = document.getElementById("design-iframe");
+            if (dif && dif.contentWindow) {
+              try { dif.contentWindow.scrollTo(0, 0); } catch (_) {}
+            }
+          }, 60);
+          setTimeout(function () {
+            var dif = document.getElementById("design-iframe");
+            if (dif && dif.contentWindow) {
+              try { dif.contentWindow.scrollTo(0, 0); } catch (_) {}
+            }
+          }, 320);
         };
         easeOpts.appendChild(el);
         // Animate the dot with GSAP
@@ -4224,16 +4240,15 @@
           p.accent +
           "!important}" +
           "html,body{overflow-y:auto!important}" +
-          // Force surface/motion example cards to reflect corners/density/depth — only when user picks (preserves template defaults otherwise)
+          // Surface example card only — corners/density/depth must not leak to other surfaces
           (picks.corners !== null
-            ? ".demo-card,.panel,.tokens,.specimen,.bg-preview,.tmpl,.tmpl-thumb,details.code-block,.swatch,.rules-col,.rules-col li,.cover-foot .cell{border-radius:" + cr.value + "!important}"
+            ? ".demo-card{border-radius:" + cr.value + "!important}"
             : "") +
           (picks.density !== null
-            ? ".demo-card,.panel{padding:" + (dn.padding || "20px") + "!important;gap:" + (dn.gap || "16px") + "!important}" +
-              ".tokens li{padding-left:" + (dn.padding || "20px") + "!important;padding-right:" + (dn.padding || "20px") + "!important}"
+            ? ".demo-card{padding:" + (dn.padding || "20px") + "!important;gap:" + (dn.gap || "16px") + "!important}"
             : "") +
           (picks.depth !== null
-            ? ".demo-card,.panel,.tokens,.tmpl{box-shadow:" + (dp.css || "none") + "!important}"
+            ? ".demo-card{box-shadow:" + (dp.css || "none") + "!important}"
             : "") +
           (bg && bg.type
             ? "html,body{background:transparent!important}.cover{background:transparent!important}#bg-veil{display:none!important}#design-bg{opacity:1!important}section{background:transparent!important}"
@@ -6537,8 +6552,9 @@
             });
           };
         }
-        // Reset config picks to defaults when a new template is selected
-        picks.palette = null;
+        // Reset config picks to defaults when a new template is selected.
+        // Carry the Phase 1 palette pick forward (Template Default = 0 → null).
+        picks.palette = tpActivePal > 0 ? tpActivePal : null;
         picks.type = null;
         picks.corners = null;
         picks.density = null;
@@ -6563,8 +6579,11 @@
             c.querySelectorAll(pair[1]).forEach(function (el) {
               el.classList.remove("selected");
             });
-            var first = c.querySelector(pair[1]);
-            if (first) first.classList.add("selected");
+            // For palette: highlight the index carried forward from Phase 1
+            var idx = 0;
+            if (pair[0] === "pal-options" && tpActivePal > 0) idx = tpActivePal;
+            var children = c.querySelectorAll(pair[1]);
+            if (children[idx]) children[idx].classList.add("selected");
           });
           ["corner-options", "density-options", "depth-options", "ease-options", "bg-options"].forEach(function (id) {
             var c = document.getElementById(id);
