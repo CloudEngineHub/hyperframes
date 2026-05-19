@@ -13,13 +13,13 @@ Install the HyperFrames skill package into your project:
 npx skills add heygen-com/hyperframes
 ```
 
-This places skill directories inside `.agent/skills/` at your workspace root — the location Antigravity scans for workspace-scoped skills.
+This places skill directories inside `.agents/skills/` at your workspace root — the location Antigravity scans for workspace-scoped skills.
 
 <Tip>
-  If you want the skills available across all your Antigravity projects, copy them to the global scope instead:
+  If you want the skills available across all your Antigravity projects, install them to the global scope instead:
 
   ```bash
-  npx skills add heygen-com/hyperframes -a antigravity --global
+  npx skills add heygen-com/hyperframes --agent antigravity --global
   ```
 
   Global skills live in `~/.gemini/antigravity/skills/` and load in every workspace.
@@ -28,7 +28,7 @@ This places skill directories inside `.agent/skills/` at your workspace root —
 Verify the skills are installed:
 
 ```bash
-ls .agent/skills/
+ls .agents/skills/
 ```
 
 You should see directories like `hyperframes/`, `hyperframes-cli/`, `gsap/`, `tailwind/`, and others — each containing a `SKILL.md` that the agent reads on demand.
@@ -100,7 +100,7 @@ The skill is only injected into the agent's context window when it matches — t
 
 ## Using multiple agents in Manager view
 
-Antigravity's Manager view lets you orchestrate multiple agents in parallel. For complex multi-scene videos, you can split the work:
+Antigravity's [Manager view](https://antigravity.google/docs/agent) lets you orchestrate multiple agents in parallel. For complex multi-scene videos, you can split the work:
 
 - **Agent 1:** Author the intro scene and transitions
 - **Agent 2:** Generate TTS narration and caption timing
@@ -110,17 +110,20 @@ Each agent picks up the relevant HyperFrames skills independently. Merge the out
 
 ## MCP alternative
 
-If you prefer zero-install cloud authoring, Antigravity supports MCP servers. Add the HyperFrames MCP connector to author and render compositions without the CLI:
+If you prefer zero-install cloud authoring, Antigravity supports remote MCP servers. Add the HyperFrames MCP connector to author and render compositions without the CLI — see [Antigravity's MCP documentation](https://antigravity.google/docs/mcp) for the exact setup steps in your version, then use the server URL:
 
-1. Open **Settings → MCP Servers → Add Server**
-2. Enter: `https://mcp.heygen.com/mcp/hyperframes`
-3. Authorize via OAuth with your HeyGen account
+```
+https://mcp.heygen.com/mcp/hyperframes
+```
 
-See the [MCP guide](/guides/mcp) for full details. The MCP handles rendering in the cloud; the CLI gives you local control.
+Authorize via OAuth with your HeyGen account when prompted. See the [HyperFrames MCP guide](/guides/mcp) for full details on tools and prompting. The MCP handles rendering in the cloud; the CLI gives you local control.
 
-## CLAUDE.md compatibility
+## Agent instruction files
 
-When Antigravity's agent uses a Claude model (Sonnet or Opus), it reads your project's `CLAUDE.md` for project-specific instructions. HyperFrames projects created with `npx hyperframes init` include a `CLAUDE.md` automatically, giving the agent additional composition context beyond what the skills provide.
+HyperFrames projects created with `npx hyperframes init` scaffold both `CLAUDE.md` and `AGENTS.md` automatically — these give the agent additional composition context beyond what the skills provide.
+
+- **`AGENTS.md`** — the cross-agent convention. Antigravity reads this regardless of which model you've selected (Gemini, Claude, or others).
+- **`CLAUDE.md`** — read when Antigravity's agent uses a Claude model (Sonnet or Opus), providing Claude-specific project instructions.
 
 ## Tips
 

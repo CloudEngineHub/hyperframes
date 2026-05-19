@@ -19,31 +19,19 @@ Install the HyperFrames skill package into your project:
 npx skills add heygen-com/hyperframes
 ```
 
-This writes skill directories to `.github/skills/` in your project — one of the paths Copilot CLI scans automatically.
+This writes skill directories to `.agents/skills/` in your project — the path Copilot CLI scans automatically for workspace-scoped skills.
 
 <Tip>
   To make skills available across all your projects, install them globally:
 
   ```bash
-  npx skills add heygen-com/hyperframes -a github-copilot --global
+  npx skills add heygen-com/hyperframes --agent github-copilot --global
   ```
 
   Global skills live in `~/.copilot/skills/` and load in every Copilot CLI session.
 </Tip>
 
-If you install skills during an active session, reload them:
-
-```
-/skills reload
-```
-
-Verify they're available:
-
-```
-/skills list
-```
-
-You should see `hyperframes`, `hyperframes-cli`, `gsap`, `tailwind`, and others in the list.
+If you install skills during an active session, run `/skills` to open the skills picker and verify they appear. New skills installed to the project directory are picked up automatically on the next prompt.
 
 ## Using skills
 
@@ -73,16 +61,14 @@ Copilot also matches skills based on the `description` field in each `SKILL.md`.
 Create a 9:16 TikTok hook video about AI productivity with bouncy captions.
 ```
 
-Explicit invocation is more reliable when you have many skills installed.
+Explicit invocation is more reliable when you have many skills installed — with large skill sets, the agent's token budget may not fit every skill description, so naming the skill directly guarantees it loads.
 
-### Skill management commands
+### Skill management
 
 | Command | What it does |
 |---|---|
-| `/skills list` | Show all available skills |
-| `/skills info hyperframes` | View skill details and file location |
-| `/skills reload` | Reload after installing new skills mid-session |
-| `/skills` | Enable or disable skills interactively |
+| `/skills` | Open the interactive skills picker — browse, enable, or disable skills |
+| `/skills add <path>` | Add an additional skill directory to the current session |
 
 ## Create and preview a video
 
@@ -109,12 +95,6 @@ Explicit invocation is more reliable when you have many skills installed.
 
     ```bash
     copilot
-    ```
-
-    Or if using the npm global install:
-
-    ```bash
-    github-copilot
     ```
   </Step>
 
@@ -170,10 +150,16 @@ In agent mode, Copilot runs terminal commands (like `npx hyperframes init` and `
 
 ## MCP alternative
 
-Copilot CLI also supports MCP servers for cloud-based authoring without the local CLI:
+Copilot CLI also supports MCP servers for cloud-based authoring without the local CLI. Use the `--additional-mcp-config` flag to add the HyperFrames MCP server to your session:
 
 ```bash
-copilot --mcp-server https://mcp.heygen.com/mcp/hyperframes
+copilot --additional-mcp-config '{"mcpServers":{"hyperframes":{"url":"https://mcp.heygen.com/mcp/hyperframes"}}}'
+```
+
+Or save the config to a file and reference it:
+
+```bash
+copilot --additional-mcp-config @mcp-config.json
 ```
 
 Authorize via OAuth when prompted. See the [MCP guide](/guides/mcp) for full details.
@@ -181,7 +167,7 @@ Authorize via OAuth when prompted. See the [MCP guide](/guides/mcp) for full det
 ## Tips
 
 - **Always start with `/hyperframes` for composition work.** This loads the full skill context — composition rules, data attributes, GSAP patterns, caption formats — that generic web knowledge doesn't cover.
-- **Use `/skills info hyperframes` to check skill status.** If output looks wrong, the skill might not be loaded. Reload with `/skills reload`.
+- **Use `/skills` to check skill status.** If output looks wrong, open the skills picker to verify the HyperFrames skills are enabled.
 - **Run `npx hyperframes lint` before rendering.** The linter catches structural issues the agent might miss on complex multi-scene edits.
 - **Keep the preview server running in a separate terminal.** You see every edit reflected in real time while prompting in Copilot CLI.
 - **Install registry blocks for transitions and effects.** `npx hyperframes add shimmer-sweep` installs pre-built blocks, then prompt the agent to wire them in.
