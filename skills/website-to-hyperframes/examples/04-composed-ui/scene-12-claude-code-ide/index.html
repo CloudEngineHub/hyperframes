@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>scene-12-claude-code-ide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0b0d; }
+
+    [data-composition-id="scene-12-claude-code-ide"] {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: radial-gradient(ellipse 1400px 900px at 50% 40%, #1a1b22 0%, #0a0b0d 70%);
+      font-family: "Inter", -apple-system, sans-serif;
+      color: #f0f0f0;
+    }
+
+    [data-composition-id="scene-12-claude-code-ide"] .grain {
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.012) 1px, transparent 1px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.012) 1px, transparent 1px);
+      background-size: 3px 3px, 5px 5px;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    /* === Terminal panel === */
+    .term-claude {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 1320px; height: 760px;
+      transform: translate(-50%, -50%);
+      background: #1a1b1f;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow:
+        0 40px 90px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 0 60px rgba(200, 109, 63, 0.08);
+      opacity: 0;
+    }
+
+    .term-chrome {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 22px;
+      background: #15161a;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      height: 54px; box-sizing: border-box;
+    }
+    .dot { width: 13px; height: 13px; border-radius: 50%; }
+    .dr { background: #ff5f57; }
+    .dy { background: #febc2e; }
+    .dg { background: #28c840; }
+    .brand-mark {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #d97757 0%, #c25a3a 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 16px; font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+    .term-title {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 18px;
+      color: #8a8f98;
+      font-weight: 500;
+    }
+    .chrome-spacer { flex: 1; }
+    .chrome-actions {
+      display: flex; gap: 10px;
+    }
+    .chrome-action {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: center;
+      color: #8a8f98;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+    }
+
+    .term-body {
+      padding: 28px 32px;
+      position: relative;
+      height: calc(100% - 54px);
+      box-sizing: border-box;
+    }
+
+    /* === Conversation history (above input) === */
+    .conversation {
+      position: absolute;
+      left: 32px; right: 32px; top: 28px;
+      max-height: 460px;
+      overflow: hidden;
+    }
+    .msg {
+      margin-bottom: 18px;
+      opacity: 0;
+    }
+    .msg-role {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6b6f7a;
+      margin-bottom: 6px;
+    }
+    .msg-role .badge-claude {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 2px 8px;
+      background: rgba(217, 119, 87, 0.15);
+      color: #d97757;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .msg-body {
+      font-family: "Inter", sans-serif;
+      font-size: 18px;
+      line-height: 1.55;
+      color: #d4d7de;
+    }
+    .msg-body .think {
+      color: #8a8f98;
+      font-style: italic;
+    }
+    .msg-body .tool-call {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: #28c840;
+      margin: 4px 0;
+    }
+    .msg-body .file-link {
+      color: #d97757;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+    }
+
+    /* === Input area (bottom anchored) === */
+    .cc-input {
+      position: absolute;
+      left: 24px; right: 24px; bottom: 22px;
+      padding: 14px 16px 12px 16px;
+      background: rgba(11, 11, 15, 0.5);
+      border: 1px solid rgba(200, 109, 63, 0.55);
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 4px rgba(200, 109, 63, 0.08),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .cc-input-line {
+      padding: 6px 6px 14px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      min-height: 30px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .prompt {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 22px;
+      color: #f0f0f0;
+      white-space: nowrap;
+      display: inline-block;
+    }
+    .caret {
+      display: inline-block;
+      width: 9px; height: 26px;
+      background: #d97757;
+      margin-left: 2px;
+      opacity: 0;
+    }
+
+    .cc-input-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 12px;
+    }
+    .cc-left { display: flex; gap: 8px; }
+    .cc-right { display: flex; align-items: center; gap: 14px; }
+    .cc-ic {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      color: #8a8f98;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cc-ic.cc-circle {
+      border: 1.5px solid rgba(200, 109, 63, 0.7);
+      border-radius: 50%;
+      background: transparent;
+    }
+    .cc-lbl {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #8a8f98;
+    }
+    .cc-lbl .check {
+      width: 12px; height: 12px;
+      stroke: #8a8f98;
+      stroke-width: 1.6;
+      fill: none;
+    }
+    .cc-send {
+      width: 36px; height: 36px;
+      background: #c86d3f;
+      border: none;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(200, 109, 63, 0.4);
+      transform: scale(1);
+    }
+    .cc-send svg {
+      width: 16px; height: 16px;
+      stroke: #fff;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* === Scene label === */
+    .scene-label {
+      position: absolute;
+      left: 32px; bottom: 24px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.4);
+      z-index: 100;
+    }
+    .scene-label b { color: rgba(255,255,255,0.7); }
+  </style>
+</head>
+<body>
+  <div
+    id="scene-12-claude-code-ide"
+    data-composition-id="scene-12-claude-code-ide"
+    data-start="0"
+    data-duration="8"
+    data-width="1920"
+    data-height="1080"
+  >
+    <div class="grain"></div>
+
+    <div class="term-claude">
+      <div class="term-chrome">
+        <span class="dot dr"></span>
+        <span class="dot dy"></span>
+        <span class="dot dg"></span>
+        <span class="brand-mark">✦</span>
+        <span class="term-title">Claude Code · Opus 4.7 (1M)</span>
+        <span class="chrome-spacer"></span>
+        <div class="chrome-actions">
+          <span class="chrome-action">⌘K</span>
+          <span class="chrome-action">⊕</span>
+        </div>
+      </div>
+
+      <div class="term-body">
+        <div class="conversation">
+          <div class="msg" id="msg-1">
+            <div class="msg-role">You</div>
+            <div class="msg-body">build me a 30-second launch video from heygen.com</div>
+          </div>
+          <div class="msg" id="msg-2">
+            <div class="msg-role"><span class="badge-claude">claude</span></div>
+            <div class="msg-body">
+              <span class="think">Reading site, extracting design system…</span>
+            </div>
+          </div>
+          <div class="msg" id="msg-3">
+            <div class="msg-role"><span class="badge-claude">claude</span></div>
+            <div class="msg-body">
+              <span class="tool-call">⏵ capture(url="https://heygen.com")</span>
+              <br/>
+              Found <b>14 colors</b>, <b>6 fonts</b>, <b>22 assets</b>. Writing <span class="file-link">DESIGN.md</span> + <span class="file-link">STORYBOARD.md</span>…
+            </div>
+          </div>
+        </div>
+
+        <div class="cc-input">
+          <div class="cc-input-line">
+            <span class="prompt" id="prompt-text"></span>
+            <span class="caret" id="caret"></span>
+          </div>
+          <div class="cc-input-row">
+            <div class="cc-left">
+              <span class="cc-ic">+</span>
+              <span class="cc-ic">/</span>
+              <span class="cc-ic cc-circle"></span>
+            </div>
+            <div class="cc-right">
+              <span class="cc-lbl">
+                <svg viewBox="0 0 16 16" class="check"><path d="M3 8 L7 11 L13 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Ask before edits
+              </span>
+              <button class="cc-send" id="send-btn">
+                <svg viewBox="0 0 16 16"><path d="M8 13 L8 3 M4 7 L8 3 L12 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene-label">Section 04 · <b>Claude Code IDE</b> · AI agent chat panel composed from divs</div>
+  </div>
+
+  <script>
+    (function () {
+      var BEAT = 8;
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      var panel = document.querySelector(".term-claude");
+      var promptEl = document.getElementById("prompt-text");
+      var caret = document.getElementById("caret");
+      var sendBtn = document.getElementById("send-btn");
+      var msg1 = document.getElementById("msg-1");
+      var msg2 = document.getElementById("msg-2");
+      var msg3 = document.getElementById("msg-3");
+      var thinkSpan = msg2.querySelector(".think");
+
+      // Pre-built type-on: discrete tl.set() so it's seekable
+      var fullPrompt = "build me a 30-second launch video from heygen.com";
+      var typeSteps = 26;
+      var typeStart = 0.55;
+      var typeEnd = 2.0;
+      var typeDur = typeEnd - typeStart;
+
+      // 1.0s: panel slides up + fades in
+      tl.fromTo(panel, { opacity: 0, y: 30, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "expo.out" }, 0);
+
+      // 0.55s: caret appears + blinks
+      tl.fromTo(caret, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.5);
+      tl.to(caret, { opacity: 0, duration: 0.4, ease: "steps(1)", yoyo: true, repeat: 3 }, 0.55);
+
+      // 0.55-2.0s: type the prompt character-by-character via tl.set()
+      for (var i = 0; i <= typeSteps; i++) {
+        var t = typeStart + (i / typeSteps) * typeDur;
+        var charsToShow = Math.round((i / typeSteps) * fullPrompt.length);
+        tl.set(promptEl, { textContent: fullPrompt.slice(0, charsToShow) }, t);
+      }
+      tl.set(promptEl, { textContent: fullPrompt }, typeEnd);
+
+      // 2.2s: caret stops blinking, settles solid
+      tl.set(caret, { opacity: 0 }, 2.2);
+
+      // 2.3s: send button pulses (about to click)
+      tl.to(sendBtn, { scale: 1.12, duration: 0.18, ease: "back.out(2)" }, 2.3);
+      tl.to(sendBtn, { scale: 1, duration: 0.18, ease: "power2.out" }, 2.48);
+
+      // 2.6s: msg-1 appears (user message materialized in conversation)
+      tl.fromTo(msg1, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 2.6);
+
+      // 2.7s: clear the input (message has been sent)
+      tl.set(promptEl, { textContent: "" }, 2.7);
+
+      // 3.2s: msg-2 (claude thinking) appears
+      tl.fromTo(msg2, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 3.2);
+
+      // 3.4-4.4s: animate the "Reading site..." text with dots
+      var thinkPhases = [
+        "Reading site",
+        "Reading site.",
+        "Reading site..",
+        "Reading site…",
+        "Reading site, extracting design system…",
+      ];
+      thinkPhases.forEach(function (phrase, idx) {
+        tl.set(thinkSpan, { textContent: phrase }, 3.4 + idx * 0.2);
+      });
+
+      // 4.6s: msg-3 (tool call + design.md) appears
+      tl.fromTo(msg3, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 4.6);
+
+      // 5.0-7.5s: subtle continuous motion on the panel (breathing)
+      tl.to(panel, { y: -4, duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 5.0);
+
+      // 5.5s: brand-mark gentle pulse (continuous motion during hold)
+      var brand = document.querySelector(".brand-mark");
+      tl.to(brand, { boxShadow: "0 0 16px rgba(217, 119, 87, 0.6)", duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 2 }, 5.5);
+
+      // 7.4s: final settle hold
+      tl.to(panel, { duration: 0.5 }, 7.4);
+
+      window.__timelines["scene-12-claude-code-ide"] = tl;
+    })();
+  </script>
+</body>
+</html>

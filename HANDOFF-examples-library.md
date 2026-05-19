@@ -1,17 +1,17 @@
 # HANDOFF — Examples Library (Sessions May 19, 2026)
 
-> **READ THIS BEFORE PICKING UP THE EXAMPLES LIBRARY WORK.** This is the followup to `HANDOFF.md` (which covers the v2-v9 pipeline-quality work through May 18). This doc covers what was built May 19: the HyperFrames Capability Showcase example library, **57 scenes across 13 sections**, all rendered and uploaded, gallery app live, **skill wiring updated to 3-mode framework** (copy+mutate / recombine / fresh).
+> **READ THIS BEFORE PICKING UP THE EXAMPLES LIBRARY WORK.** This is the followup to `HANDOFF.md` (which covers the v2-v9 pipeline-quality work through May 18). This doc covers what was built May 19: the HyperFrames Capability Showcase example library, **62 scenes across 13 sections**, all rendered and uploaded, gallery app live, **skill wiring updated to 3-mode framework** (copy+mutate / recombine / fresh), and a second-pass survey of every production project that turned up 5 high-leverage gap-filler scenes (batch 10).
 
 ---
 
 ## TL;DR
 
-**What got built:** **57 production-grade example scenes** at `skills/website-to-hyperframes/examples/`, covering every HyperFrames technique. Each scene is standalone-renderable, lint-clean, snapshot-verified, composed 100% from HTML/CSS/SVG/GSAP/Canvas — zero captured screenshots. Plus a single concatenated "Grand Tour" reel (**6:26 MP4**) that plays all 57 back-to-back.
+**What got built:** **62 production-grade example scenes** at `skills/website-to-hyperframes/examples/`, covering every HyperFrames technique. Each scene is standalone-renderable, lint-clean, snapshot-verified, composed 100% from HTML/CSS/SVG/GSAP/Canvas — zero captured screenshots. Plus a single concatenated "Grand Tour" reel (**7:10 MP4**) that plays all 62 back-to-back.
 
 **Why:** `HANDOFF.md` Recommendation 1 said skill prose was exhausted as a lever (11 eval branches all produced slideshow videos regardless of prose changes). Recommendation 2 said: **show, don't tell** — build production-grade reference examples agents can use. This library is that.
 
 **Gallery is live:** https://www.heygenverse.com/a/1636f2fe-3ddc-4543-9a56-0d0b99538807
-**Grand Tour reel (all 57 scenes, 6:26):** https://www.heygenverse.com/s/b9cdfa1b-6fbd-45a1-b71f-7183edc9bd61/raw
+**Grand Tour reel (all 62 scenes, 7:10):** https://www.heygenverse.com/s/67bb4ee5-1c7f-4837-b144-d2527b8ade83/raw
 
 **Skill wiring is active AND updated** (May 19 evening): the skill now explicitly names **three legitimate modes** for using examples — `copy+mutate` (1:1 fit), `recombine` (2-3 scenes layered), `fresh` (author from scratch with examples as taste reference). Examples are NEVER finished beats — non-negotiable customization rule applies in every mode. See **[Skill Wiring](#skill-wiring)** below for the patch summary.
 
@@ -20,11 +20,37 @@
 - **step-5-build.md**: mode-aware build process; explicit "fresh ≠ paste, recombine ≠ frankenstein".
 - **beat-builder-guide.md**: 3-mode table is the FIRST mandatory read; "non-negotiable in every mode: customize."
 
-**Branch:** `feat/pipeline-quality-v2` (continued from prior session). **15 commits** total this session.
+**Branch:** `feat/pipeline-quality-v2` (continued from prior session). **17 commits** total this session.
 
-**Library is internally consistent.** Every scene appears in (a) its section README, (b) the master lookup table in `examples/README.md`, (c) the rendered MP4 list, and (d) the Verse asset ID table below. The technique-pick checklist in step-3 has reliable coverage — an agent can find any of the 57 scenes from the lookup table without grepping the directory.
+**Library is internally consistent.** Every scene appears in (a) its section README, (b) the master lookup table in `examples/README.md`, (c) the rendered MP4 list, and (d) the Verse asset ID table below. The technique-pick checklist in step-3 has reliable coverage — an agent can find any of the 62 scenes from the lookup table without grepping the directory.
 
-**What's deferred:** agent self-test on a fresh worktree (the proof point that the library + 3-mode wiring changes agent behavior), mining the remaining archive projects for more lifts, deeper sections (especially 03 easing, 05 shader, 06 css, 08 svg).
+### What batch 10 added (May 19 evening — second-pass survey)
+
+After the user flagged that batches 1-9 hadn't thoroughly mined the production-video archives, I did a full second-pass survey: every HTML file in `launch-video`, `launch-video-2`, `claude-design-hyperframes-video`, `/Users/ularkimsanov/Downloads/Archive` (21 projects, 89 HTML files), and `/Users/ularkimsanov/Downloads/Archive 2` (16 projects, 174 HTML files). Survey notes live in `/tmp/library-survey-notes.md`.
+
+The survey turned up 5 genuinely high-leverage gap-fillers — techniques the library was missing despite being load-bearing in the production work:
+
+1. **04-12 Claude Code IDE** (lifted from `launch-video-2/compositions/act-1-cold-open.html`, .term-claude panel) — AI agent chat panel with chrome traffic lights, prompt type-on, send pulse, conversation flow with tool-call badge and design.md/storyboard.md file links. The library had ZERO AI-agent-UI mockups before this; in 2026 they're the most common product-demo visual.
+2. **04-13 Design Inspector** (lifted from `Archive/inspector-logo-intro/index.html`) — Figma-style design inspector panel with cycling values (text recolors, font swap Inter→Fraunces→IBM Plex Mono→Georgia, size types from 120→3→36→360). Demonstrates the stacked-absolute-span swap pattern that makes value cycling fully seekable under `tl.seek()`.
+3. **12-04 Brand Moodboard** (lifted from `claude-design-hyperframes-video/compositions/moodboard.html`) — Aurora Studio brand book with monogram + 6 color swatches + sticky note + reference cards stacked + Fraunces/Archivo typography sample + 6 SVG hub-spoke connectors. The "what is this brand?" opener.
+4. **12-05 Cinematic Opener** (lifted from `claude-design-hyperframes-video/compositions/opener.html`) — the canonical minimal opener referenced as Beat 1 example in `step-3-storyboard.md`. Light-ball orb blooms into beam → title fade-up → settled hold → fade to black. The "lean restraint" opener.
+5. **12-06 Design Extraction** (lifted from `launch-video-2/compositions/act-2-extraction.html`) — meta beat showing the website-to-hyperframes pipeline itself: MacBook with composed LUMEN landing inside + animated DESIGN.md panel + 16 callout tags pinning onto design elements + EXTRACTING…→EXTRACTED stamp. The "AI is analyzing / extracting from a source" pattern.
+
+Build approach: I authored 04-12 myself first (set the bar), then dispatched 4 sub-agents in parallel for the others, verifying each via snapshot before accepting. One sub-agent (12-06) was killed before reporting back but had already saved its file; I lint+snapshot-verified it myself.
+
+### What batch 11+ deferred work remains
+
+Survey turned up a second tier of candidates (documented in survey notes):
+
+- **hermes-hyperframes/compositions/boot-sequence.html** (VHS+CRT terminal — different feel from existing 12-02 matrix-style)
+- **hermes-hyperframes/compositions/shader-render.html** (WebGL + GLSL code + render terminal + CRT composite)
+- **hermes-hyperframes/compositions/parade.html** (1367 lines — kinetic typography parade with CRT aesthetic, but 1080×1080 not 1920×1080)
+- **fadeglow-mockups/frame-07-viz-hero.html** (audio-viz beat drop with spectrum bars — section 10 has NO audio-reactive scenes)
+- **launch-video-2/act-1-cold-open FULL** (extends 04-12 to the 4-panel grid showing Claude Code + Cursor + Codex + Gemini CLI)
+- **claude-design/dashboard.html** (1525-line dense analytical dashboard — contrasts with KPI-card 04-05)
+- **timeline-launch-video/act2-merged-chat.html** (persistent headline + scrolling chat thread with composer)
+
+**What's still deferred:** agent self-test on a fresh worktree (the proof point that the library + 3-mode wiring changes agent behavior). This is the natural next milestone now that the library is at 62 scenes with full skill wiring.
 
 ---
 
@@ -57,7 +83,7 @@ skills/website-to-hyperframes/examples/
 ├── 01-typography/              README.md + 11 scene dirs (~100K total)
 ├── 02-markers-and-emphasis/    README.md + 6 scene dirs
 ├── 03-easing-variety/          README.md + 1 scene dir
-├── 04-composed-ui/             README.md + 10 scene dirs
+├── 04-composed-ui/             README.md + 13 scene dirs
 ├── 05-transitions-shader/      README.md + 1 scene dir
 ├── 06-transitions-css/         README.md + 1 scene dir
 ├── 07-html-in-canvas/          README.md + 5 scene dirs
@@ -65,7 +91,7 @@ skills/website-to-hyperframes/examples/
 ├── 09-counters-and-data/       README.md + 3 scene dirs
 ├── 10-particles-and-ambient/   README.md + 3 scene dirs
 ├── 11-3d-and-parallax/         README.md + 5 scene dirs
-├── 12-combined-vignettes/      README.md + 3 scene dirs
+├── 12-combined-vignettes/      README.md + 6 scene dirs
 └── 13-anti-patterns/           README.md + 4 scene dirs
 ```
 
@@ -84,7 +110,7 @@ skills/website-to-hyperframes/examples/
 
 ---
 
-## THE 57 SCENES — FULL INVENTORY
+## THE 62 SCENES — FULL INVENTORY
 
 ### Section 01 — Typography (11 scenes)
 
@@ -121,7 +147,7 @@ skills/website-to-hyperframes/examples/
 |-------|----------|-----------|
 | `scene-01-css-animation-grid` | 3.5s | 6×3 grid of 17 pure-CSS animations |
 
-### Section 04 — Composed UI (11 scenes)
+### Section 04 — Composed UI (13 scenes)
 
 | Scene | Duration | Technique |
 |-------|----------|-----------|
@@ -136,6 +162,8 @@ skills/website-to-hyperframes/examples/
 | `scene-09-phone-mockups` | 5s | 3D iPhones with fictional Pulse/Echo app screens |
 | `scene-10-terminal-with-preview` | 8s | Two-column: code typing left + mockup builds right |
 | `scene-11-timeline-editor-ui` | 9s | Code editor + video timeline scrubber with playhead + render HUD |
+| `scene-12-claude-code-ide` | 8s | Claude Code AI agent chat panel — chrome dots + prompt type-on + tool-call badges + DESIGN.md output |
+| `scene-13-design-inspector` | 9s | Figma-style design inspector — HEADLINE on left, panel with cycling Color/Font/Size values, stacked-absolute-span swap pattern (fully seekable) |
 
 ### Section 05 — Transitions Shader (1 scene)
 
@@ -191,13 +219,16 @@ skills/website-to-hyperframes/examples/
 | `scene-04-anamorphic-text-crt` | 15s | Three.js 3D text morphing MOTION↔DESIGN + CRT HUD |
 | `scene-05-iphone-device-gesture` | 6.5s | CSS 3D iPhone with tap/swipe gesture overlays + composed app screen |
 
-### Section 12 — Combined Vignettes (3 scenes)
+### Section 12 — Combined Vignettes (6 scenes)
 
 | Scene | Duration | Technique |
 |-------|----------|-----------|
 | `scene-01-techniques-grid` | 4s | 24-cell grid with 15+ techniques (clock, blob, vortex, glitch, cube, etc.) |
 | `scene-02-binary-rain-boot` | 7.5s | Matrix-style binary rain + centered terminal boot sequence |
 | `scene-03-product-launch-beat` | 8s | 6 techniques in one beat: stroke-draw logo + kinetic headline + counter + marker + particle burst + breathing |
+| `scene-04-brand-moodboard` | 10s | Aurora Studio brand book — monogram + 6 swatches + sticky note + 5 reference cards + Fraunces/Archivo + SVG hub-spoke connectors from logo |
+| `scene-05-cinematic-opener` | 6s | The canonical minimal cinematic opener — light-ball bloom → beam → HYPER·FRAMES title fade-up → settled hold → fade |
+| `scene-06-design-extraction` | 11s | MacBook with composed LUMEN landing + animated DESIGN.md panel writing line-by-line + 16 callout tags pinning on screen elements + EXTRACTING→EXTRACTED stamp |
 
 ### Section 13 — Anti-Patterns (4 scenes)
 
@@ -349,18 +380,28 @@ All 53 scenes rendered to MP4 at draft quality (24fps) and uploaded. URLs follow
 | scene-04-anamorphic-text-crt | 73d97a8d-da17-48f0-82b6-f2bda9bd86fc |
 | scene-05-iphone-device-gesture | fb7d1f3d-0511-461a-86ad-9566f0fcdeff |
 
+### Section 04 — Composed UI (batch 10 additions)
+| Scene | Asset ID |
+|---|---|
+| scene-12-claude-code-ide | 958d51b0-9e27-4627-8b65-7253b44ac8ab |
+| scene-13-design-inspector | 2477d6d8-2748-42e4-9fd3-45d8d96c0bdb |
+
 ### Section 12 — Combined Vignettes
 | Scene | Asset ID |
 |---|---|
 | scene-01-techniques-grid | bef2cf66-bae2-4c9a-a88c-023707b3d068 |
 | scene-02-binary-rain-boot | c97c2141-5a91-4fa7-b721-f3f511679267 |
 | scene-03-product-launch-beat | c23f3036-d4ce-4cf9-bbc9-4131949c7b16 |
+| scene-04-brand-moodboard | 3ef3db80-8a84-422b-8661-52f1586b768b |
+| scene-05-cinematic-opener | 826f3732-cea7-4be3-8eb7-e2ba379a2137 |
+| scene-06-design-extraction | ece0bdfe-e57e-4ae1-b19d-548ea38c6bba |
 
 ### Grand Tour Reel
 | Reel | Asset ID | Duration |
 |---|---|---|
-| grand-tour-57-scenes (current) | b9cdfa1b-6fbd-45a1-b71f-7183edc9bd61 | 6:26 |
-| grand-tour (53-scene, superseded) | bd3a5ac8-8b80-4dc8-af1b-20606a50456e | 5:58 |
+| grand-tour-62-scenes (current) | 67bb4ee5-1c7f-4837-b144-d2527b8ade83 | 7:10 |
+| grand-tour-57-scenes (superseded) | b9cdfa1b-6fbd-45a1-b71f-7183edc9bd61 | 6:26 |
+| grand-tour-53-scenes (superseded) | bd3a5ac8-8b80-4dc8-af1b-20606a50456e | 5:58 |
 
 ### Section 13 — Anti-Patterns
 | Scene | Asset ID |
@@ -557,9 +598,11 @@ batch_upload_assets supports up to 20 files at once. PUTs can run in parallel vi
 
 ---
 
-## THE 15 COMMITS
+## THE 17 COMMITS
 
 ```
+[pending]  feat(skill): examples library batch 10 — 5 second-pass lifts (62 scenes total)
+2bdba5e9  docs: finalize handoff — batches 7-9 (57 scenes, 3-mode wiring, READMEs synced)
 6bbfafe0  docs(skill): sync remaining section READMEs (01, 02, 04, 10, 11) — 9 missing scenes
 f2d1d11d  docs(skill): sync library READMEs with batch 7 — 3-mode framework + 4 new scenes
 8f4b7eb5  feat(skill): examples library batch 7 — 4 gap-fillers + 3-mode skill wiring (57 scenes)
@@ -577,7 +620,7 @@ a877da70  feat(skill): examples library section 04 — composed UI, 8 scenes
 04827b98  feat(skill): examples library scaffold + section 01 (typography) — 10 scenes
 ```
 
-All on branch `feat/pipeline-quality-v2`, ahead of `origin/feat/pipeline-quality-v2` by 15 commits.
+All on branch `feat/pipeline-quality-v2`, ahead of `origin/feat/pipeline-quality-v2` by 17 commits.
 
 ### What batches 8 + 9 did (docs sync after batch 7)
 

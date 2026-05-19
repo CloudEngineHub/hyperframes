@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>scene-13-design-inspector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0c0d10; }
+
+    [data-composition-id="scene-13-design-inspector"] {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 1200px 800px at 30% 50%, #1a1c20 0%, #0c0d10 70%);
+      color: #fff8e9;
+      font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    /* ── Subtle grain layer (continuous-motion ambient) ── */
+    .di-grain {
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,248,233,0.015) 1px, transparent 1px),
+        radial-gradient(circle at 70% 60%, rgba(25,183,213,0.012) 1px, transparent 1px);
+      background-size: 4px 4px, 6px 6px;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      will-change: opacity;
+    }
+
+    /* ── Faint canvas-grid in the working area (Figma vibe) ── */
+    .di-grid {
+      position: absolute;
+      left: 80px; top: 80px;
+      width: 1380px; height: 920px;
+      background:
+        linear-gradient(rgba(255,248,233,0.03) 1px, transparent 1px) 0 0 / 80px 80px,
+        linear-gradient(90deg, rgba(255,248,233,0.03) 1px, transparent 1px) 0 0 / 80px 80px;
+      border: 1px solid rgba(255,248,233,0.04);
+      border-radius: 6px;
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    /* ── The HEADLINE artboard being inspected ── */
+    #headline-stage {
+      position: absolute;
+      left: 180px; top: 380px;
+      width: 1100px;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+
+    #headline-text {
+      font-family: "Inter", ui-sans-serif, sans-serif;
+      font-size: 120px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1;
+      color: #fff8e9;
+      white-space: nowrap;
+      will-change: font-family, font-size, color;
+    }
+
+    .stage-meta {
+      position: absolute;
+      left: 0; top: -40px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: rgba(255,248,233,0.35);
+      letter-spacing: 0.06em;
+    }
+
+    .stage-meta b { color: rgba(25,183,213,0.85); font-weight: 500; }
+
+    /* ── Selection bounding box (dashed cyan around headline) ── */
+    #selection-box {
+      position: absolute;
+      left: 168px; top: 360px;
+      width: 1124px; height: 154px;
+      border: 1px dashed rgba(25,183,213,0.7);
+      border-radius: 3px;
+      box-shadow: 0 0 0 1px rgba(25,183,213,0.18);
+      opacity: 0;
+      will-change: opacity, transform, border-color;
+    }
+
+    /* Tiny corner handles on the selection */
+    .sel-handle {
+      position: absolute;
+      width: 9px; height: 9px;
+      background: #0c0d10;
+      border: 1.5px solid #19b7d5;
+      border-radius: 1px;
+    }
+    .sel-handle.tl { left: -5px; top: -5px; }
+    .sel-handle.tr { right: -5px; top: -5px; }
+    .sel-handle.bl { left: -5px; bottom: -5px; }
+    .sel-handle.br { right: -5px; bottom: -5px; }
+
+    /* Selection size badge (under the box) */
+    .sel-size {
+      position: absolute;
+      left: 50%; bottom: -28px;
+      transform: translateX(-50%);
+      padding: 3px 8px;
+      background: #19b7d5;
+      color: #0c0d10;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    /* ── Cursor ── */
+    #cursor {
+      position: absolute;
+      z-index: 50;
+      width: 28px; height: 34px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+      pointer-events: none;
+      will-change: transform, opacity;
+      opacity: 0;
+    }
+    #cursor svg { width: 28px; height: 34px; }
+
+    /* ── Inspector panel ── */
+    #inspector-panel {
+      position: absolute;
+      z-index: 5;
+      right: 40px; top: 140px;
+      width: 360px;
+      background: #1a1c20;
+      border: 1px solid rgba(255,248,233,0.08);
+      border-radius: 16px;
+      padding: 24px 22px;
+      font-size: 13px;
+      color: rgba(255,248,233,0.6);
+      transform: translateX(420px);
+      opacity: 0;
+      will-change: transform, opacity;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    }
+
+    .panel-section {
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,248,233,0.06);
+    }
+    .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .panel-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,248,233,0.3);
+      margin-bottom: 10px;
+    }
+
+    .panel-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .panel-row:last-child { margin-bottom: 0; }
+
+    .panel-field {
+      flex: 1;
+      padding: 8px 10px;
+      background: rgba(255,248,233,0.04);
+      border: 1px solid rgba(255,248,233,0.08);
+      border-radius: 8px;
+      font-size: 13px;
+      color: rgba(255,248,233,0.75);
+      font-family: "IBM Plex Mono", monospace;
+      position: relative;
+      overflow: hidden;
+    }
+    .panel-field .fl {
+      font-size: 10px;
+      color: rgba(255,248,233,0.3);
+      margin-right: 4px;
+    }
+
+    #doc-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff8e9;
+      margin-bottom: 3px;
+    }
+    #doc-id {
+      font-size: 11px;
+      color: rgba(255,248,233,0.3);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* Color row */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #color-swatch {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,248,233,0.12);
+      background: #fff8e9;
+      flex-shrink: 0;
+      will-change: background-color;
+    }
+    .color-value {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: rgba(255,248,233,0.85);
+      position: relative;
+      flex: 1;
+      height: 18px;
+    }
+    .color-value span {
+      position: absolute;
+      left: 0; top: 0;
+      white-space: nowrap;
+    }
+    .color-value span.active { position: relative; }
+
+    /* Font dropdown */
+    .font-dropdown {
+      padding: 9px 12px;
+      background: rgba(255,248,233,0.04);
+      border: 1px solid rgba(255,248,233,0.08);
+      border-radius: 8px;
+      font-size: 13px;
+      color: rgba(255,248,233,0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      height: 38px;
+    }
+    .font-dropdown::after {
+      content: '▾';
+      font-size: 12px;
+      color: rgba(255,248,233,0.35);
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .font-name-stack {
+      position: relative;
+      flex: 1;
+      height: 18px;
+      overflow: hidden;
+    }
+    .font-name-stack span {
+      position: absolute;
+      left: 0; top: 0;
+      white-space: nowrap;
+      font-family: "Inter", sans-serif;
+    }
+    .font-name-stack span.active { position: relative; }
+
+    /* Size field */
+    #size-field {
+      position: relative;
+      height: 36px;
+      padding: 9px 12px;
+      will-change: border-color;
+    }
+    #size-field .fl {
+      position: absolute;
+      left: 12px; top: 9px;
+    }
+    .size-value-stack {
+      position: absolute;
+      right: 12px; top: 9px;
+      width: 80px;
+      height: 18px;
+      text-align: right;
+      overflow: hidden;
+    }
+    .size-value-stack span {
+      position: absolute;
+      right: 0; top: 0;
+      white-space: nowrap;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .size-value-stack span.active { position: relative; }
+    .size-caret { color: #19b7d5; }
+    .size-hl {
+      background: rgba(25,183,213,0.32);
+      border-radius: 2px;
+      padding: 0 2px;
+    }
+
+    /* ── Floating mini color picker (subtle, optional) ── */
+    #mini-picker {
+      position: absolute;
+      z-index: 6;
+      right: 420px; top: 360px;
+      width: 200px;
+      background: #0e1014;
+      border: 1px solid rgba(255,248,233,0.1);
+      border-radius: 12px;
+      padding: 14px;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .picker-grad {
+      width: 100%; height: 70px;
+      border-radius: 6px;
+      background:
+        linear-gradient(to bottom, transparent, black),
+        linear-gradient(to right, white, #19b7d5);
+      margin-bottom: 10px;
+      position: relative;
+      border: 1px solid rgba(255,248,233,0.08);
+    }
+    #picker-dot {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 3px rgba(0,0,0,0.5);
+      left: 22%; top: 16%;
+      will-change: left, top;
+    }
+    .hue-bar {
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
+      position: relative;
+    }
+    #hue-thumb {
+      position: absolute;
+      left: 53%; top: -3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #19b7d5;
+      border: 2px solid white;
+      transform: translateX(-50%);
+      box-shadow: 0 0 3px rgba(0,0,0,0.5);
+      will-change: left, background-color;
+    }
+
+    /* ── Scene label ── */
+    .scene-label {
+      position: absolute;
+      left: 32px; bottom: 24px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.4);
+      z-index: 100;
+    }
+    .scene-label b { color: rgba(255,255,255,0.7); }
+  </style>
+</head>
+<body>
+  <div
+    id="scene-13-design-inspector"
+    data-composition-id="scene-13-design-inspector"
+    data-start="0"
+    data-duration="9"
+    data-width="1920"
+    data-height="1080"
+  >
+    <div class="di-grain"></div>
+    <div class="di-grid"></div>
+
+    <!-- Artboard / subject being inspected -->
+    <div id="headline-stage">
+      <div class="stage-meta">Artboard · <b>Hero / Title</b> · 1100 × 156</div>
+      <div id="headline-text">HEADLINE</div>
+    </div>
+
+    <!-- Selection bounding box (dashed cyan around headline) -->
+    <div id="selection-box">
+      <span class="sel-handle tl"></span>
+      <span class="sel-handle tr"></span>
+      <span class="sel-handle bl"></span>
+      <span class="sel-handle br"></span>
+      <span class="sel-size" id="sel-size-badge">1100 × 156</span>
+    </div>
+
+    <!-- Mini color picker (briefly opens during color cycle) -->
+    <div id="mini-picker">
+      <div class="picker-grad">
+        <div id="picker-dot"></div>
+      </div>
+      <div class="hue-bar">
+        <div id="hue-thumb"></div>
+      </div>
+    </div>
+
+    <!-- Inspector panel -->
+    <div id="inspector-panel">
+      <!-- Document -->
+      <div class="panel-section">
+        <div class="panel-label">Document</div>
+        <div id="doc-title">Headline</div>
+        <div id="doc-id">#text-layer</div>
+      </div>
+
+      <!-- Layout -->
+      <div class="panel-section">
+        <div class="panel-label">Layout</div>
+        <div class="panel-row">
+          <div class="panel-field"><span class="fl">X</span> 180</div>
+          <div class="panel-field"><span class="fl">Y</span> 380</div>
+        </div>
+        <div class="panel-row">
+          <div class="panel-field"><span class="fl">W</span> 1100</div>
+          <div class="panel-field"><span class="fl">H</span> 156</div>
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="panel-section">
+        <div class="panel-label">Color</div>
+        <div class="color-row">
+          <div id="color-swatch"></div>
+          <div class="color-value">
+            <span id="cl-0" class="active">rgb(255,248,233)</span>
+            <span id="cl-1">rgb(142,216,220)</span>
+            <span id="cl-2">rgb(76,200,217)</span>
+            <span id="cl-3">rgb(25,183,213)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Font -->
+      <div class="panel-section">
+        <div class="panel-label">Font</div>
+        <div class="font-dropdown">
+          <div class="font-name-stack">
+            <span id="fd-inter" class="active">Inter</span>
+            <span id="fd-fraunces" style="font-family:Fraunces,serif;">Fraunces</span>
+            <span id="fd-plex" style="font-family:'IBM Plex Mono',monospace;">IBM Plex Mono</span>
+            <span id="fd-georgia" style="font-family:Georgia,serif;">Georgia</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Size -->
+      <div class="panel-section">
+        <div class="panel-label">Size</div>
+        <div class="panel-field" id="size-field">
+          <span class="fl">Size</span>
+          <div class="size-value-stack">
+            <span id="sv-120" class="active">120px</span>
+            <span id="sv-sel"><span class="size-hl">120</span></span>
+            <span id="sv-caret"><span class="size-caret">|</span></span>
+            <span id="sv-3a">3<span class="size-caret">|</span></span>
+            <span id="sv-36">36<span class="size-caret">|</span></span>
+            <span id="sv-360">360px</span>
+            <span id="sv-4a">4<span class="size-caret">|</span></span>
+            <span id="sv-48">48px</span>
+            <span id="sv-3b">3<span class="size-caret">|</span></span>
+            <span id="sv-30">30<span class="size-caret">|</span></span>
+            <span id="sv-300">300px</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cursor (rendered last so it sits above panel) -->
+    <div id="cursor">
+      <svg viewBox="0 0 28 34" fill="none">
+        <path d="M2 1L2 25.5L8.5 19.5L14.5 31L18.5 29L12.5 17.5L21 17.5L2 1Z"
+              fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div class="scene-label">Section 04 · <b>Design Inspector</b> · Figma-style panel with cycling values</div>
+  </div>
+
+  <script>
+    (function () {
+      var BEAT = 9;
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      var panel = document.getElementById("inspector-panel");
+      var grid = document.querySelector(".di-grid");
+      var stage = document.getElementById("headline-stage");
+      var headline = document.getElementById("headline-text");
+      var selBox = document.getElementById("selection-box");
+      var cursor = document.getElementById("cursor");
+      var picker = document.getElementById("mini-picker");
+      var swatch = document.getElementById("color-swatch");
+      var hueThumb = document.getElementById("hue-thumb");
+      var pickerDot = document.getElementById("picker-dot");
+      var sizeField = document.getElementById("size-field");
+
+      // Helper: swap "active" span in a stack (positioned: relative; absolute siblings hidden)
+      // We DON'T use this dynamically — we use tl.set on opacity/position instead, deterministic.
+      // The CSS assumes only one span has class="active" at start. After that, opacity drives visibility.
+
+      // Initial states for stack swap targets (all non-active hidden)
+      // Color value stack
+      tl.set("#cl-1", { opacity: 0 }, 0);
+      tl.set("#cl-2", { opacity: 0 }, 0);
+      tl.set("#cl-3", { opacity: 0 }, 0);
+      // Font name stack
+      tl.set("#fd-fraunces", { opacity: 0 }, 0);
+      tl.set("#fd-plex", { opacity: 0 }, 0);
+      tl.set("#fd-georgia", { opacity: 0 }, 0);
+      // Size value stack — everything except sv-120 hidden
+      ["sv-sel","sv-caret","sv-3a","sv-36","sv-360","sv-4a","sv-48","sv-3b","sv-30","sv-300"].forEach(function(id){
+        tl.set("#" + id, { opacity: 0 }, 0);
+      });
+
+      // ═══════════════════════════════════════════════
+      // 0.0–0.8s: stage + grid + headline + panel enter
+      // ═══════════════════════════════════════════════
+
+      // Grid fades up first (sets the canvas vibe)
+      tl.fromTo(grid, { opacity: 0 }, { opacity: 1, duration: 0.55, ease: "sine.inOut" }, 0);
+
+      // Headline stage drops in with a slight upward float
+      tl.fromTo(stage,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.65, ease: "expo.out" },
+        0.12);
+
+      // 0.55s: inspector panel slides in from right (expo.out — punchy tool entrance)
+      tl.fromTo(panel,
+        { x: 420, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.8, ease: "expo.out" },
+        0.55);
+
+      // 0.7s: cursor flies in near bottom-left to start
+      tl.set(cursor, { left: 120, top: 920, opacity: 0 }, 0.7);
+      tl.to(cursor, { opacity: 1, duration: 0.12, ease: "power1.in" }, 0.7);
+
+      // ═══════════════════════════════════════════════
+      // 0.9–1.6s: cursor clicks on HEADLINE → selection appears
+      // ═══════════════════════════════════════════════
+
+      // Cursor swings toward the headline (power2.inOut for confident travel)
+      tl.to(cursor, { left: 480, top: 460, duration: 0.55, ease: "power2.inOut" }, 0.9);
+
+      // Click moment — back.out for the "select" pop
+      tl.to(cursor, { scale: 0.85, duration: 0.08, ease: "power2.in" }, 1.42);
+      tl.to(cursor, { scale: 1, duration: 0.18, ease: "back.out(1.4)" }, 1.50);
+
+      // Selection box materializes around the headline (matches click moment)
+      tl.fromTo(selBox,
+        { opacity: 0, scale: 1.04 },
+        { opacity: 1, scale: 1, duration: 0.32, ease: "back.out(1.4)" },
+        1.48);
+
+      // Selection pulses gently throughout (continuous-motion guarantee)
+      tl.to(selBox,
+        { boxShadow: "0 0 0 3px rgba(25,183,213,0.06)", duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: 4 },
+        1.9);
+
+      // ═══════════════════════════════════════════════
+      // 1.7–3.4s: cursor travels to Color row → swatch cycles RGB
+      // ═══════════════════════════════════════════════
+
+      // Cursor moves to inspector panel — color row (right side, ~y=450 area)
+      tl.to(cursor, { left: 1550, top: 460, duration: 0.7, ease: "power2.inOut" }, 1.75);
+
+      // Open mini picker (subtle pop)
+      tl.fromTo(picker,
+        { opacity: 0, scale: 0.92, x: 20 },
+        { opacity: 1, scale: 1, x: 0, duration: 0.32, ease: "back.out(1.4)" },
+        2.5);
+
+      // Cursor nudges into the picker gradient + hue
+      tl.to(cursor, { left: 1380, top: 480, duration: 0.30, ease: "power2.inOut" }, 2.55);
+
+      // RGB cycles: 4 colors over 0.9s — staggered every 0.22s
+      // CL-0 (cream) → CL-1 (pale cyan) → CL-2 (mid cyan) → CL-3 (deep cyan)
+      // Swatch + headline color follow.
+
+      // Step 1: cream → pale cyan (2.75s)
+      tl.set("#cl-0", { opacity: 0 }, 2.75);
+      tl.set("#cl-1", { opacity: 1 }, 2.75);
+      tl.to(swatch, { backgroundColor: "#8ed8dc", duration: 0.2, ease: "none" }, 2.75);
+      tl.to(headline, { color: "#8ed8dc", duration: 0.2, ease: "none" }, 2.75);
+      tl.to(pickerDot, { left: "30%", top: "26%", duration: 0.22, ease: "power2.out" }, 2.75);
+      tl.to(hueThumb, { left: "44%", duration: 0.22, ease: "power2.out" }, 2.75);
+
+      // Step 2: pale cyan → mid cyan (2.97s)
+      tl.set("#cl-1", { opacity: 0 }, 2.97);
+      tl.set("#cl-2", { opacity: 1 }, 2.97);
+      tl.to(swatch, { backgroundColor: "#4cc8d9", duration: 0.2, ease: "none" }, 2.97);
+      tl.to(headline, { color: "#4cc8d9", duration: 0.2, ease: "none" }, 2.97);
+      tl.to(pickerDot, { left: "48%", top: "32%", duration: 0.22, ease: "power2.out" }, 2.97);
+      tl.to(hueThumb, { left: "49%", duration: 0.22, ease: "power2.out" }, 2.97);
+
+      // Step 3: mid cyan → deep cyan (3.20s)
+      tl.set("#cl-2", { opacity: 0 }, 3.20);
+      tl.set("#cl-3", { opacity: 1 }, 3.20);
+      tl.to(swatch, { backgroundColor: "#19b7d5", duration: 0.2, ease: "none" }, 3.20);
+      tl.to(headline, { color: "#19b7d5", duration: 0.2, ease: "none" }, 3.20);
+      tl.to(pickerDot, { left: "72%", top: "22%", duration: 0.22, ease: "power2.out" }, 3.20);
+      tl.to(hueThumb, { left: "53%", backgroundColor: "#19b7d5", duration: 0.22, ease: "power2.out" }, 3.20);
+
+      // Picker closes (power1.in fade — "done with that tool")
+      tl.to(picker, { opacity: 0, scale: 0.92, x: 20, duration: 0.28, ease: "power1.in" }, 3.55);
+
+      // ═══════════════════════════════════════════════
+      // 3.6–6.0s: cursor → Font dropdown → cycle 4 fonts on headline
+      // ═══════════════════════════════════════════════
+
+      // Cursor moves to font dropdown row in panel
+      tl.to(cursor, { left: 1620, top: 590, duration: 0.55, ease: "power2.inOut" }, 3.6);
+
+      // Click moment on font field
+      tl.to(cursor, { scale: 0.88, duration: 0.06, ease: "power2.in" }, 4.10);
+      tl.to(cursor, { scale: 1, duration: 0.14, ease: "back.out(1.4)" }, 4.16);
+
+      // Font cycle: Inter → Fraunces → IBM Plex Mono → Georgia (each held ~0.55s)
+      // Swap dropdown text via opacity, swap headline font-family via duration:0.01 tween.
+
+      // Fraunces at 4.25s
+      tl.set("#fd-inter", { opacity: 0 }, 4.25);
+      tl.set("#fd-fraunces", { opacity: 1 }, 4.25);
+      tl.to(headline, { fontFamily: "Fraunces, Georgia, serif", duration: 0.01 }, 4.25);
+
+      // IBM Plex Mono at 4.85s
+      tl.set("#fd-fraunces", { opacity: 0 }, 4.85);
+      tl.set("#fd-plex", { opacity: 1 }, 4.85);
+      tl.to(headline, { fontFamily: "'IBM Plex Mono', monospace", duration: 0.01 }, 4.85);
+
+      // Georgia at 5.45s
+      tl.set("#fd-plex", { opacity: 0 }, 5.45);
+      tl.set("#fd-georgia", { opacity: 1 }, 5.45);
+      tl.to(headline, { fontFamily: "Georgia, serif", duration: 0.01 }, 5.45);
+
+      // Back to Inter at 6.00s (final stable state for Size demo)
+      tl.set("#fd-georgia", { opacity: 0 }, 6.00);
+      tl.set("#fd-inter", { opacity: 1 }, 6.00);
+      tl.to(headline, { fontFamily: "Inter, ui-sans-serif, sans-serif", duration: 0.01 }, 6.00);
+
+      // ═══════════════════════════════════════════════
+      // 6.1–8.2s: cursor → Size field → type cycle (120 → 4 → 48 → 3 → 36 → 360 → 3 → 30 → 300)
+      // ═══════════════════════════════════════════════
+
+      // Cursor moves to size field
+      tl.to(cursor, { left: 1620, top: 720, duration: 0.42, ease: "power2.inOut" }, 6.10);
+
+      // Click field (back.out for click pop)
+      tl.to(cursor, { scale: 0.88, duration: 0.06, ease: "power2.in" }, 6.48);
+      tl.to(cursor, { scale: 1, duration: 0.14, ease: "back.out(1.4)" }, 6.54);
+
+      // Field activates — border turns cyan
+      tl.to(sizeField, {
+        borderColor: "rgba(25,183,213,0.55)",
+        duration: 0.01
+      }, 6.52);
+
+      // Select "120" — highlight
+      tl.set("#sv-120", { opacity: 0 }, 6.60);
+      tl.set("#sv-sel", { opacity: 1 }, 6.60);
+
+      // Delete → caret only
+      tl.set("#sv-sel", { opacity: 0 }, 6.78);
+      tl.set("#sv-caret", { opacity: 1 }, 6.78);
+
+      // Type "4"
+      tl.set("#sv-caret", { opacity: 0 }, 6.88);
+      tl.set("#sv-4a", { opacity: 1 }, 6.88);
+      tl.to(headline, { fontSize: "40px", duration: 0.08, ease: "power1.out" }, 6.88);
+
+      // Type "48" — finalize as "48px"
+      tl.set("#sv-4a", { opacity: 0 }, 7.00);
+      tl.set("#sv-48", { opacity: 1 }, 7.00);
+      tl.to(headline, { fontSize: "48px", duration: 0.10, ease: "back.out(1.4)" }, 7.00);
+
+      // Hold tiny ~0.25s — then clear + caret
+      tl.set("#sv-48", { opacity: 0 }, 7.30);
+      tl.set("#sv-caret", { opacity: 1 }, 7.30);
+
+      // Type "3"
+      tl.set("#sv-caret", { opacity: 0 }, 7.40);
+      tl.set("#sv-3a", { opacity: 1 }, 7.40);
+      tl.to(headline, { fontSize: "30px", duration: 0.06, ease: "power1.out" }, 7.40);
+
+      // Type "36"
+      tl.set("#sv-3a", { opacity: 0 }, 7.52);
+      tl.set("#sv-36", { opacity: 1 }, 7.52);
+      tl.to(headline, { fontSize: "36px", duration: 0.06, ease: "power1.out" }, 7.52);
+
+      // Type "360" — headline ramps BIG with back.out for impact
+      tl.set("#sv-36", { opacity: 0 }, 7.64);
+      tl.set("#sv-360", { opacity: 1 }, 7.64);
+      tl.to(headline, { fontSize: "360px", duration: 0.32, ease: "back.out(1.2)" }, 7.64);
+
+      // ═══════════════════════════════════════════════
+      // 8.0–9.0s: deactivate field + selection box drifts (settle)
+      // ═══════════════════════════════════════════════
+
+      // Field border returns to neutral
+      tl.to(sizeField, {
+        borderColor: "rgba(255,248,233,0.08)",
+        duration: 0.01
+      }, 8.05);
+
+      // Cursor settles — small drift toward bottom-right (sine.inOut for breath)
+      tl.to(cursor, { left: 1650, top: 760, duration: 0.7, ease: "sine.inOut" }, 8.1);
+
+      // Selection box has to follow because headline grew — quick scale + reposition
+      tl.to(selBox, {
+        width: 1280, height: 380, top: 280, left: 100,
+        duration: 0.32, ease: "back.out(1.2)"
+      }, 7.74);
+
+      // Selection size badge updates (just a text swap)
+      tl.set("#sel-size-badge", { textContent: "1280 × 380" }, 7.78);
+
+      // Final breath: panel + grid gentle drift to feel "alive" through the hold
+      tl.to(panel, { y: -3, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 8.0);
+      tl.to(grid, { opacity: 0.85, duration: 0.6, ease: "sine.inOut", yoyo: true, repeat: 1 }, 8.1);
+
+      window.__timelines["scene-13-design-inspector"] = tl;
+    })();
+  </script>
+</body>
+</html>

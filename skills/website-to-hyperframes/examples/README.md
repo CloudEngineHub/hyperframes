@@ -92,6 +92,8 @@ Need a specific technique? Use this table to find the canonical scene.
 | 3D iPhone mockups with composed app UI | [`04-composed-ui/scene-09-phone-mockups/`](04-composed-ui/scene-09-phone-mockups/) |
 | Terminal + live preview split (`npx create-app` → mockup builds in pane) | [`04-composed-ui/scene-10-terminal-with-preview/`](04-composed-ui/scene-10-terminal-with-preview/) |
 | Video editor UI with timeline scrubber + render HUD | [`04-composed-ui/scene-11-timeline-editor-ui/`](04-composed-ui/scene-11-timeline-editor-ui/) |
+| Claude Code / AI agent IDE mockup with prompt + tool calls | [`04-composed-ui/scene-12-claude-code-ide/`](04-composed-ui/scene-12-claude-code-ide/) |
+| Figma-style design inspector panel with cycling values | [`04-composed-ui/scene-13-design-inspector/`](04-composed-ui/scene-13-design-inspector/) |
 | WebGL fragment shader + Canvas 2D fallback | [`07-html-in-canvas/scene-01-webgl-shader/`](07-html-in-canvas/scene-01-webgl-shader/) |
 | Canvas 2D procedural ASCII art + lightning | [`07-html-in-canvas/scene-02-canvas-ascii/`](07-html-in-canvas/scene-02-canvas-ascii/) |
 | Canvas 2D cursor blur + chromatic aberration text | [`07-html-in-canvas/scene-03-cursor-blur-sweeps/`](07-html-in-canvas/scene-03-cursor-blur-sweeps/) |
@@ -112,6 +114,9 @@ Need a specific technique? Use this table to find the canonical scene.
 | 24-cell technique showcase grid | [`12-combined-vignettes/scene-01-techniques-grid/`](12-combined-vignettes/scene-01-techniques-grid/) |
 | Binary rain + centered terminal boot sequence | [`12-combined-vignettes/scene-02-binary-rain-boot/`](12-combined-vignettes/scene-02-binary-rain-boot/) |
 | **6-technique product-launch beat** (stroke-draw logo + kinetic headline + counter + marker + particles + breathing) | [`12-combined-vignettes/scene-03-product-launch-beat/`](12-combined-vignettes/scene-03-product-launch-beat/) |
+| **Brand moodboard** (crown + swatches + logo card + sticky note + reference cards + SVG hub-spoke connectors) | [`12-combined-vignettes/scene-04-brand-moodboard/`](12-combined-vignettes/scene-04-brand-moodboard/) |
+| **Cinematic minimal opener** (light-ball bloom → beam → title fade-up — canonical Beat 1 reference) | [`12-combined-vignettes/scene-05-cinematic-opener/`](12-combined-vignettes/scene-05-cinematic-opener/) |
+| **Design extraction beat** (MacBook + animated DESIGN.md + callout tags pinned on screen elements) | [`12-combined-vignettes/scene-06-design-extraction/`](12-combined-vignettes/scene-06-design-extraction/) |
 | BAD EXAMPLE: slideshow trap | [`13-anti-patterns/scene-01-slideshow-trap/`](13-anti-patterns/scene-01-slideshow-trap/) |
 | BAD EXAMPLE: static after entrance | [`13-anti-patterns/scene-02-static-after-entrance/`](13-anti-patterns/scene-02-static-after-entrance/) |
 | BAD EXAMPLE: power2.out everywhere | [`13-anti-patterns/scene-03-power2-everywhere/`](13-anti-patterns/scene-03-power2-everywhere/) |
@@ -127,10 +132,10 @@ Need a specific technique? Use this table to find the canonical scene.
 
 ## Stitched Grand Tour reel
 
-All 57 scenes concatenated back-to-back as a single 6:26 MP4. Useful for visual-gestalt review or for sharing the library at a glance:
+All 62 scenes concatenated back-to-back as a single 7:10 MP4. Useful for visual-gestalt review or for sharing the library at a glance:
 
-- **Grand Tour reel:** https://www.heygenverse.com/s/b9cdfa1b-6fbd-45a1-b71f-7183edc9bd61/raw
-- **Browsable gallery (per-section grid, all 57 scenes as embedded videos):** https://www.heygenverse.com/a/1636f2fe-3ddc-4543-9a56-0d0b99538807
+- **Grand Tour reel:** https://www.heygenverse.com/s/67bb4ee5-1c7f-4837-b144-d2527b8ade83/raw
+- **Browsable gallery (per-section grid, all 62 scenes as embedded videos):** https://www.heygenverse.com/a/1636f2fe-3ddc-4543-9a56-0d0b99538807
 
 Rebuild the reel after adding scenes: `ffmpeg -f concat -safe 0 -i /tmp/concat-list.txt -c copy out.mp4` where the concat list orders all scene MP4s in section sequence.
 
