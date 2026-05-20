@@ -614,7 +614,8 @@ function inlineSubCompositions(
 
   if (result.externalLinks.length && head) {
     for (const link of result.externalLinks) {
-      if (document.querySelector(`link[href="${link.href}"]`)) continue;
+      const escapedHref = link.href.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      if (document.querySelector(`link[href="${escapedHref}"]`)) continue;
       const el = document.createElement("link");
       el.setAttribute("rel", link.rel);
       el.setAttribute("href", link.href);

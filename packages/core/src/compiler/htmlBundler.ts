@@ -813,7 +813,8 @@ export async function bundleToSingleHtml(
   }
 
   for (const link of compExternalLinks) {
-    if (!document.querySelector(`link[href="${link.href}"]`)) {
+    const escapedHref = link.href.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    if (!document.querySelector(`link[href="${escapedHref}"]`)) {
       const linkEl = document.createElement("link");
       linkEl.setAttribute("rel", link.rel);
       linkEl.setAttribute("href", link.href);
