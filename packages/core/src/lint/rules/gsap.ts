@@ -875,7 +875,7 @@ export const gsapRules: Array<(ctx: LintContext) => HyperframeLintFinding[]> = [
       const windows = extractGsapWindows(script.content);
 
       for (const win of windows) {
-        if (win.method !== "from" && win.method !== "fromTo") continue;
+        if (win.method !== "from") continue;
         if (!win.properties.includes("opacity")) continue;
         const sel = win.targetSelector;
         const cssKey = sel.startsWith("#") || sel.startsWith(".") ? sel : `#${sel}`;

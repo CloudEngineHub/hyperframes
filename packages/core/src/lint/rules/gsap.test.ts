@@ -806,6 +806,24 @@ describe("GSAP rules", () => {
     expect(finding).toBeUndefined();
   });
 
+  it("does NOT error when gsap.fromTo({opacity:0}, {opacity:1}) — destination overrides CSS", () => {
+    const html = `
+<html><body>
+  <div data-composition-id="c1" data-width="1920" data-height="1080">
+    <div id="title" style="opacity: 0; font-size: 120px;">Hello</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#title", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5 }, 0.2);
+    window.__timelines["c1"] = tl;
+  </script>
+</body></html>`;
+    const result = lintHyperframeHtml(html);
+    const finding = result.findings.find((f) => f.code === "gsap_from_opacity_noop");
+    expect(finding).toBeUndefined();
+  });
+
   it("does NOT error when gsap.to() uses opacity:0 (exit animation)", () => {
     const html = `
 <html><body>
