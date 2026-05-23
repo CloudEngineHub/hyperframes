@@ -1,0 +1,13 @@
+{
+  "name": "video-hold-last-frame",
+  "description": "Regression: non-looping video source shorter than data-duration must hold the last frame instead of going black. Source is 2s, data-duration is 4s.",
+  "tags": ["regression", "video", "hold-last-frame"],
+  "minPsnr": 30,
+  "maxFrameFailures": 0,
+  "minAudioCorrelation": 0,
+  "maxAudioLagWindows": 1,
+  "renderConfig": {
+    "fps": 30,
+    "workers": 1
+  }
+}
