@@ -30,7 +30,7 @@ function useKeyframeToggle(session?: DomEditSessionSlice) {
   const sel = session.domEditSelection;
   const anims = session.selectedGsapAnimations;
   const kfAnim = anims.find((a) => a.keyframes);
-  const flatAnim = anims.find((a) => "x" in a.properties || "y" in a.properties);
+  const flatAnim = anims.find((a) => !a.keyframes);
 
   let state: "active" | "inactive" | "none" = "none";
   if (kfAnim?.keyframes && sel) {
@@ -66,7 +66,16 @@ function useKeyframeToggle(session?: DomEditSessionSlice) {
               session.handleGsapAddKeyframe(kfAnim.id, pct, "x", 0);
             }
           } else if (flatAnim) {
+            const elStart = Number.parseFloat(sel.dataAttributes?.start ?? "0") || 0;
+            const elDuration = Number.parseFloat(sel.dataAttributes?.duration ?? "1") || 1;
+            const pct =
+              elDuration > 0
+                ? Math.max(0, Math.min(100, Math.round(((t - elStart) / elDuration) * 100)))
+                : 0;
             session.handleGsapConvertToKeyframes(flatAnim.id);
+            if (pct > 0 && pct < 100) {
+              session.handleGsapAddKeyframe(flatAnim.id, pct, "x", 0);
+            }
           }
         }
       : undefined;

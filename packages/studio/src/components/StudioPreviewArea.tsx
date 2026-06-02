@@ -166,9 +166,7 @@ export function StudioPreviewArea({
                 handleGsapAddKeyframe(anim.id, pct, "x", 0);
               }
             } else {
-              const flatAnim = selectedGsapAnimations.find(
-                (a) => "x" in a.properties || "y" in a.properties,
-              );
+              const flatAnim = selectedGsapAnimations.find((a) => !a.keyframes);
               if (flatAnim) handleGsapConvertToKeyframes(flatAnim.id);
             }
           }}
