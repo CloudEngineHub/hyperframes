@@ -354,8 +354,11 @@ export function useDomEditSession({
     (method: "to" | "from" | "set" | "fromTo") => {
       if (!domEditSelection) return;
       addGsapAnimation(domEditSelection, method, currentTime);
+      if (domEditSelection.element.hasAttribute("data-hf-studio-path-offset")) {
+        handleDomManualEditsReset(domEditSelection);
+      }
     },
-    [domEditSelection, addGsapAnimation, currentTime],
+    [domEditSelection, addGsapAnimation, currentTime, handleDomManualEditsReset],
   );
 
   const handleGsapAddProperty = useCallback(
