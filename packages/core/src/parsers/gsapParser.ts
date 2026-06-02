@@ -1272,6 +1272,18 @@ export function updateKeyframeInScript(
 }
 
 /** Resolve from/to property maps for a tween being converted to keyframes. */
+const CSS_IDENTITY: Record<string, number> = {
+  opacity: 1,
+  autoAlpha: 1,
+  scale: 1,
+  scaleX: 1,
+  scaleY: 1,
+};
+
+function cssIdentityValue(prop: string): number {
+  return CSS_IDENTITY[prop] ?? 0;
+}
+
 function resolveConversionProps(
   anim: GsapAnimation,
   resolvedFromValues?: Record<string, number | string>,
@@ -1280,21 +1292,21 @@ function resolveConversionProps(
     if (resolvedFromValues) {
       return { fromProps: resolvedFromValues, toProps: { ...anim.properties } };
     }
-    const zeroedFrom: Record<string, number | string> = {};
+    const identityFrom: Record<string, number | string> = {};
     for (const [key, val] of Object.entries(anim.properties)) {
-      if (val != null) zeroedFrom[key] = typeof val === "number" ? 0 : val;
+      if (val != null) identityFrom[key] = typeof val === "number" ? cssIdentityValue(key) : val;
     }
-    return { fromProps: zeroedFrom, toProps: { ...anim.properties } };
+    return { fromProps: identityFrom, toProps: { ...anim.properties } };
   }
   if (anim.method === "from") {
     if (resolvedFromValues) {
       return { fromProps: { ...anim.properties }, toProps: resolvedFromValues };
     }
-    const zeroedTo: Record<string, number | string> = {};
+    const identityTo: Record<string, number | string> = {};
     for (const [key, val] of Object.entries(anim.properties)) {
-      if (val != null) zeroedTo[key] = typeof val === "number" ? 0 : val;
+      if (val != null) identityTo[key] = typeof val === "number" ? cssIdentityValue(key) : val;
     }
-    return { fromProps: { ...anim.properties }, toProps: zeroedTo };
+    return { fromProps: { ...anim.properties }, toProps: identityTo };
   }
   // fromTo
   return { fromProps: { ...(anim.fromProperties ?? {}) }, toProps: { ...anim.properties } };
