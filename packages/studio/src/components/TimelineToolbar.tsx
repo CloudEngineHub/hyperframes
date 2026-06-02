@@ -42,6 +42,43 @@ function interpolateKeyframeProperties(
   return result;
 }
 
+function readRuntimeKeyframeValues(
+  iframe: HTMLIFrameElement | null,
+  sel: DomEditSelection,
+  keyframes: GsapPercentageKeyframe[],
+): Record<string, number> {
+  if (!iframe?.contentWindow) return {};
+  let gsap: { getProperty?: (el: Element, prop: string) => number } | undefined;
+  try {
+    gsap = (iframe.contentWindow as Window & { gsap?: typeof gsap }).gsap;
+  } catch {
+    return {};
+  }
+  if (!gsap?.getProperty) return {};
+  const selector = sel.id ? `#${sel.id}` : sel.selector;
+  if (!selector) return {};
+  let doc: Document | null = null;
+  try {
+    doc = iframe.contentDocument;
+  } catch {
+    return {};
+  }
+  const element = doc?.querySelector(selector);
+  if (!element) return {};
+  const allProps = new Set<string>();
+  for (const kf of keyframes) {
+    for (const p of Object.keys(kf.properties)) {
+      if (typeof kf.properties[p] === "number") allProps.add(p);
+    }
+  }
+  const result: Record<string, number> = {};
+  for (const prop of allProps) {
+    const val = Number(gsap.getProperty(element, prop));
+    if (Number.isFinite(val)) result[prop] = Math.round(val);
+  }
+  return result;
+}
+
 interface DomEditSessionSlice {
   domEditSelection: DomEditSelection | null;
   selectedGsapAnimations: GsapAnimation[];
@@ -49,6 +86,7 @@ interface DomEditSessionSlice {
   handleGsapAddKeyframe: (animId: string, pct: number, prop: string, val: number | string) => void;
   handleGsapConvertToKeyframes: (animId: string) => void;
   handleGsapAddAnimation: (method: "to" | "from" | "set" | "fromTo") => void;
+  previewIframeRef?: React.RefObject<HTMLIFrameElement | null>;
 }
 
 interface TimelineToolbarProps {
@@ -96,8 +134,16 @@ function useKeyframeToggle(session?: DomEditSessionSlice) {
           if (existing) {
             session.handleGsapRemoveKeyframe(kfAnim.id, existing.percentage);
           } else {
-            const interpolated = interpolateKeyframeProperties(kfAnim.keyframes.keyframes, pct);
-            for (const [prop, val] of Object.entries(interpolated)) {
+            const runtimeValues = readRuntimeKeyframeValues(
+              session.previewIframeRef?.current ?? null,
+              sel,
+              kfAnim.keyframes.keyframes,
+            );
+            const values =
+              Object.keys(runtimeValues).length > 0
+                ? runtimeValues
+                : interpolateKeyframeProperties(kfAnim.keyframes.keyframes, pct);
+            for (const [prop, val] of Object.entries(values)) {
               session.handleGsapAddKeyframe(kfAnim.id, pct, prop, val);
             }
           }

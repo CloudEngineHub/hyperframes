@@ -31,8 +31,9 @@ export const SUPPORTED_PROPS = [
   // Typography
   "fontSize",
   "letterSpacing",
-  // Filter
+  // Filter & Clipping
   "filter",
+  "clipPath",
 ];
 
 export const SUPPORTED_EASES = [

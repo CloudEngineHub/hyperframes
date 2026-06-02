@@ -238,6 +238,11 @@ export const PropertyPanel = memo(function PropertyPanel({
   const commitManualOffset = (axis: "x" | "y", nextValue: string) => {
     const parsed = parsePxMetricValue(nextValue);
     if (parsed == null) return;
+    if (gsapKeyframes && gsapAnimId && onAddKeyframe) {
+      const pct = Math.max(0, Math.min(100, Math.round(currentPct)));
+      onAddKeyframe(gsapAnimId, pct, axis, parsed);
+      return;
+    }
     const current = readStudioPathOffset(element.element);
     onSetManualOffset(element, {
       x: axis === "x" ? parsed : current.x,

@@ -593,5 +593,6 @@ export function useDomEditSession({
     handleGsapRemoveAllKeyframes,
     handleResetSelectedElementKeyframes,
     invalidateGsapCache: bumpGsapCache,
+    previewIframeRef,
   };
 }

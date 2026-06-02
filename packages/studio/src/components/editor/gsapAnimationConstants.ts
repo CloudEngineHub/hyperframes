@@ -27,6 +27,16 @@ export const PROP_LABELS: Record<string, string> = {
   autoAlpha: "Visibility",
   visibility: "Visible",
   scaleX_alias: "Stretch X",
+  filter: "Filter",
+  clipPath: "Clip Path",
+  color: "Color",
+  backgroundColor: "Background",
+  borderColor: "Border Color",
+  borderRadius: "Radius",
+  fontSize: "Font Size",
+  letterSpacing: "Tracking",
+  skewX: "Skew X",
+  skewY: "Skew Y",
 };
 
 export const PROP_UNITS: Record<string, string> = {
