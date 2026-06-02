@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { usePlayerStore } from "../player";
 import { FONT_EXT } from "../utils/mediaTypes";
 import type { PatchOperation } from "../utils/sourcePatcher";
