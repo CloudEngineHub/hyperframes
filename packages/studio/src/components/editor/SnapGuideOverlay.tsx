@@ -28,6 +28,10 @@ export const SnapGuideOverlay = memo(function SnapGuideOverlay({
   const guideElsRef = useRef<(HTMLDivElement | null)[]>([]);
   const spacingElsRef = useRef<(HTMLDivElement | null)[]>([]);
   const spacingLabelElsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const overlayWidthRef = useRef(overlayWidth);
+  overlayWidthRef.current = overlayWidth;
+  const overlayHeightRef = useRef(overlayHeight);
+  overlayHeightRef.current = overlayHeight;
 
   useMountEffect(() => {
     let frame = 0;
@@ -39,6 +43,8 @@ export const SnapGuideOverlay = memo(function SnapGuideOverlay({
       const state = snapGuidesRef.current;
       const guides = state?.guides ?? [];
       const spacingGuides = state?.spacingGuides ?? [];
+      const w = overlayWidthRef.current;
+      const h = overlayHeightRef.current;
 
       for (let i = 0; i < MAX_GUIDES; i++) {
         const el = guideElsRef.current[i];
@@ -55,11 +61,11 @@ export const SnapGuideOverlay = memo(function SnapGuideOverlay({
           el.style.left = `${guide.position}px`;
           el.style.top = "0";
           el.style.width = "1px";
-          el.style.height = `${overlayHeight}px`;
+          el.style.height = `${h}px`;
         } else {
           el.style.left = "0";
           el.style.top = `${guide.position}px`;
-          el.style.width = `${overlayWidth}px`;
+          el.style.width = `${w}px`;
           el.style.height = "1px";
         }
       }

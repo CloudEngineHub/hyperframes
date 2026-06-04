@@ -151,7 +151,6 @@ export function startGesture(
           excludeElements: buildExcludeElements({ iframe, selection: sel }),
         })
       : undefined;
-
   e.preventDefault();
   e.stopPropagation();
   e.currentTarget.setPointerCapture(e.pointerId);
