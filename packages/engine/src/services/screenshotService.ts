@@ -131,14 +131,24 @@ export async function pageScreenshotCapture(page: Page, options: CaptureOptions)
   const isPng = options.format === "png";
   const dpr = options.deviceScaleFactor ?? 1;
   const clip = { x: 0, y: 0, width: options.width, height: options.height, scale: dpr };
+
+  // Force a standard compositor cycle before the real capture. The 1×1
+  // micro-screenshot runs with captureBeyondViewport:false (the default),
+  // which triggers Chrome's viewport-bounded composite path — this path
+  // reliably composites WebGL/ANGLE canvas layers into the surface texture.
+  // Without this flush, captureBeyondViewport:true can skip WebGL layer
+  // compositing under certain GPU configs (SwiftShader, some ANGLE backends),
+  // producing a black canvas in the final screenshot.
+  await client.send("Page.captureScreenshot", {
+    format: "jpeg",
+    quality: 1,
+    clip: { x: 0, y: 0, width: 1, height: 1, scale: 1 },
+  });
+
   const result = await client.send("Page.captureScreenshot", {
     format: isPng ? "png" : "jpeg",
     quality: isPng ? undefined : (options.quality ?? 80),
     fromSurface: true,
-    // The explicit clip rect constrains output to exact composition
-    // dimensions. The viewport-boundary pre-clip from captureBeyondViewport:
-    // false is redundant, and Chrome's compositor rounds it inward under
-    // multi-tab load — clipping the bottom/right edge of tall viewports.
     captureBeyondViewport: true,
     optimizeForSpeed: !isPng,
     clip,

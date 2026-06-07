@@ -20,11 +20,51 @@ function makeFakePageWithCdp(send: (method: string, params: object) => Promise<{
   return fakePage;
 }
 
-describe("pageScreenshotCapture supersample plumbing", () => {
+describe("pageScreenshotCapture", () => {
   // Minimal 1×1 transparent PNG, base64. The function returns Buffer.from(data, "base64")
   // and we never inspect the bytes — only the params we pass to client.send.
   const ONE_PIXEL_PNG_B64 =
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkAAIAAAoAAv/lxKUAAAAASUVORK5CYII=";
+
+  // The flush call is always the first CDP send; the real screenshot is the second.
+  const flushCallIndex = 0;
+  const realCallIndex = 1;
+
+  it("issues a 1×1 compositor flush before the real screenshot", async () => {
+    const send = vi.fn().mockResolvedValue({ data: ONE_PIXEL_PNG_B64 });
+    const page = makeFakePageWithCdp(send);
+
+    await pageScreenshotCapture(page, {
+      width: 1920,
+      height: 1080,
+      fps: { num: 30, den: 1 },
+      format: "jpeg",
+    });
+
+    expect(send).toHaveBeenCalledTimes(2);
+
+    const flushParams = send.mock.calls[flushCallIndex]?.[1] as Record<string, unknown>;
+    expect(flushParams).toEqual({
+      format: "jpeg",
+      quality: 1,
+      clip: { x: 0, y: 0, width: 1, height: 1, scale: 1 },
+    });
+  });
+
+  it("flush does not use captureBeyondViewport so standard compositor path runs", async () => {
+    const send = vi.fn().mockResolvedValue({ data: ONE_PIXEL_PNG_B64 });
+    const page = makeFakePageWithCdp(send);
+
+    await pageScreenshotCapture(page, {
+      width: 1920,
+      height: 1080,
+      fps: { num: 30, den: 1 },
+      format: "jpeg",
+    });
+
+    const flushParams = send.mock.calls[flushCallIndex]?.[1] as Record<string, unknown>;
+    expect(flushParams).not.toHaveProperty("captureBeyondViewport");
+  });
 
   it("passes `clip` with scale 1 when deviceScaleFactor is undefined (default 1)", async () => {
     const send = vi.fn().mockResolvedValue({ data: ONE_PIXEL_PNG_B64 });
@@ -58,7 +98,7 @@ describe("pageScreenshotCapture supersample plumbing", () => {
       deviceScaleFactor: 1,
     });
 
-    const params = send.mock.calls[0]?.[1] as { clip?: { scale: number } };
+    const params = send.mock.calls[realCallIndex]?.[1] as { clip?: { scale: number } };
     expect(params.clip).toEqual({ x: 0, y: 0, width: 1920, height: 1080, scale: 1 });
   });
 
@@ -94,8 +134,24 @@ describe("pageScreenshotCapture supersample plumbing", () => {
       deviceScaleFactor: 3,
     });
 
-    const params = send.mock.calls[0]?.[1] as { clip?: { scale: number } };
+    const params = send.mock.calls[realCallIndex]?.[1] as { clip?: { scale: number } };
     expect(params.clip?.scale).toBe(3);
+  });
+
+  it("real screenshot uses captureBeyondViewport: true and fromSurface: true", async () => {
+    const send = vi.fn().mockResolvedValue({ data: ONE_PIXEL_PNG_B64 });
+    const page = makeFakePageWithCdp(send);
+
+    await pageScreenshotCapture(page, {
+      width: 1920,
+      height: 1080,
+      fps: { num: 30, den: 1 },
+      format: "jpeg",
+    });
+
+    const realParams = send.mock.calls[realCallIndex]?.[1] as Record<string, unknown>;
+    expect(realParams.captureBeyondViewport).toBe(true);
+    expect(realParams.fromSurface).toBe(true);
   });
 });
 
