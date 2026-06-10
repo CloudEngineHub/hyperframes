@@ -17,13 +17,17 @@ Load the `hyperframes` skill — it has the rules for data attributes, timeline 
 
 ---
 
-## 1. Copy SFX to project
+## 1. Get SFX from the catalog
+
+SFX come from HeyGen's free catalog via the `hyperframes sfx` CLI — see [`../../hyperframes/references/sound-effects.md`](../../hyperframes/references/sound-effects.md). For each SFX the storyboard (Step 3) assigned, search by its description and download it into the project:
 
 ```bash
-cp -r skills/website-to-hyperframes/assets/sfx/ <project-dir>/sfx/
-# If skill is installed elsewhere:
-find . -path "*/website-to-hyperframes/assets/sfx" -exec cp -r {} <project-dir>/sfx/ \;
+hyperframes sfx list                                    # the families, to orient (optional)
+hyperframes sfx search "punchy transition whoosh" --json
+hyperframes sfx add <id>                                # → assets/sfx/<id>.mp3, prints loudness/peak/onset/tail
 ```
+
+`sfx add` writes the clip to `assets/sfx/` and prints its analysis (peak time, onset/tail, loudness) — use it to trim and anchor per the global doc. If `HEYGEN_API_KEY` isn't set, `sfx` prints how to get a free key; ask the user for one or build without SFX — don't silently drop them.
 
 ## 2. Build the root index.html
 
@@ -76,11 +80,13 @@ Create `index.html` yourself. This is the orchestrator — it holds beat slots, 
     data-volume="1"
   ></audio>
 
-  <!-- SFX on content moments, NOT on shader transitions -->
+  <!-- SFX on content moments, NOT on shader transitions.
+       src is the LOCAL file from `sfx add`; trim/anchor from its analysis. -->
   <audio
     id="sfx-impact"
-    src="sfx/impact-bass-1.mp3"
+    src="assets/sfx/<id>.mp3"
     data-start="0.3"
+    data-media-start="0.05"
     data-duration="2.1"
     data-track-index="41"
     data-volume="0.35"
@@ -88,7 +94,7 @@ Create `index.html` yourself. This is the orchestrator — it holds beat slots, 
 </div>
 ```
 
-SFX were assigned in the storyboard (Step 3) — implement exactly what STORYBOARD.md specifies. Each SFX entry has a file, trigger time, and volume. Wire each one as an `<audio>` element with the exact `data-start`, `data-duration`, and `data-volume` from the storyboard. Do not add, remove, or substitute SFX beyond what the storyboard says.
+SFX were assigned in the storyboard (Step 3) by _description_, not filename. For each one: `hyperframes sfx search`/`add` to get the clip into `assets/sfx/`, then wire it as an `<audio>` element pointing at the **local** downloaded file — never a search `audio_url` (it expires). Set `data-volume` from the storyboard, and `data-media-start`/`data-duration`/`data-start` per the analysis `sfx add` printed (trim dead air to onset/tail, anchor hits/risers) following [`../../hyperframes/references/sound-effects.md`](../../hyperframes/references/sound-effects.md). Do not add, remove, or substitute SFX beyond what the storyboard says.
 
 **Choose architecture based on pacing (from Step 3)**
 

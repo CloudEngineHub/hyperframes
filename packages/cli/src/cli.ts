@@ -127,6 +127,7 @@ const subCommands = {
   lambda: () => import("./commands/lambda.js").then((m) => m.default),
   cloud: () => import("./commands/cloud.js").then((m) => m.default),
   auth: () => import("./commands/auth.js").then((m) => m.default),
+  sfx: () => import("./commands/sfx.js").then((m) => m.default),
 };
 
 const main = defineCommand({
