@@ -1,0 +1,41 @@
+<template id="scene_1-template">
+  <div
+    class="scene_1-root"
+    data-composition-id="scene_1"
+    data-width="1920"
+    data-height="1080"
+    style="position:relative; width:1920px; height:1080px; overflow:hidden;"
+  >
+    <style>
+      .scene_1-root {
+        background: #1a1a2e;
+      }
+      .scene_1-root .title-card {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: system-ui, sans-serif;
+        font-size: 96px;
+        font-weight: 700;
+        color: #e94560;
+        text-align: center;
+      }
+      .scene_1-root .subtitle {
+        position: absolute;
+        bottom: 200px;
+        width: 100%;
+        text-align: center;
+        font-family: system-ui, sans-serif;
+        font-size: 48px;
+        color: #f5f5f5;
+      }
+    </style>
+    <div class="title-card">INNER ROOT CLASS</div>
+    <div class="subtitle">This text should be visible</div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["scene_1"] = gsap.timeline({ paused: true });
+    </script>
+  </div>
+</template>
