@@ -26,11 +26,13 @@ The Arc field above (Problem→Solution / Reveal / Demonstration / Vibe / Compar
 
 If the user explicitly wants a **launch-style** or **persuasion-heavy** reel — a product launch trailer, a category-creation announcement, a transformation story — the five named archetypes below give the storyboard a more specific structural spine. They are optional and SECONDARY to the Arc field. Pick one only when the user's brief reads as persuasion-led, not when it's a general brand piece.
 
-- **PAS** (Pain → Agitate → Solve) — when the product solves a sharp, named pain the audience feels. Open on the friction, intensify it briefly, reveal the product as relief. Best for B2B SaaS where the pain is structural (manual workflow, tool sprawl, broken handoff).
-- **BAB** (Before → After → Bridge) — when the transformation IS the story. Show the friction state, contrast with the desired state, walk the audience across the bridge (the product's workflow) that gets there. The bridge is the proof — viewers leave knowing the steps, not just the value. Shallower emotional curve than PAS; proof-heavier than Future-Pacing.
-- **Future-Pacing** — when the brand sells an **aspirational outcome** the viewer wants to inhabit. Open in the future state; reverse-engineer the product's role in getting there. Best for category-defining or vision-forward brands (`"Imagine if your team..."` openings).
-- **Demo-Loop** — when the product itself is the hook. Open mid-product-use; the cycle of action → result IS the story. Best for tools whose value is immediately visible (creative apps, agent tools, anything with a satisfying loop).
-- **Feature-Benefit-Cascade** — when the product has 3–5 distinct features that each deserve a beat. A rapid sequence of feature → benefit pairs, each ~3–5s, building cumulative product surface. Best for mature products with broad surface where no single feature is the wow.
+Every entry below is equal-weight — none is preferred. Pick the one whose structural shape matches the brief.
+
+- **PAS** (Pain → Agitate → Solve) — open on a named pain, intensify briefly, reveal the product as relief. Applies when the brief frames a structural friction the audience already feels.
+- **BAB** (Before → After → Bridge) — show the friction state, contrast with the desired state, walk through the workflow steps that bridge them. Applies when the transformation steps are the proof.
+- **Future-Pacing** — open in the future/desired state, reverse-engineer the product's role in getting there. Applies when the brief frames an aspirational outcome.
+- **Demo-Loop** — open mid-product-use; the cycle of action → result is the structure. Applies when the brief frames the product itself as the demonstration.
+- **Feature-Benefit-Cascade** — rapid sequence of feature → benefit pairs (~3–5s each), building cumulative surface. Applies when the brief lists 3–5 distinct features.
 
 If you pick an archetype, **write it on the same line as the Arc field** so the worker reads both: `**Arc:** Demonstration / Demo-Loop — three workflow loops, each ending in a "ship" moment.`
 
@@ -321,12 +323,12 @@ Use the pacing you decided at the top of this step. The beat count, duration, an
 | **Visual spectacle**       | The shot itself is the hook — no copy, no claim, just a striking image | A logo dissolving into a particle storm; a product 3D-rotating through liquid glass |
 | **Question invitation**    | Invite the viewer to participate (a poll, a comparison, a self-rating) | `"How many tools did you use this morning? Count them. We'll wait."`           |
 | **Trend positioning**      | Anchor to a cultural / market shift the viewer is already aware of     | `"Every AI tool ships an agent now. Most of them lie. We don't."`              |
-| **Contradiction-reveal**   | Attack the viewer's assumed knowledge head-on — `"You learned X. It's wrong."` Different from shocking-statistic in that the source of authority being challenged IS the viewer's training/intuition. | `"You were taught to write unit tests first. Nobody on a real team does that."` |
-| **Time-stamped urgency**   | A concrete moment-in-time framing that drops the viewer into a scene already in motion | `"Tuesday, 9:47 AM. You have 13 minutes before standup. You haven't written a line."` |
-| **Aftermath open**         | Start in the resolved/peak/celebratory state, rewind to show how. The hook is "wait, how did we get here?" Reverse chronology becomes the structure. | A team high-fiving in the closing frame, then `"Eight hours earlier."` smash-cuts to chaos. |
-| **Negative space**         | The first 1.0-1.5s of the video is INTENTIONALLY empty — black, white, silence, a single fixed dot. Every other hook ADDS information; this one removes it, weaponizing the viewer's pattern-completion instinct. | 1.2s of pure black with a faint heartbeat SFX, then BAM — full hero. |
+| **Contradiction-reveal**   | Attack a belief the viewer holds; the video is the proof              | `"You were taught to write tests first. Nobody on a real team does that."`     |
+| **Time-stamped urgency**   | Drop the viewer into a moment-in-time scene already in motion         | `"Tuesday, 9:47 AM. You have 13 minutes before standup. Zero lines written."`  |
+| **Aftermath open**         | Start in the resolved/peak state; rewind chronology shows how         | Team high-fiving on the closing frame, then `"Eight hours earlier."` smash-cut |
+| **Negative space**         | First 1.0–1.5s intentionally empty (silence, black, single fixed dot) | 1.2s of pure black with one faint heartbeat SFX, then full-hero reveal         |
 
-Most map cleanly onto a single opener beat's VO line + the visual that lands it. **Don't combine more than one hook per opener** — stacking hooks ("imagine + pain + statistic") fragments the cold-open and loses the scroll. Pick the one that fits the brand voice (clinical fintech ≠ visceral metaphor), the platform (TikTok feed ≠ enterprise landing page), and the message (a feature launch usually wants category-announcement; a brand reel usually wants visceral-metaphor or visual-spectacle).
+Pick one — every entry above is a known scroll-stopper, none is "better" than another. The right choice is whichever fits the brand voice, the platform, and the message at hand. **Don't combine more than one hook per opener** — stacking fragments the cold-open and loses the scroll.
 
 **CTA / closing beats** are consistently the weakest. Agents treat them as "logo + tagline + done." A good CTA should: make the logo entrance an event (SVG path draw, scale with overshoot, or anything awesome really), have continuous background motion, and hold only 2-3 seconds after the last spoken word — NOT 8-10 seconds of silence.
 
@@ -397,30 +399,18 @@ Describe the feel precisely: "snappy overshoot bounce settling into place" → b
 
 ### Named motion patterns — write these into the storyboard, the worker implements
 
-The storyboard can NAME these by ID; the beat worker implements them with the right GSAP shape. Naming them in prose means the worker doesn't have to invent the rhythm — they just code what's already specified.
+The storyboard names a pattern by ID; the beat worker reads the row and codes the GSAP shape. **Every entry below is equal-weight** — none is preferred or "best" for any category. Pick the one that matches the beat's intent, not the one that reads richest in this doc. The format is uniform: mechanism + one concrete number/constraint.
 
-- **`stillness-before-climax`** — a deliberate 0.3–0.75s pause between a major action and its confirmation. The silence creates narrative tension before the landing. Example: "icons collapse at 2.2s, demo pops out at 2.95s (0.75s gap)" or "Step 3 activates at 3.33s, button enters at 3.52s (0.19s buffer)." A scene that jumps directly from action to result loses its dramatic comma. **Schedule the pause explicitly** in the storyboard's per-beat choreography — `[pause 0.5s]` between the trigger and the response.
-
-- **`exit-75-percent`** — an exit animation lasts roughly 75% of its entry duration. Not 50% (reads as a flash), not 100% (sluggish, blocks the next beat's entrance). Arrival is deliberate; departure is swift but not abrupt. Example: a title enters in 0.8s → exits in 0.6s.
-
-- **`multiplicative-breathing`** (not yoyo) — hero images and background elements get a continuous ±2–5% scale breath layered ON TOP of their settled scale, not a yoyo tween. The form is `scale = final * (1 + Math.sin(t * freq) * amp)` driven by `onUpdate` reading `tl.time()`. **Forbid yoyo tweens on the same property** — they overwrite the entry scale and snap the element back to the wrong baseline. Minimum amplitude ±6px or ±2–5% scale; sub-3px micro-floats are invisible at video resolution. The build worker writes the JS; the storyboard just names `multiplicative-breathing on .hero-card across the hold phase`.
-
-- **`leading-line-camera-traversal`** — the viewport stays fixed at 1920×1080 but the WORLD is bigger (4000-12000px wide). All elements are absolutely positioned across this large canvas; the "camera" is a GSAP tween on the world's `transform: translate(x, y)` that pans between named coordinates. Optional: hand-drawn SVG paths (rough arrows, curves, scribbles) draw with `drawSVG` / stroke-dashoffset BETWEEN camera moves, suggesting where the camera is about to go. The eye follows the line, the line "pulls" the camera. Best for: feature lists, roadmap reveals, "we ship a lot" videos, brand-voice-rich moments where the rhythm is `move → land → reveal → move`. Storyboard names it like:
-  ```
-  Beat 2 — `leading-line-camera-traversal`. World: 6000×3000. Camera path:
-    s2-start (0,0) → s2-pause (2200,400) over 1.2s, power3.inOut.
-    Orange leading-line draws between coords during the pause (0.5s).
-    Camera then to s2-end (4880,1530) over 1.4s.
-  ```
-  Worker implementation: `gsap.set('.world', { x: -cx + 960, y: -cy + 540 })` to center coordinate `(cx, cy)` at viewport center. Easing is critical — `power3.inOut` reads as smooth dolly; `power2.out` reads as snap-to-target. Reference implementation: cell-Roadmap (`fable-test/hyperframes-roadmap/compositions/roadmap.html`).
-
-- **`match-cut-handoff`** — two adjacent beats share an element that morphs in shape between them. Beat N ends with a circle; beat N+1 begins with the letter O at the same screen position and scale. The crossfade between beats hides the shape change; the eye reads it as continuous. Powerful when the morph is conceptually rhyming (logo → letter, screen → window, dashboard → spreadsheet). Storyboard names it as: `match-cut from beat-2 (circle, 320px, center) → beat-3 (letter O of "Orbit", 320px, center)`. Worker writes the entry of beat N+1 with a `gsap.set` baseline matching beat N's exit pose.
-
-- **`whip-pan`** (between-beat transition, not in-beat) — replace a CSS crossfade with a fast directional blur sweep at the seam. Beat N's last 0.15s blasts horizontally out of frame; beat N+1's first 0.15s blasts in from the opposite direction. Reads as Edgar Wright cuts — punchy, hand-of-the-editor visible. Use AT MOST twice per video; more flattens. Storyboard declares: `transition between beat-3 and beat-4: whip-pan-left, 0.3s`. Implementation: the orchestrator wires this via storyboard prose (it's not a HyperShader transition — it's two coordinated GSAP tweens on adjacent beat exits/entries).
-
-- **`earned-hold`** — after a stretch of rapid motion (say, beats 2-4 of a fast-paced reel), the camera locks DEAD STILL for 0.6-1.2s on a single hero element. Music drops to 60% or out entirely. The stillness IS the impact — every prior beat earns this beat its silence. Best for the moment right before the CTA in a fast video, or after a payoff reveal. Storyboard names it: `earned-hold on .hero-logo for 0.9s, music drops -8dB, no other motion`. The worker implements by writing NO tweens during this window — the contrast is the design.
-
-- **`settling-overshoot`** — an entering element overshoots its target by 5-8px (or 4-8% scale), then jitters back at decreasing amplitude over 0.3s. Reads as physical settling — the element has mass, momentum, finds rest. Different from `back.out` ease (single overshoot+settle) because the jitter has 2-3 decreasing bounces. Used sparingly on key arrivals (a hero word landing, a CTA button locking in). Storyboard names it: `settling-overshoot on .cta-button at 5.4s, 7px overshoot, 3 dampened jitters`. Worker stacks two GSAP tweens: arrival with `back.out(2)` then a follow-up `tl.fromTo(.cta, {y: -3}, {y: 0, duration: 0.18, ease: "elastic.out(1, 0.4)"})`.
+- **`stillness-before-climax`** — 0.3–0.75s pause between a major action and its confirmation. Schedule the gap explicitly in the per-beat choreography (`trigger at 2.2s · response at 2.95s`).
+- **`exit-75-percent`** — exit duration ≈ 0.75 × entry duration. Entry 0.8s → exit 0.6s. Not 50% (flash), not 100% (sluggish).
+- **`multiplicative-breathing`** — continuous ±2–5% scale layered on the settled scale via `scale = final * (1 + sin(t * freq) * amp)`, `onUpdate` reads `tl.time()`. Not yoyo (overwrites baseline). Minimum amplitude ±6px or ±2–5%.
+- **`leading-line-camera-traversal`** — world canvas larger than 1920×1080 (e.g. 6000×3000); the "camera" is a GSAP tween on `.world` `transform: translate(x, y)` between named coordinates. Centering formula: `translate(-cx + 960, -cy + 540)`. Optional SVG paths draw between camera moves to suggest the route.
+- **`match-cut-handoff`** — adjacent beats share an element at the seam (beat N exit pose = beat N+1 entry pose, same screen position + scale). The crossfade hides the shape change; the eye reads continuity. Storyboard names both poses explicitly.
+- **`whip-pan`** — between-beat transition: beat N exits with 0.15s directional blur sweep; beat N+1 enters with mirrored 0.15s sweep from the opposite side. Wired by orchestrator, not HyperShader. Total seam ≈ 0.3s.
+- **`earned-hold`** — 0.6–1.2s of zero motion on a single hero element, with music attenuated −6 to −10 dB. Storyboard declares the duration; the worker writes no tweens across that window.
+- **`settling-overshoot`** — entering element overshoots target by 5–8px (or 4–8% scale), then jitters back at decreasing amplitude over ~0.3s. Two stacked tweens: arrival with `back.out(2)` + follow-up `elastic.out(1, 0.4)` on a small delta.
+- **`custom-cubic-bezier-ease`** — define a `CustomEase` via cubic-bezier coordinates when standard GSAP eases (power1–4, expo, elastic, back, sine) don't carry the intended personality. Storyboard names the coords: `CustomEase.create("hero-in", "M0,0 C0.6,-0.28 0.735,0.045 1,1")`. Worker registers it once and references by name in tweens.
+- **`bezier-motion-path`** — element follows a curve through space, not a straight line. GSAP `MotionPathPlugin` reads an SVG `<path d="…"/>` and tweens the element along it. Storyboard names the path id and traversal duration; the path itself can be drawn beat-side or imported from `capture/assets/`.
 
 ---
 
