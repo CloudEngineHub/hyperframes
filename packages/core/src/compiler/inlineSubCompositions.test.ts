@@ -321,4 +321,136 @@ describe("inlineSubCompositions – #ID selector scoping divergence", () => {
       /\[data-composition-id="intro"\]\[data-hf-authored-id="intro"\]\s+\.title/,
     );
   });
+
+  it("compoundAuthoredRoot + id != compId: without flattenInnerRoot, compound selector targets host which has mismatched data-hf-authored-id", () => {
+    // id="root" but compId="scene_1" — the dangerous combination Vai identified
+    const subComp = `<template id="scene_1-template">
+  <div id="root" data-composition-id="scene_1" data-width="1920" data-height="1080">
+    <div class="content">Hello</div>
+    <style>
+      #root { background: #111; }
+      #root .content { color: #fff; }
+    </style>
+  </div>
+</template>`;
+
+    const { document } = parseHTML(`<!DOCTYPE html>
+<html><body>
+  <div data-composition-id="main">
+    <div data-composition-id="scene_1" data-composition-src="scene_1.html"
+         data-start="0" data-duration="4" data-track-index="0"></div>
+  </div>
+</body></html>`);
+    const host = document.querySelector('[data-composition-src="scene_1.html"]')!;
+
+    const result = inlineSubCompositions(document, [host], {
+      resolveHtml: () => subComp,
+      parseHtml: (html) => parseHTML(html).document,
+      compoundAuthoredRoot: true,
+    });
+
+    // Without flattenInnerRoot (old producer path), innerHTML strips the inner
+    // root. The host gets data-hf-authored-id="root" from the post-inlining
+    // propagation. CSS scoping with compoundAuthoredRoot emits a compound
+    // selector [data-composition-id="scene_1"][data-hf-authored-id="root"].
+    // This works because both attributes land on the host element.
+    expect(host.getAttribute("data-hf-authored-id")).toBe("root");
+    expect(host.getAttribute("data-composition-id")).toBe("scene_1");
+
+    const scopedCss = result.styles.join("\n");
+    expect(scopedCss).toContain('[data-composition-id="scene_1"][data-hf-authored-id="root"]');
+  });
+
+  it("flattenInnerRoot + id != compId: CSS uses descendant selectors that resolve correctly", () => {
+    // Same id="root" + compId="scene_1" combination, but with flattenInnerRoot.
+    // This is the fix path — inner root is preserved as a child.
+    const subComp = `<template id="scene_1-template">
+  <div id="root" data-composition-id="scene_1" data-width="1920" data-height="1080">
+    <div class="content">Hello</div>
+    <style>
+      #root { background: #111; }
+      #root .content { color: #fff; }
+    </style>
+  </div>
+</template>`;
+
+    const { document } = parseHTML(`<!DOCTYPE html>
+<html><body>
+  <div data-composition-id="main">
+    <div data-composition-id="scene_1" data-composition-src="scene_1.html"
+         data-start="0" data-duration="4" data-track-index="0"></div>
+  </div>
+</body></html>`);
+    const host = document.querySelector('[data-composition-src="scene_1.html"]')!;
+
+    const result = inlineSubCompositions(document, [host], {
+      resolveHtml: () => subComp,
+      parseHtml: (html) => parseHTML(html).document,
+      flattenInnerRoot: prepareFlattenedInnerRoot,
+    });
+
+    // With flattenInnerRoot, data-hf-authored-id="root" is on the inner child
+    const innerChild = host.querySelector('[data-hf-authored-id="root"]');
+    expect(innerChild).not.toBeNull();
+    // The host does NOT have data-hf-authored-id (it's on the child)
+    expect(host.getAttribute("data-hf-authored-id")).toBeNull();
+
+    // CSS uses descendant selectors: [data-composition-id="scene_1"] [data-hf-authored-id="root"]
+    // NOT compound: [data-composition-id="scene_1"][data-hf-authored-id="root"]
+    const scopedCss = result.styles.join("\n");
+    expect(scopedCss).toContain('[data-hf-authored-id="root"]');
+    // Descendant combinator (space) between scope and authored-id
+    expect(scopedCss).toMatch(/\[data-composition-id="scene_1"\]\s+\[data-hf-authored-id="root"\]/);
+  });
+
+  it("flattenInnerRoot + compoundAuthoredRoot + id != compId: compound selector would NOT resolve", () => {
+    // Documents the bug: compoundAuthoredRoot + flattenInnerRoot + id != compId
+    // produces a compound selector that matches nothing at runtime.
+    const subComp = `<template id="scene_1-template">
+  <div id="root" data-composition-id="scene_1" data-width="1920" data-height="1080">
+    <div class="content">Hello</div>
+    <style>
+      #root { background: #111; }
+    </style>
+  </div>
+</template>`;
+
+    const { document } = parseHTML(`<!DOCTYPE html>
+<html><body>
+  <div data-composition-id="main">
+    <div data-composition-id="scene_1" data-composition-src="scene_1.html"
+         data-start="0" data-duration="4" data-track-index="0"></div>
+  </div>
+</body></html>`);
+    const host = document.querySelector('[data-composition-src="scene_1.html"]')!;
+
+    const result = inlineSubCompositions(document, [host], {
+      resolveHtml: () => subComp,
+      parseHtml: (html) => parseHTML(html).document,
+      flattenInnerRoot: prepareFlattenedInnerRoot,
+      compoundAuthoredRoot: true,
+    });
+
+    // compoundAuthoredRoot emits [data-composition-id][data-hf-authored-id]
+    // as a compound (no space) targeting one element. But with flattenInnerRoot:
+    //   - host has data-composition-id="scene_1" (no data-hf-authored-id)
+    //   - child has data-hf-authored-id="root" (no data-composition-id)
+    // So the compound selector matches NEITHER element. This is why the
+    // producer must NOT use compoundAuthoredRoot with flattenInnerRoot.
+    const scopedCss = result.styles.join("\n");
+
+    // The compound selector is emitted...
+    expect(scopedCss).toMatch(/\[data-composition-id="scene_1"\]\[data-hf-authored-id="root"\]/);
+
+    // ...but it matches nothing: host lacks data-hf-authored-id="root",
+    // child lacks data-composition-id="scene_1"
+    const hostMatchesCompound =
+      host.getAttribute("data-composition-id") === "scene_1" &&
+      host.getAttribute("data-hf-authored-id") === "root";
+    expect(hostMatchesCompound).toBe(false);
+
+    const innerChild = host.querySelector('[data-hf-authored-id="root"]');
+    const childMatchesCompound = innerChild?.getAttribute("data-composition-id") === "scene_1";
+    expect(childMatchesCompound).toBe(false);
+  });
 });
