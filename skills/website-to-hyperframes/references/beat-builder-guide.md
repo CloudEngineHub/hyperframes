@@ -76,20 +76,24 @@ If `asset-descriptions.md` has no Gemini Vision descriptions (the heading says "
 
 ### Captured videos — they're in the manifest, not on disk
 
-The capture pipeline writes `capture/extracted/video-manifest.json` listing every `<video>` element on the source page (URL, dimensions, heading, caption, preview PNG). It does **not** download the actual mp4s — that would balloon the capture size on sites with many videos.
+The capture pipeline writes `capture/extracted/video-manifest.json` listing every `<video>` element on the source page (URL, dimensions, heading, caption, preview PNG). It does **not** download the actual mp4s — that would balloon the capture size on sites with many videos (some marketing pages have 15+ feature videos).
 
-When a beat genuinely needs the hero video (e.g. heygen.com's "Orb" — a 3D-rendered animation that's hard to approximate in CSS), fetch just that one:
+When a beat genuinely needs the hero video (e.g. heygen.com's "Orb" — a 3D-rendered animation that's hard to approximate in CSS), fetch just that one with the CLI:
 
 ```bash
-# Find the entry in capture/extracted/video-manifest.json — note its `url`.
-# Then download it to assets/videos/:
-mkdir -p assets/videos
-curl -sL "<url-from-manifest>" -o assets/videos/<filename-from-manifest>
+# List what's in the manifest:
+npx tsx packages/cli/src/cli.ts capture-video . --list
+
+# Download by index (the hero is usually index 0):
+npx tsx packages/cli/src/cli.ts capture-video . --index 0
+
+# Or by exact URL (when you've already inspected video-manifest.json):
+npx tsx packages/cli/src/cli.ts capture-video . --url https://cdn.example.com/hero.mp4
 ```
 
-Embed as a `<video>` element with `data-start` / `data-duration` like any other clip. See the `/hyperframes` skill's video-composition reference for the contract.
+The file lands at `capture/assets/videos/<filename-from-manifest>` (matching the rest of the captured-assets layout). The command prints a ready-to-paste `<video>` snippet on success. Embed it in your beat composition with `data-start` / `data-duration` like any other clip — see the `/hyperframes` skill's video-composition reference for the contract.
 
-Don't bulk-download every video in the manifest — most aren't relevant to your beat. Pick the one the beat actually needs.
+**Don't bulk-download every video in the manifest** — most aren't relevant to your beat. Pick the ONE the beat actually needs, by looking at the manifest's `heading` and `caption` fields + the preview PNG at `capture/assets/videos/previews/video-N-preview.png`.
 
 ## Step 2: Build the composition
 
