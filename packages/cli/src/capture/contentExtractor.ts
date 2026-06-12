@@ -363,13 +363,28 @@ export function generateAssetDescriptions(
       const heading = catalogMatch?.nearestHeading || "";
       const section = catalogMatch?.sectionClasses || "";
       const aboveFold = catalogMatch?.aboveFold ? "above fold" : "";
+      // Logo signals — let the no-Gemini fallback still surface logos
+      // grep-ably even when Vision wasn't available to describe them.
+      const isLikelyLogo = !!(
+        catalogMatch?.inBanner ||
+        catalogMatch?.inHomeLink ||
+        catalogMatch?.matchesTitleBrand ||
+        /logo|brand|wordmark/i.test(desc) ||
+        /logo|brand|wordmark/i.test(section) ||
+        file.includes("logo")
+      );
       const geminiCaption = geminiCaptions[file];
       const cleanName = file.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
       const parts = [`${file} — ${sizeKb}KB`];
       if (geminiCaption) {
+        // Even with Gemini's description, prepend the LOGO tag if
+        // structural signals fired — gives a stable grep target for
+        // agents searching for "the logo."
+        if (isLikelyLogo) parts.push("LOGO");
         parts.push(geminiCaption);
         captionedLines.push(parts.join(", "));
       } else {
+        if (isLikelyLogo) parts.push("LOGO");
         if (desc) parts.push(`"${desc.slice(0, 80)}"`);
         if (heading) parts.push(`section: "${heading.slice(0, 60)}"`);
         else if (section) parts.push(`in: ${section.split(" ").slice(0, 3).join(" ")}`);
@@ -403,8 +418,16 @@ export function generateAssetDescriptions(
           ),
       );
       const label = svgMatch?.label || file.replace(".svg", "").replace(/-/g, " ");
-      const isLogo = svgMatch?.isLogo || file.includes("logo");
-      svgLines.push(`svgs/${file} — ${isLogo ? "logo: " : "icon: "}${label}`);
+      // Filename prefix is now the most reliable logo signal: the
+      // capture pipeline names DOM-marked logos `logo-<hash>.svg` and
+      // everything else `svg-<hash>.svg`. Fall back to the tokens.svgs
+      // isLogo flag for legacy captures + a filename-includes-"logo"
+      // check for human-readable rasters.
+      const isLogo = file.startsWith("logo-") || svgMatch?.isLogo || file.includes("logo");
+      // Use uppercase "LOGO:" so agents can grep for it as a single,
+      // unambiguous token. The lowercase "logo:" prefix was easy to miss
+      // since real Vision captions also use the word casually.
+      svgLines.push(`svgs/${file} — ${isLogo ? "LOGO: " : "icon: "}${label}`);
     }
   } catch {
     /* no svgs dir */

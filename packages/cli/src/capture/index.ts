@@ -522,14 +522,19 @@ export async function captureWebsite(
       const lines = generateAssetDescriptions(outputDir, tokens, catalogedAssets, geminiCaptions);
 
       if (lines.length > 0) {
+        const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+        const header = hasGeminiKey
+          ? "# Asset Descriptions\n\nOne line per file. Read this instead of opening every image individually. Lines tagged `LOGO` are the brand-mark candidates — search for the brand name here BEFORE composing a logo from scratch.\n\n"
+          : "# Asset Descriptions\n\n⚠️  GEMINI_API_KEY not set — descriptions below are catalog-derived (alt text, headings, section context, filename) instead of Vision-generated. Lines tagged `LOGO` are the brand-mark candidates per DOM-structural signals (inside header/nav, inside home anchor, or alt-text matching the page title). To get richer Vision descriptions on the next capture, set GEMINI_API_KEY (or GOOGLE_API_KEY) and re-run.\n\nWhen the description is too weak to identify a captured logo by description alone, open the LOGO-tagged SVGs in a previewer or `sharp`-render them to PNG before referencing — the alternative (composing a fake logo) ships off-brand in the final video.\n\n";
         writeFileSync(
           join(outputDir, "extracted", "asset-descriptions.md"),
-          "# Asset Descriptions\n\nOne line per file. Read this instead of opening every image individually.\n\n" +
-            lines.map((l) => "- " + l).join("\n") +
-            "\n",
+          header + lines.map((l) => "- " + l).join("\n") + "\n",
           "utf-8",
         );
-        progress("design", `${lines.length} asset descriptions written`);
+        progress(
+          "design",
+          `${lines.length} asset descriptions written${hasGeminiKey ? "" : " (no Gemini key — catalog-fallback mode)"}`,
+        );
       }
     } catch {
       /* non-critical */
