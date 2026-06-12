@@ -103,7 +103,20 @@ This decision changes the pipeline:
 - **With narration:** Step 3 includes a full script. Step 4 generates TTS, transcribes, maps timestamps to beats.
 - **Without narration:** Step 3 has no script (VO cues in storyboard are empty). Step 4 is skipped — beat durations are planned manually in the storyboard based on rhythm and pacing.
 
-### Question 5 (if applicable): Format?
+### Question 5: Background music?
+
+Music is optional and decided here, then recorded in the storyboard's Global Direction so Step 5 can fetch it. Three options (💬 user-preference; agent auto-decides in auto mode by mapping video type → typical answer):
+
+- **Yes, music bed** — a background track plays under the video. Sets a mood the visuals reinforce. Best for brand reels, atmospheric pieces, launch teasers, no-narration social ads. Volume hierarchy: BGM `0.4–0.6` under VO; `0.7–0.9` if pure-music (no narration).
+- **No music** — SFX-only or silent. Best for fast-paced product demos, tutorial walk-throughs, comparison videos where music would distract from VO. The default for narration-heavy product videos.
+- **Auto-decide** — agent picks based on video type (brand reel → yes; product demo → no; ambiguous → no, since adding music when none is needed is worse than missing it when one would have helped).
+
+The decision wires into the pipeline:
+
+- **With music:** Step 3 names a mood/feel in the storyboard's Global Direction (`**Music direction:** moody ambient pad, slow build, sits at ~0.45 under VO`). Step 5 runs `hyperframes music search`/`add` against the HeyGen catalog (same wire as `sfx`) and embeds the track as the BGM lane (track 11). See [`background-music.md`](background-music.md) for volume hierarchy, manual ducking patterns, and the one-bed-per-video rule.
+- **Without music:** No music line in Global Direction; Step 5 skips the music fetch cleanly.
+
+### Question 6 (if applicable): Format?
 
 Only ask if not already specified by the user:
 

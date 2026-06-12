@@ -109,9 +109,13 @@ The final beat timings (real-audio-derived `start` and `duration`) live in STORY
 
 ---
 
-## Music (deferred)
+## Music (storyboard-driven, decided in Step 2)
 
-w2h does not currently generate or fetch music. If the user supplies a track, note its file path in STORYBOARD.md for Step 5 to wire as a BGM track. Otherwise the video ships SFX-only — do not ask the user about music at this step; if they want it, they'll tell you. (Future: deterministic BGM selection from `inference.json` voice_tone, modeled on plv2's pattern.)
+Music is a Step-2 user-preference question (see step-2-brief.md Question 5) — **do NOT ask the user about music at this step**, the decision is already locked in the brief. If Step 2 said yes, the storyboard's Global Direction names a mood (`**Music direction:** moody ambient pad, slow build, sits at ~0.45 under VO`); Step 5 fetches it via `hyperframes music search` + `music add` against the HeyGen catalog (free, same key as `sfx`).
+
+If the user supplies their own track instead of using the catalog, note its file path in STORYBOARD.md's Global Direction as `**Music file:** path/to/track.mp3` and Step 5 wires that directly without a fetch. If Step 2 said no music, no Music line appears in Global Direction and Step 5 skips the fetch cleanly.
+
+See [`background-music.md`](background-music.md) for the full model: when music helps vs hurts, the volume hierarchy under VO (`0.4–0.6` vs `0.7–0.9` pure-music), manual ducking patterns since there's no auto-ducking, and the one-bed-per-video rule.
 
 ---
 

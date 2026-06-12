@@ -132,9 +132,10 @@ Every STORYBOARD.md starts with global settings:
 
 ```markdown
 **Format:** 1920×1080
-**Audio:** [TTS provider] voiceover + underscore + SFX
+**Audio:** [TTS provider] voiceover + [music yes/no, from Step 2 Q5] + SFX
 **VO direction:** [voice character — e.g., "mid-age male, calm confident delivery,
 Apple keynote register — economy of words, silence between sentences is a feature"]
+**Music direction:** [only if Step 2 Q5 said yes — one line of mood/feel for `hyperframes music search`, plus volume rule. e.g., "moody ambient pad with slow build, sits at ~0.45 under VO, lifts to ~0.75 in the 2s pre-CTA stretch where there's no narration"]
 **Style basis:** DESIGN.md (brand colors, fonts, components from the captured site)
 ```
 
@@ -143,10 +144,12 @@ Apple keynote register — economy of words, silence between sentences is a feat
 - Captured assets and composed visuals are both load-bearing — the agent decides per beat which to use, and most beats correlate both. See the Asset & Brand Floor section below for the required floor (brand mark + signature visual) and the variation principle (don't repeat the same content-source pattern across beats).
 - Use different techniques from techniques.md — not across the whole video, per beat. Don't default to basic fade/scale/opacity — mix in SVG path drawing, HTML-in-canvas, shaders, scrolling effects or movement effect, CSS 3D transforms, typing effects, counter animations, canvas procedural art. Each beat should feel like its own visual world. Use as many as makes sense for the storyboard.
 
-**Underscore/music direction** (if applicable):
+**Music direction details** (only if Step 2 Q5 said yes):
 
-- Describe the mood, reference artists, when it swells or drops
-- Example: "Minimal electronic. Warm sustained pad already playing when the video starts. Sits underneath everything, never competing with VO. Swells gently during the flex section, drops to near-nothing for the comparison, resolves on a final chord."
+- Step 2 already locked the yes/no decision. Here, expand the one-line `**Music direction:**` global line above into the mood the agent will use as the `hyperframes music search` query.
+- Describe the mood by feel (Step 5 searches the catalog by meaning, not by filename): `"moody ambient pad slow build"`, `"upbeat lo-fi reel bed"`, `"tense synth drone rising"`, `"warm acoustic cozy"`, `"epic cinematic orchestral swell"`, `"minimal piano introspective"`, `"glitchy electronic future-tech"`.
+- Note volume rule (no auto-ducking — see [`background-music.md`](background-music.md)): BGM 0.4–0.6 under VO; 0.7–0.9 if pure-music. State if the bed lifts/drops across the video (e.g., "lifts to ~0.75 for the 2s pre-CTA stretch where there's no narration").
+- Example: "Minimal electronic ambient pad. Already playing when the video starts. Sits at ~0.45 under VO; lifts to ~0.75 in the 2s pre-CTA stretch where there's no narration."
 
 ---
 
