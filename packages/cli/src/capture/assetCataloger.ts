@@ -25,6 +25,12 @@ export interface CatalogedAsset {
   sectionClasses?: string;
   /** Whether the image is above the fold (visible without scrolling) */
   aboveFold?: boolean;
+  /** Element sits inside <header>, <nav>, or [role="banner"] — logo signal */
+  inBanner?: boolean;
+  /** Element sits inside <a> with site-root href ("/", "#", origin-only) — brand-home link */
+  inHomeLink?: boolean;
+  /** alt/aria-label/title contains the brand segment of document.title */
+  matchesTitleBrand?: boolean;
 }
 
 /**
@@ -62,6 +68,29 @@ export async function catalogAssets(page: Page): Promise<CatalogedAsset[]> {
         var rect = el.getBoundingClientRect();
         ctx.aboveFold = rect.top < window.innerHeight;
       } catch(e) {}
+      // Logo signals — surfaced explicitly so the downloader can prefix
+      // logo-<hash> reliably. Real-AI-test on heygen.com + huly.io showed
+      // the prior class-substring detector caught 0 logos; these explicit
+      // structural signals catch the header logo across modern React/
+      // Tailwind builds where "logo" isn't in any className.
+      // 1. inBanner: element sits inside <header>, <nav>, or [role=banner].
+      ctx.inBanner = el.closest('header, nav, [role="banner"]') !== null;
+      // 2. inHomeLink: element sits inside an <a> whose href is the site
+      //    root ("/", "#", "./" or origin-only URL) — the brand-home link.
+      var homeAnchor = el.closest('a[href]');
+      if (homeAnchor) {
+        var aHref = homeAnchor.getAttribute('href') || '';
+        ctx.inHomeLink = aHref === '/' || aHref === '#' || aHref === './' ||
+                         /^https?:\\/\\/[^/]+\\/?$/.test(aHref);
+      }
+      // 3. matchesTitleBrand: alt/aria-label/title contains the brand
+      //    segment of the page title (everything before " - " / " | " /
+      //    " — ") — the "alt=HeyGen" / "aria-label=Huly" pattern.
+      var titleBrand = (document.title || '').split(/[-|—]/)[0].trim();
+      if (desc && titleBrand.length > 1 && titleBrand.length < 30 &&
+          desc.toLowerCase().indexOf(titleBrand.toLowerCase()) !== -1) {
+        ctx.matchesTitleBrand = true;
+      }
       return ctx;
     }
 
@@ -92,12 +121,18 @@ export async function catalogAssets(page: Page): Promise<CatalogedAsset[]> {
       if (notes && !entry.notes) {
         entry.notes = notes;
       }
-      // Merge rich context (first one wins)
+      // Merge rich context. Text fields: first-occurrence wins. Boolean
+      // signals (inBanner / inHomeLink / matchesTitleBrand): any positive
+      // sample wins — if ANY DOM occurrence of this URL is in a header,
+      // the URL is a header-context asset.
       if (richCtx) {
         if (richCtx.description && !entry.description) entry.description = richCtx.description;
         if (richCtx.nearestHeading && !entry.nearestHeading) entry.nearestHeading = richCtx.nearestHeading;
         if (richCtx.sectionClasses && !entry.sectionClasses) entry.sectionClasses = richCtx.sectionClasses;
         if (richCtx.aboveFold !== undefined && entry.aboveFold === undefined) entry.aboveFold = richCtx.aboveFold;
+        if (richCtx.inBanner) entry.inBanner = true;
+        if (richCtx.inHomeLink) entry.inHomeLink = true;
+        if (richCtx.matchesTitleBrand) entry.matchesTitleBrand = true;
       }
     }
 
@@ -324,6 +359,10 @@ function deduplicateSrcsetVariants(assets: CatalogedAsset[]): CatalogedAsset[] {
       if (a.notes && !existing.notes) {
         existing.notes = a.notes;
       }
+      // Boolean logo signals: any positive sample wins through the merge.
+      if (a.inBanner) existing.inBanner = true;
+      if (a.inHomeLink) existing.inHomeLink = true;
+      if (a.matchesTitleBrand) existing.matchesTitleBrand = true;
       // Keep the URL with highest w= value (largest image)
       const existingW = getWidthParam(existing.url);
       const newW = getWidthParam(a.url);

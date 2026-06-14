@@ -7,8 +7,21 @@
 
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join, extname } from "node:path";
+import { createHash } from "node:crypto";
 import type { DesignTokens, DownloadedAsset } from "./types.js";
 import type { CatalogedAsset } from "./assetCataloger.js";
+
+/**
+ * Content-hash slug for SVGs — `svg-<8-char-sha1>` for icons / `logo-<hash>`
+ * when DOM evidence says it's a logo. Replaces label-derived slugging which
+ * mis-assigned brand names to the wrong SVG bodies (e.g. `heygen-logo.svg`
+ * landing on the Google partner-logo SVG). The hash is a function of the
+ * bytes, so the filename can never mismatch the content.
+ */
+function svgContentHashSlug(svgSource: string | Buffer, isLogo: boolean): string {
+  const hash = createHash("sha1").update(svgSource).digest("hex").slice(0, 8);
+  return isLogo ? `logo-${hash}` : `svg-${hash}`;
+}
 
 export async function downloadAssets(
   tokens: DesignTokens,
@@ -22,15 +35,20 @@ export async function downloadAssets(
   const assets: DownloadedAsset[] = [];
   const downloadedUrls = new Set<string>();
 
-  // 1. ALL inline SVGs — save as files (logos get priority naming)
+  // 1. ALL inline SVGs — save as files. Names are content-hash based
+  //    (`svg-<hash>.svg` or `logo-<hash>.svg`) so the filename can never
+  //    drift from the SVG body. The DOM-derived `label` is unreliable —
+  //    it has misassigned `heygen-logo.svg` to the Google partner SVG in
+  //    past captures because aria-label / nearest-heading inference can
+  //    pick up text from the wrong ancestor. Content-hash is invariant.
   mkdirSync(join(outputDir, "assets", "svgs"), { recursive: true });
   const usedSvgNames = new Set<string>();
   for (let i = 0; i < tokens.svgs.length && i < 30; i++) {
     const svg = tokens.svgs[i]!;
     if (!svg.outerHTML || svg.outerHTML.length < 50) continue;
-    const label = svg.label?.replace(/[^a-zA-Z0-9-_ ]/g, "").trim();
-    let slug = label ? slugify(label) : svg.isLogo ? `logo-${i}` : `icon-${i}`;
-    // Deduplicate — two SVGs with same aria-label get suffixed
+    const slug = svgContentHashSlug(svg.outerHTML, !!svg.isLogo);
+    // Hash collisions are negligible for 8-char sha1 prefix over <30 SVGs,
+    // but suffix-dedupe anyway for safety + idempotent re-runs.
     let finalSlug = slug;
     let suffix = 2;
     while (usedSvgNames.has(finalSlug)) {
@@ -135,8 +153,38 @@ export async function downloadAssets(
       if (result.status !== "fulfilled" || !result.value) continue;
       const { url, isPoster, parsedUrl, ext, buffer, catalog } = result.value;
       try {
-        // Generate human-readable name from catalog context
-        const slug = deriveAssetName(parsedUrl, catalog, isPoster, imgIdx, usedNames);
+        // SVGs use content-hash names because catalog-derived slugs
+        // mis-assigned brand names to the wrong SVG bodies (the same
+        // alignment failure that produced `heygen-logo.svg` containing
+        // the Google wordmark). Rasters keep the catalog-derived
+        // human-readable slug — they were not affected by the bug.
+        let slug: string;
+        if (ext === ".svg") {
+          // isLogo signals — broadened. The original `contexts` substring
+          // check never fired in practice because contexts hold HTML
+          // positions like 'img[src]' / 'video[poster]', not semantic
+          // labels. Real signals come from DOM structure + alt/aria text:
+          // 1. The cataloger now flags inBanner (inside <header>/<nav>/
+          //    [role=banner]), inHomeLink (inside <a href="/">), and
+          //    matchesTitleBrand (alt/aria matches document.title's
+          //    brand segment) — see assetCataloger.ts getElementContext.
+          // 2. As a backstop, also check description / nearestHeading /
+          //    sectionClasses for "logo" / "brand" / "wordmark" text.
+          const c = catalog;
+          const brandRe = /logo|brand|wordmark/i;
+          const isLogo = !!(
+            c?.inBanner ||
+            c?.inHomeLink ||
+            c?.matchesTitleBrand ||
+            c?.contexts?.some((s) => brandRe.test(s)) ||
+            (c?.description && brandRe.test(c.description)) ||
+            (c?.nearestHeading && brandRe.test(c.nearestHeading)) ||
+            (c?.sectionClasses && brandRe.test(c.sectionClasses))
+          );
+          slug = svgContentHashSlug(buffer, isLogo);
+        } else {
+          slug = deriveAssetName(parsedUrl, catalog, isPoster, imgIdx, usedNames);
+        }
         const name = `${slug}${ext}`;
         usedNames.add(slug);
         const localPath = `assets/${name}`;

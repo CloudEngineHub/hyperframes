@@ -353,6 +353,43 @@ const EXTRACT_SCRIPT = `(() => {
     // Keep SVGs that have a label OR are at least 16px wide OR are inside a logo/brand context
     var inLogoContext = svg.closest('[class*="logo"], [class*="brand"], [class*="partner"], [class*="customer"], [class*="marquee"]') !== null;
     if (!label && !inLogoContext && (!w || parseInt(w) < 16)) return null;
+    // isLogo — broadened detection. Real-AI-test on heygen.com + huly.io
+    // showed the original class-based detector caught 0/32 and 0/19 SVGs
+    // respectively — modern React/Tailwind builds don't put "logo" / "brand"
+    // anywhere in className. Three additional cheap heuristics added below.
+    var isLogo = (label && label.toLowerCase().indexOf("logo") !== -1) ||
+                 svg.closest('[class*="logo"], [class*="brand"], [class*="home"], [class*="marquee"], [class*="partner"], [class*="customer"]') !== null;
+    if (!isLogo) {
+      // (a) First SVG inside <header>, <nav>, or [role=banner] — the
+      // canonical "home logo at the top of the page" pattern.
+      var bannerEl = svg.closest('header, nav, [role="banner"]');
+      if (bannerEl) {
+        var firstSvg = bannerEl.querySelector('svg');
+        if (firstSvg === svg) isLogo = true;
+      }
+    }
+    if (!isLogo) {
+      // (b) SVG inside an <a> whose href is the site root — the brand-home
+      // link pattern (e.g. <a href="/"><svg>...</svg></a>).
+      var anchor = svg.closest('a[href]');
+      if (anchor) {
+        var href = anchor.getAttribute('href') || '';
+        if (href === '/' || href === '#' || href === './' ||
+            /^https?:\\/\\/[^/]+\\/?$/.test(href)) {
+          isLogo = true;
+        }
+      }
+    }
+    if (!isLogo) {
+      // (c) SVG with aria-label that matches the document title's brand
+      // segment (everything before " - " / " | " / " — ").
+      var ariaLabel = svg.getAttribute('aria-label') || svg.getAttribute('title') || '';
+      var titleBrand = (document.title || '').split(/[-|—]/)[0].trim();
+      if (titleBrand.length > 1 && titleBrand.length < 30 &&
+          ariaLabel.toLowerCase().indexOf(titleBrand.toLowerCase()) !== -1) {
+        isLogo = true;
+      }
+    }
     var rect = svg.getBoundingClientRect();
     return {
       label: label || undefined,
@@ -360,7 +397,7 @@ const EXTRACT_SCRIPT = `(() => {
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       outerHTML: svg.outerHTML.slice(0, 10000),
-      isLogo: (label && label.toLowerCase().indexOf("logo") !== -1) || svg.closest('[class*="logo"], [class*="brand"], [class*="home"], [class*="marquee"], [class*="partner"], [class*="customer"]') !== null
+      isLogo: isLogo
     };
   }).filter(Boolean).slice(0, 50);
 

@@ -11,6 +11,7 @@
 import type { Page } from "puppeteer-core";
 import { existsSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import sharp from "sharp";
 import type { CatalogedAsset } from "./assetCataloger.js";
 import type { DesignTokens } from "./types.js";
 
@@ -232,7 +233,12 @@ export async function captionImagesWithGemini(
     }
     progress("design", `${Object.keys(geminiCaptions).length} images captioned with Gemini`);
 
-    // Caption SVGs by sending source code as text (vision API rejects image/svg+xml).
+    // Caption SVGs by RENDERING each to PNG via sharp first, then sending the
+    // PNG bytes to the Vision API — same call shape as raster images.
+    // Previous implementation sent SVG path markup as TEXT, which produced
+    // pure hallucinations on wordmarks (`hubspot-logo.svg` → "VIVIENNE",
+    // `huly-logo.svg` → "Kube", `workday.svg` → "wrestling"). Vision models
+    // can't reliably mental-render path commands; they need actual pixels.
     const svgFiles: Array<{ file: string; relPath: string }> = [];
     const assetsDir = join(outputDir, "assets");
     for (const f of readdirSync(assetsDir)) {
@@ -246,17 +252,49 @@ export async function captionImagesWithGemini(
     }
 
     if (svgFiles.length > 0) {
-      progress("design", `Captioning ${svgFiles.length} SVGs via code analysis...`);
+      progress("design", `Rasterizing + captioning ${svgFiles.length} SVGs via vision API...`);
       const SVG_BATCH = 20;
-      const MAX_SVG_CHARS = 10_000;
+      const SVG_RENDER_SIZE = 256; // px — enough resolution for Gemini to read wordmarks, small enough to keep payload sub-MB
       for (let i = 0; i < svgFiles.length; i += SVG_BATCH) {
         const batch = svgFiles.slice(i, i + SVG_BATCH);
         const results = await Promise.allSettled(
           batch.map(async ({ relPath }) => {
             const filePath = join(assetsDir, relPath);
-            let svgText = readFileSync(filePath, "utf-8");
-            if (svgText.length > MAX_SVG_CHARS) {
-              svgText = svgText.slice(0, MAX_SVG_CHARS) + "\n<!-- truncated -->";
+            let pngBase64: string;
+            try {
+              // Detect SVG fill polarity so we can pick a contrasting flatten
+              // background. White-glyph SVGs (huly's "✕ huly" wordmark uses
+              // fill="#fff") render invisible against white; dark-glyph SVGs
+              // render invisible against black. Choosing the background by
+              // dominant fill keeps both polarities readable for the vision API.
+              const svgSource = readFileSync(filePath, "utf-8");
+              const lightFillHits = (
+                svgSource.match(/fill\s*=\s*["'](#fff(fff)?|white|#f[ef][ef])["']/gi) || []
+              ).length;
+              const darkFillHits = (
+                svgSource.match(/fill\s*=\s*["'](#000(000)?|black|#[0-3]{6}|#[0-3]{3})["']/gi) || []
+              ).length;
+              const bg =
+                lightFillHits > darkFillHits
+                  ? { r: 32, g: 32, b: 32 } // dark slate behind light glyphs
+                  : { r: 255, g: 255, b: 255 }; // white behind dark glyphs (default)
+              // sharp rasterizes SVG → PNG natively.
+              const pngBuffer = await sharp(filePath)
+                .resize({
+                  width: SVG_RENDER_SIZE,
+                  height: SVG_RENDER_SIZE,
+                  fit: "inside",
+                  withoutEnlargement: false,
+                })
+                .flatten({ background: bg })
+                .png()
+                .toBuffer();
+              pngBase64 = pngBuffer.toString("base64");
+            } catch {
+              // SVG rasterization can fail on exotic features (external fonts,
+              // foreignObject, filters with missing primitives). Skip caption
+              // rather than block — agent will fall back to contact-sheet view.
+              return { file: relPath, caption: "" };
             }
             const response = await ai.models.generateContent({
               model,
@@ -264,12 +302,13 @@ export async function captionImagesWithGemini(
                 {
                   role: "user",
                   parts: [
+                    { inlineData: { mimeType: "image/png", data: pngBase64 } },
                     {
                       text:
-                        "This SVG code is from a website. Describe what it renders in ONE short sentence " +
-                        "for a video storyboard. Focus on: what shape/icon/illustration it is, its colors. " +
-                        "Be factual.\n\n" +
-                        svgText,
+                        "Describe this SVG asset rendered from a website in ONE short sentence for a video storyboard. " +
+                        "Focus on: what shape/icon/illustration/wordmark it is, its colors, any text it contains. " +
+                        "If you see a wordmark, READ THE LETTERS LITERALLY — do not guess a brand from context. " +
+                        "Be factual.",
                     },
                   ],
                 },
@@ -334,13 +373,28 @@ export function generateAssetDescriptions(
       const heading = catalogMatch?.nearestHeading || "";
       const section = catalogMatch?.sectionClasses || "";
       const aboveFold = catalogMatch?.aboveFold ? "above fold" : "";
+      // Logo signals — let the no-Gemini fallback still surface logos
+      // grep-ably even when Vision wasn't available to describe them.
+      const isLikelyLogo = !!(
+        catalogMatch?.inBanner ||
+        catalogMatch?.inHomeLink ||
+        catalogMatch?.matchesTitleBrand ||
+        /logo|brand|wordmark/i.test(desc) ||
+        /logo|brand|wordmark/i.test(section) ||
+        file.includes("logo")
+      );
       const geminiCaption = geminiCaptions[file];
       const cleanName = file.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
       const parts = [`${file} — ${sizeKb}KB`];
       if (geminiCaption) {
+        // Even with Gemini's description, prepend the LOGO tag if
+        // structural signals fired — gives a stable grep target for
+        // agents searching for "the logo."
+        if (isLikelyLogo) parts.push("LOGO");
         parts.push(geminiCaption);
         captionedLines.push(parts.join(", "));
       } else {
+        if (isLikelyLogo) parts.push("LOGO");
         if (desc) parts.push(`"${desc.slice(0, 80)}"`);
         if (heading) parts.push(`section: "${heading.slice(0, 60)}"`);
         else if (section) parts.push(`in: ${section.split(" ").slice(0, 3).join(" ")}`);
@@ -358,11 +412,6 @@ export function generateAssetDescriptions(
     const svgsPath = join(assetsPath, "svgs");
     for (const file of readdirSync(svgsPath)) {
       if (!file.endsWith(".svg")) continue;
-      const geminiCaption = geminiCaptions[`svgs/${file}`];
-      if (geminiCaption) {
-        svgLines.push(`svgs/${file} — ${geminiCaption}`);
-        continue;
-      }
       const svgMatch = tokens.svgs.find(
         (s) =>
           s.label &&
@@ -373,9 +422,28 @@ export function generateAssetDescriptions(
               .slice(0, 15),
           ),
       );
+      // Filename prefix is now the most reliable logo signal: the
+      // capture pipeline names DOM-marked logos `logo-<hash>.svg` and
+      // everything else `svg-<hash>.svg`. Fall back to the tokens.svgs
+      // isLogo flag for legacy captures + a filename-includes-"logo"
+      // check for human-readable rasters.
+      //
+      // Compute this BEFORE the Gemini-caption branch so SVG logos that
+      // got Vision captions still receive the LOGO marker — without it
+      // an inline header `<svg>` named `logo-<hash>.svg` would land in
+      // asset-descriptions.md as plain text, defeating the LOGO grep.
+      const isLogo = file.startsWith("logo-") || svgMatch?.isLogo || file.includes("logo");
+      const geminiCaption = geminiCaptions[`svgs/${file}`];
+      if (geminiCaption) {
+        const prefix = isLogo ? "LOGO: " : "";
+        svgLines.push(`svgs/${file} — ${prefix}${geminiCaption}`);
+        continue;
+      }
       const label = svgMatch?.label || file.replace(".svg", "").replace(/-/g, " ");
-      const isLogo = svgMatch?.isLogo || file.includes("logo");
-      svgLines.push(`svgs/${file} — ${isLogo ? "logo: " : "icon: "}${label}`);
+      // Use uppercase "LOGO:" so agents can grep for it as a single,
+      // unambiguous token. The lowercase "logo:" prefix was easy to miss
+      // since real Vision captions also use the word casually.
+      svgLines.push(`svgs/${file} — ${isLogo ? "LOGO: " : "icon: "}${label}`);
     }
   } catch {
     /* no svgs dir */
