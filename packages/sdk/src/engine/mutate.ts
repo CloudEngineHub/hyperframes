@@ -509,10 +509,15 @@ function handleSetVariableValue(
 // ─── GSAP selector helpers ───────────────────────────────────────────────────
 
 function selectorMatchesId(selector: string, id: HfId): boolean {
+  const bareId = id.includes("/") ? id.split("/").pop()! : id;
   return (
     selector === `[data-hf-id="${id}"]` ||
     selector === `[data-hf-id='${id}']` ||
-    selector === `#${id}`
+    selector === `#${id}` ||
+    (bareId !== id &&
+      (selector === `[data-hf-id="${bareId}"]` ||
+        selector === `[data-hf-id='${bareId}']` ||
+        selector === `#${bareId}`))
   );
 }
 
@@ -585,6 +590,8 @@ function handleAddGsapTween(
   tween: GsapTweenSpec,
 ): MutationResult {
   const script = getGsapScript(parsed.document);
+  if (script === null)
+    throw new Error("No GSAP script block found. Use comp.can(op) to check first.");
   if (!script) return EMPTY;
 
   const extras: Record<string, unknown> = {};
@@ -623,6 +630,8 @@ function handleSetGsapTween(
   properties: Partial<GsapTweenSpec>,
 ): MutationResult {
   const script = getGsapScript(parsed.document);
+  if (script === null)
+    throw new Error("No GSAP script block found. Use comp.can(op) to check first.");
   if (!script) return EMPTY;
 
   const updates: Partial<GsapAnimation> = {};
@@ -649,6 +658,8 @@ function handleSetGsapTween(
 
 function handleRemoveGsapTween(parsed: ParsedDocument, animationId: string): MutationResult {
   const script = getGsapScript(parsed.document);
+  if (script === null)
+    throw new Error("No GSAP script block found. Use comp.can(op) to check first.");
   if (!script) return EMPTY;
   const newScript = removeAnimationFromScript(script, animationId);
   if (newScript === script) return EMPTY;

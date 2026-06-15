@@ -152,6 +152,9 @@ export function StudioApp() {
     domEditSaveTimestampRef,
     setRefreshKey,
   });
+
+  const sdkSession = useSdkSession(projectId, activeCompPath, domEditSaveTimestampRef);
+
   useEffect(() => {
     if (activeCompPathHydrated) return;
     if (!fileManager.fileTreeLoaded) return;
