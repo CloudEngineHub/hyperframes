@@ -108,6 +108,15 @@ export interface CaptureSession {
    * is true and capture mode resolved to "drawelement".
    */
   workerEncodeEnabled?: boolean;
+  /**
+   * Clip-cut boundary frame indices (±1) computed from the clip schedule at
+   * init. drawElement blacks out hard clip-cut boundary frames (the outgoing
+   * clip is dropped a frame before the incoming clip's paint record is ready);
+   * these frames are captured via screenshot instead. See
+   * docs/fast-capture-limitations.md Lim 6. Empty/undefined disables the
+   * fallback (`HF_FAST_CAPTURE_BOUNDARY_SS=false`).
+   */
+  clipBoundaryFrames?: Set<number>;
 }
 
 // Circular buffer for browser console messages dumped on render failure diagnostics.
@@ -494,6 +503,16 @@ async function initDrawElementOrTransparentBackground(
       session.captureMode = "drawelement";
       session.drawElementReady = true;
       logInitPhase("drawElement canvas injected");
+      // Lim 6: drawElement blacks out hard clip-cut boundary frames (outgoing clip
+      // dropped a frame before the incoming clip's paint record is ready). Capture
+      // those frames via screenshot instead. Computed once from the clip schedule.
+      if (process.env.HF_FAST_CAPTURE_BOUNDARY_SS !== "false") {
+        const boundaries = await computeClipBoundaryFrames(page, fpsToNumber(session.options.fps));
+        if (boundaries.size > 0) {
+          session.clipBoundaryFrames = boundaries;
+          logInitPhase(`clip-boundary screenshot fallback: ${boundaries.size} frame(s)`);
+        }
+      }
       // Worker-encode pipeline: macOS hardware GPU path only (syncToPaintEvent=true,
       // beginFrameTimeTicks=0). Skip for BeginFrame (Linux/Docker) and transparent
       // (PNG) output — those use the existing synchronous path unchanged.
@@ -1548,6 +1567,44 @@ async function prepareFrameForCapture(
  * Shared by captureFrame (disk) and captureFrameToBuffer (buffer).
  * Returns the screenshot buffer, quantized time, and total capture time.
  */
+/**
+ * Clip-cut boundary frame indices (±1) from the clip schedule. A clip is visible
+ * over `[start, start+duration)`; its in- and out-edges are the frames where
+ * drawElement can black out (Lim 6). Returns those frames and their immediate
+ * neighbours (the desync is ±1 frame).
+ */
+async function computeClipBoundaryFrames(page: Page, fps: number): Promise<Set<number>> {
+  const schedule = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("[data-start]")).map((el) => ({
+      start: parseFloat((el as HTMLElement).dataset.start || ""),
+      dur: parseFloat((el as HTMLElement).dataset.duration || ""),
+    })),
+  );
+  const frames = new Set<number>();
+  for (const { start, dur } of schedule) {
+    if (Number.isNaN(start)) continue;
+    const edges = [Math.round(start * fps)];
+    if (!Number.isNaN(dur)) edges.push(Math.round((start + dur) * fps));
+    for (const e of edges) {
+      for (const f of [e - 1, e, e + 1]) {
+        if (f >= 0) frames.add(f);
+      }
+    }
+  }
+  return frames;
+}
+
+/**
+ * True for the drawElement `InvalidStateError: No cached paint record for element`
+ * thrown when a subtree element has no paint record for the current frame (display
+ * toggled / detached / freshly-shown at a clip-cut boundary). Per-frame, not
+ * whole-comp — callers fall back to screenshot for the single frame.
+ */
+export function isNoCachedPaintRecordError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes("No cached paint record");
+}
+
 async function captureFrameCore(
   session: CaptureSession,
   frameIndex: number,
@@ -1578,6 +1635,13 @@ async function captureFrameCore(
       if (result.hasDamage) session.beginFrameHasDamageCount++;
       else session.beginFrameNoDamageCount++;
       screenshotBuffer = result.buffer;
+    } else if (
+      session.captureMode === "drawelement" &&
+      session.clipBoundaryFrames?.has(frameIndex)
+    ) {
+      // Lim 6: clip-cut boundary frame — drawElement may render it black. Capture
+      // via screenshot instead. See docs/fast-capture-limitations.md.
+      screenshotBuffer = await pageScreenshotCapture(page, options);
     } else if (session.captureMode === "drawelement") {
       // Advance compositor state via BeginFrame when available (Linux headless-shell);
       // on macOS the compositor advances naturally without BeginFrame.
@@ -1590,17 +1654,34 @@ async function captureFrameCore(
           // no screenshot param — we capture via canvas
         });
       }
-      screenshotBuffer = await captureDrawElementFrame(
-        page,
-        options.width,
-        options.height,
-        options.format ?? "jpeg",
-        options.quality ?? 80,
-        // Paint-event sync only without BeginFrame (macOS / screenshot-launched):
-        // under BeginFrame control the per-frame beginFrame above already painted
-        // a fresh snapshot, and no further paint would arrive during a wait.
-        session.beginFrameTimeTicks === 0,
-      );
+      try {
+        screenshotBuffer = await captureDrawElementFrame(
+          page,
+          options.width,
+          options.height,
+          options.format ?? "jpeg",
+          options.quality ?? 80,
+          // Paint-event sync only without BeginFrame (macOS / screenshot-launched):
+          // under BeginFrame control the per-frame beginFrame above already painted
+          // a fresh snapshot, and no further paint would arrive during a wait.
+          session.beginFrameTimeTicks === 0,
+        );
+      } catch (err) {
+        // drawElementImage throws `InvalidStateError: No cached paint record for
+        // element` when an element in the subtree has no paint record this frame
+        // (display toggled / detached / freshly-shown at a clip-cut boundary). This
+        // is a per-frame condition, not a whole-comp one — fall back to screenshot
+        // for THIS frame instead of aborting the render. See fast-capture-limitations.md.
+        if (isNoCachedPaintRecordError(err)) {
+          console.log(
+            `[engine] fast capture: frame ${frameIndex} — No cached paint record; ` +
+              `screenshot fallback for this frame (see fast-capture-limitations.md)`,
+          );
+          screenshotBuffer = await pageScreenshotCapture(page, options);
+        } else {
+          throw err;
+        }
+      }
     } else {
       screenshotBuffer = await pageScreenshotCapture(page, options);
     }
@@ -1693,6 +1774,18 @@ export async function captureFrameToBufferPipelined(
     );
     void quantizedTime;
 
+    // Lim 6: clip-cut boundary frame — drawElement may render it black. Capture
+    // via screenshot and return a resolved encodeResult so the pipeline writes it
+    // like any other frame. See docs/fast-capture-limitations.md.
+    if (session.clipBoundaryFrames?.has(frameIndex)) {
+      const buffer = await pageScreenshotCapture(page, options);
+      session.capturePerf.frames += 1;
+      session.capturePerf.seekMs += seekMs;
+      session.capturePerf.beforeCaptureMs += beforeCaptureMs;
+      session.capturePerf.totalMs += Date.now() - startTime;
+      return { encodeResult: Promise.resolve(buffer), captureTimeMs: Date.now() - startTime };
+    }
+
     // Worker-encode is gated to the macOS GPU path (beginFrameTimeTicks === 0,
     // syncToPaintEvent = true); see initDrawElementOrTransparentBackground. The
     // BeginFrame branch present in the synchronous captureFrameCore is therefore
@@ -1716,6 +1809,18 @@ export async function captureFrameToBufferPipelined(
 
     return { encodeResult, captureTimeMs };
   } catch (captureError) {
+    // Per-frame `No cached paint record`: fall back to screenshot for THIS frame
+    // instead of aborting the render (clip-cut boundary / freshly-shown element).
+    // The worker isn't involved for this frame; return a resolved encodeResult so
+    // the pipeline loop writes it like any other. See fast-capture-limitations.md.
+    if (isNoCachedPaintRecordError(captureError)) {
+      console.log(
+        `[engine] fast capture: frame ${frameIndex} — No cached paint record; ` +
+          `screenshot fallback for this frame (see fast-capture-limitations.md)`,
+      );
+      const buffer = await pageScreenshotCapture(page, options);
+      return { encodeResult: Promise.resolve(buffer), captureTimeMs: Date.now() - startTime };
+    }
     // Mirror captureFrameCore: capture per-frame diagnostics (frame-error
     // PNG/HTML/JSON + console tail) before rethrowing so pipelined-path
     // failures are debuggable like the serial path.
