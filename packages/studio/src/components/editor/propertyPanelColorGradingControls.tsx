@@ -89,19 +89,11 @@ function ColorGradingSliderControl({
   onCommit: (nextValue: number) => void;
   onReset?: () => void;
 }) {
-  const [draft, setDraft] = useState(value);
-  const [inputDraft, setInputDraft] = useState(() => formatNumericInput(value, scale));
+  const [draftState, setDraftState] = useState<{ value: number; source: number } | null>(null);
+  const [inputDraft, setInputDraft] = useState<{ value: string; source: number } | null>(null);
   const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const valueRef = useRef(value);
-  const draftRef = useRef(value);
   valueRef.current = value;
-  draftRef.current = draft;
-
-  useEffect(() => {
-    setDraft(value);
-    draftRef.current = value;
-    setInputDraft(formatNumericInput(value, scale));
-  }, [scale, value]);
 
   useEffect(
     () => () => {
@@ -115,46 +107,55 @@ function ColorGradingSliderControl({
     [max, min],
   );
 
-  const commitDraft = useCallback(
+  const setLocalDraft = useCallback(
     (nextValue: number) => {
       const clamped = clampDraft(nextValue);
+      const source = valueRef.current;
+      setDraftState({ value: clamped, source });
+      setInputDraft({ value: formatNumericInput(clamped, scale), source });
+      return clamped;
+    },
+    [clampDraft, scale],
+  );
+
+  const commitDraft = useCallback(
+    (nextValue: number) => {
+      const clamped = setLocalDraft(nextValue);
       if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
-      setDraft(clamped);
-      draftRef.current = clamped;
-      setInputDraft(formatNumericInput(clamped, scale));
       if (clamped !== valueRef.current) onCommit(clamped);
     },
-    [clampDraft, onCommit, scale],
+    [onCommit, setLocalDraft],
   );
 
   const scheduleCommit = useCallback(
     (nextValue: number) => {
-      const clamped = clampDraft(nextValue);
-      setDraft(clamped);
-      draftRef.current = clamped;
-      setInputDraft(formatNumericInput(clamped, scale));
+      const clamped = setLocalDraft(nextValue);
       if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
       commitTimerRef.current = setTimeout(() => {
         if (clamped !== valueRef.current) onCommit(clamped);
       }, 40);
     },
-    [clampDraft, onCommit, scale],
+    [onCommit, setLocalDraft],
   );
 
+  const draft = draftState?.source === value ? draftState.value : value;
+  const inputValue =
+    inputDraft?.source === value ? inputDraft.value : formatNumericInput(draft, scale);
+
   const commitInputDraft = useCallback(() => {
-    const parsed = parseNumericInput(inputDraft, scale);
+    const parsed = parseNumericInput(inputValue, scale);
     if (parsed === null) {
-      setInputDraft(formatNumericInput(draft, scale));
+      setInputDraft(null);
       return;
     }
     commitDraft(parsed);
-  }, [commitDraft, draft, inputDraft, scale]);
+  }, [commitDraft, inputValue, scale]);
 
   const nudge = useCallback(
     (direction: -1 | 1) => {
-      commitDraft(draftRef.current + step * direction);
+      commitDraft(draft + step * direction);
     },
-    [commitDraft, step],
+    [commitDraft, draft, step],
   );
 
   const range = max - min;
@@ -227,12 +228,14 @@ function ColorGradingSliderControl({
         <div className="flex flex-shrink-0 items-center rounded-md bg-panel-input px-1.5 py-1">
           <input
             type="number"
-            value={inputDraft}
+            value={inputValue}
             min={min / scale}
             max={max / scale}
             step={step / scale}
             disabled={disabled}
-            onChange={(event) => setInputDraft(event.currentTarget.value)}
+            onChange={(event) =>
+              setInputDraft({ value: event.currentTarget.value, source: valueRef.current })
+            }
             onBlur={commitInputDraft}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
@@ -284,13 +287,11 @@ function ColorGradingSliderControl({
 export function ColorGradingControls({
   grading,
   assets,
-  defaultColorGrading,
   onImportAssets,
   onCommitColorGrading,
 }: {
   grading: NormalizedHfColorGrading;
   assets: string[];
-  defaultColorGrading: NormalizedHfColorGrading;
   onImportAssets?: (files: FileList, dir?: string) => Promise<string[]>;
   onCommitColorGrading: (nextGrading: NormalizedHfColorGrading) => void;
 }) {
@@ -303,8 +304,8 @@ export function ColorGradingControls({
   const selectedProjectLut = selectedLut ? (selectedLut.split("/").pop() ?? selectedLut) : null;
 
   const applyPreset = (preset: string) => {
-    const next = normalizeHfColorGrading({ preset, intensity: 1 }) ?? defaultColorGrading;
-    onCommitColorGrading(next);
+    const next = normalizeHfColorGrading({ preset, intensity: 1 });
+    if (next) onCommitColorGrading(next);
   };
   const applyLut = (src: string | null, intensity = 1) => {
     onCommitColorGrading({

@@ -45,10 +45,8 @@ const DEFAULT_COLOR_GRADING: NormalizedHfColorGrading = {
 
 const COLOR_GRADING_DATA_KEY = HF_COLOR_GRADING_ATTR.replace(/^data-/, "");
 
-type RuntimeColorGradingStatusState = "missing" | "inactive" | "pending" | "active" | "unavailable";
-
 interface RuntimeColorGradingStatus {
-  state: RuntimeColorGradingStatusState;
+  state: "missing" | "inactive" | "pending" | "active" | "unavailable";
   message: string;
 }
 
@@ -309,10 +307,6 @@ export function ColorGradingSection({
     [onSetAttributeLive, postColorGrading, postCompare, refreshRuntimeStatus],
   );
 
-  const resetColorGrading = useCallback(() => {
-    commitColorGrading(DEFAULT_COLOR_GRADING);
-  }, [commitColorGrading]);
-
   const commitCompare = useCallback(
     (enabled: boolean) => {
       const nextEnabled = enabled && isHfColorGradingActive(grading);
@@ -340,7 +334,7 @@ export function ColorGradingSection({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              resetColorGrading();
+              commitColorGrading(DEFAULT_COLOR_GRADING);
             }}
             className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-panel-text-4 transition-colors hover:bg-panel-hover hover:text-panel-text-1"
             title="Reset grading"
@@ -353,7 +347,6 @@ export function ColorGradingSection({
       <ColorGradingControls
         grading={grading}
         assets={assets}
-        defaultColorGrading={DEFAULT_COLOR_GRADING}
         onImportAssets={onImportAssets}
         onCommitColorGrading={commitColorGrading}
       />
