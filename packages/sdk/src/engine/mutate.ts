@@ -47,6 +47,7 @@ import {
   addAnimationToScript,
   updateAnimationInScript,
   removeAnimationFromScript,
+  removePropertyFromAnimation,
   addKeyframeToScript,
   removeKeyframeFromScript,
   updateKeyframeInScript,
@@ -136,7 +137,48 @@ function targets(target: HfId | HfId[]): HfId[] {
 
 // ─── Op dispatch ────────────────────────────────────────────────────────────
 
+function dispatchRemoveGsapKeyframe(
+  parsed: ParsedDocument,
+  op: Extract<EditOp, { type: "removeGsapKeyframe" }>,
+): MutationResult {
+  return "percentage" in op
+    ? handleRemoveGsapKeyframeByPercentage(parsed, op.animationId, op.percentage)
+    : handleRemoveGsapKeyframe(parsed, op.animationId, op.keyframeIndex);
+}
+
+function applyGsapOp(parsed: ParsedDocument, op: EditOp): MutationResult | undefined {
+  switch (op.type) {
+    case "addGsapTween":
+      return handleAddGsapTween(parsed, op.target, op.tween);
+    case "setGsapTween":
+      return handleSetGsapTween(parsed, op.animationId, op.properties);
+    case "removeGsapProperty":
+      return handleRemoveGsapProperty(parsed, op.animationId, op.property, op.from);
+    case "removeGsapTween":
+      return handleRemoveGsapTween(parsed, op.animationId);
+    case "deleteAllForSelector":
+      return handleDeleteAllForSelector(parsed, op.selector);
+    case "setGsapKeyframe":
+      return handleSetGsapKeyframe(
+        parsed,
+        op.animationId,
+        op.keyframeIndex,
+        op.position,
+        op.value,
+        op.ease,
+      );
+    case "addGsapKeyframe":
+      return handleAddGsapKeyframe(parsed, op.animationId, op.position, op.value);
+    case "removeGsapKeyframe":
+      return dispatchRemoveGsapKeyframe(parsed, op);
+    default:
+      return undefined;
+  }
+}
+
 export function applyOp(parsed: ParsedDocument, op: EditOp): MutationResult {
+  const gsap = applyGsapOp(parsed, op);
+  if (gsap !== undefined) return gsap;
   switch (op.type) {
     case "setStyle":
       return handleSetStyle(parsed, targets(op.target), op.styles);
@@ -160,31 +202,14 @@ export function applyOp(parsed: ParsedDocument, op: EditOp): MutationResult {
       return handleSetCompositionMetadata(parsed, op);
     case "setVariableValue":
       return handleSetVariableValue(parsed, op.id, op.value);
-    case "addGsapTween":
-      return handleAddGsapTween(parsed, op.target, op.tween);
-    case "setGsapTween":
-      return handleSetGsapTween(parsed, op.animationId, op.properties);
-    case "removeGsapTween":
-      return handleRemoveGsapTween(parsed, op.animationId);
-    case "setGsapKeyframe":
-      return handleSetGsapKeyframe(
-        parsed,
-        op.animationId,
-        op.keyframeIndex,
-        op.position,
-        op.value,
-        op.ease,
-      );
-    case "addGsapKeyframe":
-      return handleAddGsapKeyframe(parsed, op.animationId, op.position, op.value);
-    case "removeGsapKeyframe":
-      return handleRemoveGsapKeyframe(parsed, op.animationId, op.keyframeIndex);
+    case "setClassStyle":
+      return handleSetClassStyle(parsed, op.selector, op.styles);
     case "addLabel":
       return handleAddLabel(parsed, op.name, op.position);
     case "removeLabel":
       return handleRemoveLabel(parsed, op.name);
-    case "setClassStyle":
-      return handleSetClassStyle(parsed, op.selector, op.styles);
+    default:
+      throw new UnsupportedOpError((op as EditOp).type);
   }
 }
 
@@ -689,12 +714,44 @@ function handleSetGsapTween(
   return gsapScriptChange(script, newScript);
 }
 
+function handleRemoveGsapProperty(
+  parsed: ParsedDocument,
+  animationId: string,
+  property: string,
+  from: boolean | undefined,
+): MutationResult {
+  const script = getGsapScript(parsed.document);
+  if (!script) return EMPTY;
+  const newScript = removePropertyFromAnimation(script, animationId, property, from ?? false);
+  if (newScript === script) return EMPTY;
+  setGsapScript(parsed.document, newScript);
+  return gsapScriptChange(script, newScript);
+}
+
 function handleRemoveGsapTween(parsed: ParsedDocument, animationId: string): MutationResult {
   const script = getGsapScript(parsed.document);
   if (!script) return EMPTY;
   const newScript = removeAnimationFromScript(script, animationId);
   if (newScript === script) return EMPTY;
   setGsapScript(parsed.document, newScript);
+  return gsapScriptChange(script, newScript);
+}
+
+function handleDeleteAllForSelector(parsed: ParsedDocument, selector: string): MutationResult {
+  const script = getGsapScript(parsed.document);
+  if (!script) return EMPTY;
+  const parsedForWrite = parseGsapScriptAcornForWrite(script);
+  if (!parsedForWrite) return EMPTY;
+  const matching = parsedForWrite.located.filter((l) => l.animation.targetSelector === selector);
+  if (matching.length === 0) return EMPTY;
+  let newScript = script;
+  for (const m of [...matching].reverse()) {
+    newScript = removeAnimationFromScript(newScript, m.id);
+  }
+  if (newScript === script) return EMPTY;
+  setGsapScript(parsed.document, newScript);
+  // ponytail: skips stripStudioEditsFromTarget (data-hf-studio-path-offset cleanup) —
+  // studio path offset is cosmetic once all animations are gone; session reloads after write
   return gsapScriptChange(script, newScript);
 }
 
@@ -767,6 +824,28 @@ function handleAddGsapKeyframe(
     undefined,
     deriveKeyframeBackfillDefaults(props),
   );
+  if (newScript === script) return EMPTY;
+  setGsapScript(parsed.document, newScript);
+  return gsapScriptChange(script, newScript);
+}
+
+function handleRemoveGsapKeyframeByPercentage(
+  parsed: ParsedDocument,
+  animationId: string,
+  percentage: number,
+): MutationResult {
+  const script = getGsapScript(parsed.document);
+  if (!script) return EMPTY;
+  const parsedForWrite = parseGsapScriptAcornForWrite(script);
+  const located = parsedForWrite?.located.find((l) => l.id === animationId);
+  const kfs = located?.animation.keyframes?.keyframes;
+  if (!kfs) return EMPTY;
+  // No-op on ambiguity: duplicate-percentage keyframes can't be disambiguated.
+  const TOLERANCE = 0.001;
+  const matches = kfs.filter((k) => Math.abs(k.percentage - percentage) <= TOLERANCE);
+  if (matches.length !== 1) return EMPTY;
+  const pct = matches[0]!.percentage;
+  const newScript = removeKeyframeFromScript(script, animationId, pct);
   if (newScript === script) return EMPTY;
   setGsapScript(parsed.document, newScript);
   return gsapScriptChange(script, newScript);
@@ -873,7 +952,9 @@ export function validateOp(parsed: ParsedDocument, op: EditOp): CanResult {
     case "setGsapKeyframe":
     case "addGsapKeyframe":
     case "removeGsapKeyframe":
+    case "removeGsapProperty":
     case "removeGsapTween":
+    case "deleteAllForSelector":
     case "removeLabel":
       if (getGsapScript(parsed.document) === null)
         return canErr(
