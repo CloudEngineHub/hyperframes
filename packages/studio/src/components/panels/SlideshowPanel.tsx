@@ -316,7 +316,7 @@ export function SlideshowPanel({ scenes, onPersist, onPersistNotes }: SlideshowP
 
   const handleCreateSequence = useCallback(
     (label: string) => {
-      const id = `seq-${Date.now()}`;
+      const id = `seq-${crypto.randomUUID()}`;
       applyManifest(createSequence(manifestRef.current, id, label)).catch(() => {});
     },
     [applyManifest],

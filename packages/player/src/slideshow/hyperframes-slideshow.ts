@@ -62,6 +62,12 @@ function injectKeyframesOnce(): void {
     @media (prefers-reduced-motion: reduce) {
       .hf-hotspot-pill { animation: none !important; }
     }
+    /* Nav-button hover (replaces inline onmouseover/onmouseout — CSP-safe).
+       !important beats the inline base color set on each button. */
+    [data-hf-nav-cluster] button:hover {
+      background: rgba(255,255,255,0.12) !important;
+      color: #fff !important;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -387,9 +393,6 @@ export class HyperframesSlideshow extends HTMLElement {
     const { counter, currentSlide } = this.controller;
     if (!currentSlide) return;
 
-    // Inject keyframes for hotspot pulse animation once per document.
-    injectKeyframesOnce();
-
     // Hotspot pills: compact floating buttons anchored to the region's top-left,
     // sized to content (not filling the region). The region x/y positions the pill;
     // w/h are ignored for sizing (pill is content-sized). XSS: escHtml guards all
@@ -415,6 +418,7 @@ export class HyperframesSlideshow extends HTMLElement {
 
   /** Ensure the overlay chrome layer exists, set its content, and wire its buttons. */
   private paintChrome(html: string): void {
+    injectKeyframesOnce(); // nav-button :hover + hotspot keyframes (CSP-safe, once per doc)
     if (!this.chrome) {
       this.chrome = document.createElement("div");
       this.chrome.setAttribute("data-hf-chrome", "");
@@ -450,8 +454,6 @@ export class HyperframesSlideshow extends HTMLElement {
           aria-label="${this._muted ? "Unmute" : "Mute"}"
           aria-pressed="${this._muted ? "true" : "false"}"
           style="${btnStyle}${this._muted ? "color:rgba(255,255,255,0.45);" : ""}"
-          onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='${this._muted ? "rgba(255,255,255,0.6)" : "#fff"}';"
-          onmouseout="this.style.background='transparent';this.style.color='${this._muted ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.85)"}';"
         >${this._muted ? speakerMutedSvg : speakerSvg}</button>`
       : "";
     const prevBtnHtml = showPrev
@@ -459,20 +461,14 @@ export class HyperframesSlideshow extends HTMLElement {
           data-hf-prev
           type="button"
           aria-label="Previous slide"
-          style="${btnStyle}"
-          onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff';"
-          onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.85)';"
-        >&#8249;</button>`
+          style="${btnStyle}"        >&#8249;</button>`
       : "";
     const nextBtnHtml = showNext
       ? `<button
           data-hf-next
           type="button"
           aria-label="Next slide"
-          style="${btnStyle}"
-          onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff';"
-          onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.85)';"
-        >&#8250;</button>`
+          style="${btnStyle}"        >&#8250;</button>`
       : "";
     const isFs = document.fullscreenElement === this;
     const enterFsSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
@@ -482,10 +478,7 @@ export class HyperframesSlideshow extends HTMLElement {
           type="button"
           aria-label="${isFs ? "Exit full screen" : "Full screen"}"
           aria-pressed="${isFs ? "true" : "false"}"
-          style="${btnStyle}"
-          onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#fff';"
-          onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.85)';"
-        >${isFs ? exitFsSvg : enterFsSvg}</button>`;
+          style="${btnStyle}"        >${isFs ? exitFsSvg : enterFsSvg}</button>`;
     // Audience/viewer: only the fullscreen control (no navigation).
     if (variant === "fs-only") {
       return `

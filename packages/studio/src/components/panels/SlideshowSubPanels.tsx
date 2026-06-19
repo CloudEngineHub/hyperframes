@@ -425,7 +425,7 @@ export function HotspotTool({
   // fallow-ignore-next-line complexity
   const handleMakeHotspot = useCallback(() => {
     if (!selectedSceneId || !targetSequenceId || !elementKey) return;
-    const id = `hotspot-${elementKey}-${Date.now()}`;
+    const id = `hotspot-${elementKey}-${crypto.randomUUID()}`;
     const label = hotspotLabel.trim() || elementKey;
     onAddHotspot(selectedSceneId, { id, label, target: targetSequenceId });
     setHotspotLabel("");
