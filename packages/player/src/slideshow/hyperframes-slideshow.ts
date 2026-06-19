@@ -114,6 +114,17 @@ export class HyperframesSlideshow extends HTMLElement {
     }
   }
 
+  // Observe the attributes the component reads so runtime toggles take effect.
+  static get observedAttributes(): string[] {
+    return ["sound", "mode"];
+  }
+
+  attributeChangedCallback(): void {
+    // Re-render once bound so a flipped `sound`/`mode` is reflected (mute button,
+    // audience-vs-presenter chrome). No-op before the controller binds.
+    if (this.controller) this.render();
+  }
+
   connectedCallback(): void {
     this.disconnected = false;
     this.initInFlight = false;
@@ -178,7 +189,9 @@ export class HyperframesSlideshow extends HTMLElement {
    */
   present(): void {
     const sep = location.search ? "&" : "?";
-    window.open(location.href + sep + "mode=audience", "_blank");
+    // noopener,noreferrer: the audience window must not get a reference back to
+    // this window (it syncs over BroadcastChannel, not window.opener).
+    window.open(location.href + sep + "mode=audience", "_blank", "noopener,noreferrer");
     this.setAttribute("data-hf-presenting", "true");
     this.presenterStartMs = Date.now();
     if (this.presenterInterval === null) {

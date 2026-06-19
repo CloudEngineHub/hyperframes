@@ -78,6 +78,10 @@ export async function persistSlideshowManifest(args: PersistSlideshowArgs): Prom
     after = stripped + "\n" + islandHtml;
   }
 
+  // No-op gate: if the rewritten HTML is byte-identical to the current serialized
+  // HTML, skip the write — avoids a spurious disk write and a no-op undo entry.
+  if (after === current) return;
+
   await persistSdkSerialize(after, targetPath, originalContent, deps, {
     label: label ?? "Edit slideshow",
     ...(coalesceKey ? { coalesceKey } : {}),

@@ -101,7 +101,9 @@ export function makeSlideshowNotesController(): NotesController {
         const p = pending;
         if (p !== null) {
           pending = null;
-          p.persist(p.manifest).catch(() => {});
+          p.persist(p.manifest).catch((err: unknown) => {
+            console.error("[slideshow] notes persist failed:", err);
+          });
         }
       }, delayMs);
       return timer;
@@ -115,7 +117,9 @@ export function makeSlideshowNotesController(): NotesController {
       const p = pending;
       if (p !== null) {
         pending = null;
-        p.persist(p.manifest).catch(() => {});
+        p.persist(p.manifest).catch((err: unknown) => {
+          console.error("[slideshow] notes persist failed:", err);
+        });
       }
     },
 
@@ -215,7 +219,12 @@ export function SlideshowPanel({ scenes, onPersist, onPersistNotes }: SlideshowP
       const merged = notesCtrlRef.current.mergeIntoDiscrete(next);
       setManifest(merged);
       manifestRef.current = merged;
-      await onPersist(merged);
+      // Surface persist failures instead of swallowing them at each call site.
+      try {
+        await onPersist(merged);
+      } catch (err) {
+        console.error("[slideshow] failed to persist manifest edit:", err);
+      }
     },
     [onPersist],
   );
@@ -331,6 +340,16 @@ export function SlideshowPanel({ scenes, onPersist, onPersistNotes }: SlideshowP
 
   const handleDeleteSequence = useCallback(
     (id: string) => {
+      // Deleting a branch removes its slides and orphans any hotspot targeting it —
+      // confirm first to prevent accidental data loss.
+      const seq = (manifestRef.current.slideSequences ?? []).find((s) => s.id === id);
+      const count = seq?.slides.length ?? 0;
+      const label = seq?.label ?? id;
+      const ok = window.confirm(
+        `Delete branch "${label}"${count ? ` and its ${count} slide${count === 1 ? "" : "s"}` : ""}? ` +
+          `Hotspots pointing to it will no longer resolve.`,
+      );
+      if (!ok) return;
       applyManifest(deleteSequence(manifestRef.current, id)).catch(() => {});
     },
     [applyManifest],
