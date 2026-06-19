@@ -66,6 +66,7 @@ The flow caption reveals word-by-word from the transcript. The active word gets 
 - **type** (terminal/retro) — `fromTo(w,{opacity:0},{opacity:1,duration:.2,ease:'steps(3)'})` staggered as the cadence
 - **blur-in** (horror) — `fromTo(w,{opacity:0,filter:'blur(10px)',y:'.1em'},{opacity:1,filter:'blur(0)',y:0,duration:.6,ease:'power2.out'})`
 - **karaoke** (creator) — words start visible-dim; on `w.start` `set(w,{className:'w act'})` (active → `--cacc`), prior word back to spoken. The signature verbatim mechanic.
+- **crosshair** (investigative/thriller) — two 1px guide lines (decorative `::before`/`::after`) converge on the word center (`x: ±40→0`, `duration:.15, ease:'none'`), then the word snaps in (`fromTo(w,{opacity:0,scale:1.06},{opacity:1,scale:1,duration:.05,ease:'expo.out'})`). ~200ms total; seek-safe as absolute-time tweens.
 - **flow exits** — fade-up-out `to{opacity:0,y:-10}` · horror smear `to{opacity:0,x:6,skewX:10,filter:'blur(5px)'}` · all ≈0.4–0.55 s.
 
 ---
