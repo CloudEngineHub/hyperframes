@@ -10,6 +10,7 @@ import { resolveTweenStart, resolveTweenDuration } from "../utils/globalTimeComp
 import { roundTo3 } from "../utils/rounding";
 import { computeElementPercentage } from "./gsapShared";
 import { computeDraggedGsapPosition } from "./draggedGsapPosition";
+import type { RuntimeTweenChange } from "./gsapRuntimePatch";
 export interface GsapDragCommitCallbacks {
   commitMutation: (
     selection: DomEditSelection,
@@ -20,6 +21,13 @@ export interface GsapDragCommitCallbacks {
       softReload?: boolean;
       skipReload?: boolean;
       beforeReload?: () => void;
+      /**
+       * Value-only fast path: when set, `runCommit` patches the changed tween in
+       * the preview runtime in place (instant, no re-run) and only falls back to
+       * the soft reload if the patch can't be safely applied. Attached only to
+       * value-only `set` commits; structural/keyframe commits omit it.
+       */
+      instantPatch?: { selector: string; change: RuntimeTweenChange };
     },
   ) => Promise<void>;
   fetchAnimations?: () => Promise<GsapAnimation[]>;
@@ -351,7 +359,15 @@ export async function commitStaticGsapPosition(
     await callbacks.commitMutation(
       selection,
       { type: "update-property", animationId: existingSet.id, property: "y", value: newY },
-      { label: "Move layer", softReload: true, coalesceKey },
+      {
+        label: "Move layer",
+        softReload: true,
+        coalesceKey,
+        // Final commit of the coalesced x/y pair: carry the full {x,y} so the
+        // runtime `tl.set` is patched in place instantly (skips the soft reload
+        // when the helper can confidently apply it).
+        instantPatch: { selector, change: { kind: "set", props: { x: newX, y: newY } } },
+      },
     );
     return;
   }
@@ -405,7 +421,12 @@ export async function commitStaticGsapRotation(
         property: "rotation",
         value: newRotation,
       },
-      { label: "Rotate layer", softReload: true },
+      {
+        label: "Rotate layer",
+        softReload: true,
+        // Value-only rotation set: patch the runtime `tl.set` rotation in place.
+        instantPatch: { selector, change: { kind: "set", props: { rotation: newRotation } } },
+      },
     );
     return;
   }

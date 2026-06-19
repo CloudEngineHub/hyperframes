@@ -89,6 +89,40 @@ describe("tryGsapDragIntercept — stale-parse guard (no resurrection after dele
     expect(mutation.type).not.toBe("add-keyframe");
   });
 
+  it("forwards instantPatch {kind:set,x,y} on the final commit when updating an existing static set", async () => {
+    const commitMutation = vi.fn();
+    const iframe = fakeIframe("puck-b", []); // runtime empty → STATIC path
+    // An existing position-hold `set` for the selector → update-in-place (not add).
+    const existingSet = {
+      id: "#puck-b-set",
+      targetSelector: "#puck-b",
+      method: "set",
+      // Tagged as a position group so resolveGroupTween returns it directly
+      // (no split commit), exercising the in-place update path cleanly.
+      propertyGroup: "position",
+      properties: { x: 0, y: 0 },
+    } as unknown as GsapAnimation;
+
+    const handled = await tryGsapDragIntercept(
+      selection,
+      { x: -50, y: 30 },
+      [existingSet],
+      iframe,
+      commitMutation,
+    );
+
+    expect(handled).toBe(true);
+    // The coalesced update-property pair: the x commit is skipReload (no patch),
+    // the final y commit triggers the reload and carries the full {x,y} patch.
+    const updates = commitMutation.mock.calls.filter(([, m]) => m.type === "update-property");
+    expect(updates).toHaveLength(2);
+    expect(updates[0][2].instantPatch).toBeUndefined();
+    expect(updates[1][2].instantPatch).toEqual({
+      selector: "#puck-b",
+      change: { kind: "set", props: { x: -50, y: 30 } },
+    });
+  });
+
   it("does not trip the stale-parse guard when the runtime still has the tween", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const liveTween = {

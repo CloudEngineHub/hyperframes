@@ -3,6 +3,8 @@ import type { GsapAnimation } from "@hyperframes/core/gsap-parser";
 import type { DomEditSelection } from "../components/editor/domEditingTypes";
 import {
   commitGsapPositionFromDrag,
+  commitStaticGsapPosition,
+  commitStaticGsapRotation,
   parkPlayheadOnKeyframe,
   type GsapDragCommitCallbacks,
 } from "./gsapDragCommit";
@@ -232,6 +234,142 @@ describe("commitGsapPositionFromDrag — from() tween dragged outside its range"
     expect(types).not.toContain("add-with-keyframes"); // regression: no parallel tween
     const replace = mutations.find((m) => m.type === "replace-with-keyframes");
     expect(replace?.animationId).toBe("#title-from-400-position"); // replaces the split from()
+  });
+});
+
+// Captures the OPTIONS each commit carries (not just the mutation) so we can
+// assert which value-only commits attach the `instantPatch` fast path.
+type RecordedCommit = { mutation: Record<string, unknown>; options: Record<string, unknown> };
+function optionRecordingCallbacks(): {
+  commits: RecordedCommit[];
+  callbacks: GsapDragCommitCallbacks;
+} {
+  const commits: RecordedCommit[] = [];
+  return {
+    commits,
+    callbacks: {
+      commitMutation: async (_sel, mutation, options) => {
+        commits.push({ mutation, options: options as Record<string, unknown> });
+      },
+      fetchAnimations: async () => [convertedTween()],
+    },
+  };
+}
+
+const existingPositionSet = (): GsapAnimation =>
+  ({
+    id: "#puck-a-set",
+    targetSelector: "#puck-a",
+    method: "set",
+    properties: { x: 10, y: 20 },
+  }) as unknown as GsapAnimation;
+
+const existingRotationSet = (): GsapAnimation =>
+  ({
+    id: "#puck-a-rot-set",
+    targetSelector: "#puck-a",
+    method: "set",
+    properties: { rotation: 15 },
+  }) as unknown as GsapAnimation;
+
+describe("commitStaticGsapPosition — instantPatch (value-only set)", () => {
+  beforeEach(() => usePlayerStore.setState({ currentTime: 0, activeKeyframePct: null }));
+
+  it("attaches instantPatch {kind:set, props:{x,y}} to the FINAL coalesced commit only", async () => {
+    const { commits, callbacks } = optionRecordingCallbacks();
+
+    await commitStaticGsapPosition(
+      selection(),
+      { x: -50, y: 30 }, // studioOffset → newX/newY off a zero base
+      { x: 0, y: 0 },
+      "#puck-a",
+      existingPositionSet(),
+      callbacks,
+    );
+
+    expect(commits).toHaveLength(2);
+    // First (x) commit is the intermediate skipReload one — NO instantPatch.
+    expect(commits[0].options.skipReload).toBe(true);
+    expect(commits[0].options.instantPatch).toBeUndefined();
+    // Final (y) commit triggers the reload and carries the full {x,y} patch.
+    expect(commits[1].options.softReload).toBe(true);
+    expect(commits[1].options.instantPatch).toEqual({
+      selector: "#puck-a",
+      change: { kind: "set", props: { x: -50, y: 30 } },
+    });
+  });
+
+  it("does NOT attach instantPatch when ADDING a new set (structural — new tween)", async () => {
+    const { commits, callbacks } = optionRecordingCallbacks();
+
+    await commitStaticGsapPosition(
+      selection(),
+      { x: -50, y: 30 },
+      { x: 0, y: 0 },
+      "#puck-a",
+      null, // no existing set → `add` a new tween
+      callbacks,
+    );
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0].mutation.type).toBe("add");
+    expect(commits[0].options.instantPatch).toBeUndefined();
+  });
+});
+
+describe("commitStaticGsapRotation — instantPatch (value-only set)", () => {
+  beforeEach(() => usePlayerStore.setState({ currentTime: 0, activeKeyframePct: null }));
+
+  it("attaches instantPatch {kind:set, props:{rotation}} when updating an existing rotation set", async () => {
+    const { commits, callbacks } = optionRecordingCallbacks();
+
+    await commitStaticGsapRotation(selection(), 42, "#puck-a", existingRotationSet(), callbacks);
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0].mutation.type).toBe("update-property");
+    expect(commits[0].options.instantPatch).toEqual({
+      selector: "#puck-a",
+      change: { kind: "set", props: { rotation: 42 } },
+    });
+  });
+
+  it("does NOT attach instantPatch when ADDING a new rotation set (structural)", async () => {
+    const { commits, callbacks } = optionRecordingCallbacks();
+
+    await commitStaticGsapRotation(selection(), 42, "#puck-a", null, callbacks);
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0].mutation.type).toBe("add");
+    expect(commits[0].options.instantPatch).toBeUndefined();
+  });
+});
+
+describe("commitGsapPositionFromDrag — keyframe/structural commits omit instantPatch", () => {
+  beforeEach(() => usePlayerStore.setState({ currentTime: 0, activeKeyframePct: null }));
+
+  it("a structural keyframe drag (convert-to-keyframes → add-keyframe) sets no instantPatch", async () => {
+    usePlayerStore.setState({ currentTime: 2 }); // inside [1.2, 3.4] → convert + add-keyframe
+    const { commits, callbacks } = optionRecordingCallbacks();
+
+    await commitGsapPositionFromDrag(
+      selection(),
+      flatTween(),
+      { x: -100, y: 0 },
+      { x: 0, y: 0 },
+      null,
+      "#puck-a",
+      callbacks,
+    );
+
+    // The keyframe path is structural here (convert + add-keyframe) and must rely
+    // on the soft reload — none of its commits opt into the instant patch.
+    expect(commits.length).toBeGreaterThan(0);
+    for (const c of commits) {
+      expect(c.options.instantPatch).toBeUndefined();
+    }
+    const types = commits.map((c) => c.mutation.type);
+    expect(types).toContain("convert-to-keyframes");
+    expect(types).toContain("add-keyframe");
   });
 });
 
