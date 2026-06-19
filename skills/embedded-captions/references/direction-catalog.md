@@ -2,7 +2,7 @@
 
 10 distinct aesthetic directions the skill can express. Each is a complete look: font, motion, color, placement, rhetorical defaults. The agent picks by **content tone × shot type × platform**, not preset name.
 
-The 10 column-flow DNAs (`dna/`) + 38 themes (`themes/`) cover most of this catalog; the rest are future ship-ready aesthetics.
+**Superseded for routing by [CATALOG.md](../CATALOG.md) → [dna/](../dna/README.md) (the 10 column-flow voices) + [themes/](../themes/README.md) (38 themed)** — the per-direction specs below map ~1:1 onto shipped identities. Kept for the **classification matrix** (tone × shot × platform), which the live registries don't restate; the rest are future ship-ready aesthetics.
 
 Classification matrix — pick direction by intersection:
 

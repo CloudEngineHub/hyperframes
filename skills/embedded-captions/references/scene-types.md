@@ -1,5 +1,7 @@
 # Scene Types — picking the right template
 
+> **Orientation (read first).** From the Cinematic engine's **template-era** authoring model. Live identity routing is now [CATALOG.md](../CATALOG.md) → [dna/](../dna/README.md) / [themes/](../themes/README.md); the per-template example shells (memory-wall / champion) are no longer shipped, though [make-composition.cjs](../scripts/make-composition.cjs) still keeps the `crown` + per-group `custom_css` mechanism. Read this for the **scene-reading judgement** it teaches — is a surface usable for embed, where the clean zone sits — not as the routing surface. **Blend is locked per DNA** in the engine path (the compiler ignores `plan.blend_mode`); the `mix-blend-mode` advice below is the **hand-authored / clone-and-tweak** path only ([bespoke-vs-presets.md](bespoke-vs-presets.md)).
+
 The three templates differ in one thing: **what surface (if any) the text physically sits on**. Pick by reading the scene, not by the genre label.
 
 ## wall-embed — "text is printed on a real surface"

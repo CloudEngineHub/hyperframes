@@ -127,10 +127,10 @@ Fine-tune stagger within a tone:
 
 ---
 
-## Anti-patterns (banned, from anti-patterns.md)
+## Anti-patterns (motion pacing)
 
-- Animating `letter-spacing` → reflow
-- Animating `filter:blur` → reflow + can wash out text
+The animation-property bans — never animate `letter-spacing` / `filter:blur` / font-size (inline-block reflow) — live in [failure-modes.md § Animation](failure-modes.md). Motion-pacing-specific:
+
 - `Math.random()` / `Date.now()` in timeline → non-deterministic render
 - Entries under 100ms total → frantic, unreadable
 - Same motion for every group for 30s+ → eye adapts, stops registering

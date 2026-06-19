@@ -1,5 +1,7 @@
 # Typographic moves — a palette, not a cage
 
+> **Orientation (read first).** A typographic **palette** for the hand-authored Cinematic path. Live routing is [CATALOG.md](../CATALOG.md) → [dna/](../dna/README.md) / [themes/](../themes/README.md). The **size-vs-text-length** math here is canonical in [composition-craft.md](composition-craft.md) (the `max_font_px` formula); **never italicize for emphasis** is canonical in [aesthetic-principles.md](aesthetic-principles.md) rule #8. Read this for the named moves, not those two rules.
+
 `cinematic-cream` template locks DNA only (font-family, motion, color
 palette defaults). It does NOT enforce slot structure. The agent writes
 each caption group's typography from scratch via the plan.json `css`

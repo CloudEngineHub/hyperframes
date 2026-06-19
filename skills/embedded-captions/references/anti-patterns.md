@@ -95,11 +95,11 @@ Overlay works on **mid-tone** backgrounds. On dark bookshelves (<60 luminance), 
 - dark surface (<60) → `screen`
 - bright surface (>180) → `normal` with opaque text
 
+_Path note: this manual blend pick is the **hand-authored / clone-and-tweak** path. The dna/theme **engine** locks blend per DNA (`make-composition.cjs` ignores `plan.blend_mode`) — there you use luminance to **pick a fitting identity**, never to recolour ([SKILL.md](../SKILL.md) pre-flight #3, [dna/README.md](../dna/README.md))._
+
 ### You animate `letter-spacing` on the word entry.
 
-You saw a "typewriter breath" effect somewhere and added `letterSpacing: "0.04em"` to the `fromTo` "from" state. Result: inline-block reflow every frame → the whole `.cap` line box recomputes → captions visibly jump between rows. See the "Some → line 2" bug from memory-wall.
-
-**Animate only opacity + transform.** If you want a breath effect, use `scale` or `y`, not letter-spacing.
+Inline-block reflow → the `.cap` line box recomputes every frame → captions jump between rows. **Animate only opacity + transform** — for a breath effect use `scale`/`y`, never letter-spacing / `filter:blur` / font-size. Mechanics + the "Some → line 2" bug: [failure-modes.md § Animation](failure-modes.md).
 
 ---
 
@@ -107,15 +107,11 @@ You saw a "typewriter breath" effect somewhere and added `letterSpacing: "0.04em
 
 ### You fade both the group container AND each word.
 
-Default feels safer: fade the container in, then fade each word in. But container.opacity × word.opacity produces a non-linear curve — at progress 40% the combined opacity is 16%, not 40%. Visible result: captions seem to "pop" into view around halfway.
-
-Set container opacity to 1 at entrance via `tl.set`, then fade only the words. Single-layer opacity = linear perceived fade.
+`container.opacity × word.opacity` is non-linear — captions "pop" in around the 40% mark. Set container `opacity: 1` at entrance via `tl.set`, then fade only the words. Why + the curve math: [failure-modes.md § Animation](failure-modes.md).
 
 ### You stack captions in a flex column.
 
-Flex-direction: column with multiple `.cap` children looks tidy in source. At runtime, hidden captions (`visibility: hidden`) still reserve flex space. The newly-entering caption shows up at the _bottom_ of the column instead of the designed position — landing in the gesture zone, getting clipped.
-
-Use `position: absolute` for each `.cap` inside the plane so hidden ones don't occupy layout. Both shipped templates do this.
+Hidden caps (`visibility: hidden`) still reserve flex space → the entering cap lands at the column bottom in the gesture zone, clipped. Use `position: absolute` per `.cap` inside the plane. The `cg-4 → y=700` instance: [failure-modes.md § Layout](failure-modes.md). _(Deliberate flex accumulation — the memory-wall poem-stack — is the sanctioned exception: [bespoke-vs-presets.md § Caps should accumulate](bespoke-vs-presets.md).)_
 
 ### You start the timeline at t=0.
 
@@ -147,7 +143,7 @@ Transcription is Whisper (via `transcribe.cjs`, no API key) — good word timing
 
 ### You enable CoreML for the matting ONNX.
 
-It's the Apple way, obviously faster. No. CoreML partitions the ONNX graph across providers. The mixed-precision boundary produced (observed with the previous RVM engine) alpha=30 inside the subject's face while background correctly reads 0. Captions shine through face. Pin the CPU execution provider only (`onnxruntime-node`). Our `matte.cjs` already does this; don't "optimize" it by re-adding CoreML.
+No — CoreML partitions the graph; the mixed-precision boundary leaks alpha≈30 inside the face → captions shine through. Pin `CPUExecutionProvider` only; `matte.cjs` already does. Detail: [failure-modes.md § Matting](failure-modes.md).
 
 ### You pick a matte model by "general vs human."
 
