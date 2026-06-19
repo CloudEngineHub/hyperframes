@@ -42,7 +42,7 @@ Look at the subject's body center, not the frame center. Jobs sits at x=1100 in 
 
 ### You copy-paste position values from memory-wall to a new video.
 
-`top: 40, right: 30, width: 720, rotateY: -13` worked for a 1280×720 frame with an acoustic foam wall on the right. It will not work on a 1920×1080 frame with a bookshelf backdrop. Run the 6-item checklist in [scene-types.md](scene-types.md) for the new video before reusing any numbers.
+`top: 40, right: 30, width: 720, rotateY: -13` worked for a 1280×720 frame with an acoustic foam wall on the right. It will not work on a 1920×1080 frame with a bookshelf backdrop. Run the 6-point checklist in [layout-heuristics.md § Step 0](layout-heuristics.md) for the new video before reusing any numbers.
 
 ---
 
@@ -161,16 +161,15 @@ Self-check: am I transcribing instead of editing? The rail carries most text; em
 
 ### You read one reference doc and skip the rest.
 
-You'll read this file alone and feel covered. These anti-patterns reference concepts defined in `layout-heuristics.md`, `typography-presets.md`, `scene-types.md`. If you haven't read those, the fix advice here won't make sense.
+You'll read this file alone and feel covered. These anti-patterns reference concepts defined in `layout-heuristics.md` (incl. its Step 0 embed-viability gate) and `typography-presets.md`. If you haven't read those, the fix advice here won't make sense.
 
 **Order of reading for a new video**:
 
 1. SKILL.md (decision gate + pipeline + pre-flight probes)
 2. bespoke-vs-presets.md (**first check if a canonical example fits — clone if so**)
-3. scene-types.md (template selection — all 4 wall conditions)
-4. layout-heuristics.md (positions, sides, crown, font scale, pillarbox formula)
-5. typography-presets.md (font-size × column-width table, starting points)
-6. caption-grouping.md (word → group)
-7. **This file last** (to catch yourself before committing to plan.json)
+3. layout-heuristics.md (Step 0 embed-viability gate — all 4 wall conditions; then positions, sides, crown, font scale, pillarbox formula)
+4. typography-presets.md (font-size × column-width table, starting points)
+5. caption-grouping.md (word → group)
+6. **This file last** (to catch yourself before committing to plan.json)
 
 If you're pressed for time, still read this one — it flags the failures you're about to make.

@@ -4,6 +4,32 @@
 
 How to pick `wall_position` / `crown_position` in plan.json.
 
+## Step 0 — is a surface-printed (wall-embed) caption even viable?
+
+Before any positioning, decide whether the scene can carry text _printed onto a surface_ at all. Layout (Steps 1+) assumes this is already answered; if it fails, step down to a clean-zone column or the rail.
+
+**Four conditions — ALL must hold:**
+
+1. **A flat / near-flat surface larger than the caption block** — acoustic foam, painted wall, door, stone facade, blackboard. Bad: bookshelves (3D depth + clutter), mic shields (too small), windows (transparent), patterned brick.
+2. **The surface sits at a non-zero angle to camera** (~5–20°). Perspective is what sells "embedded"; a perfectly parallel wall reads as a sticker. Memory Wall's foam was tilted ~13°.
+3. **The surface is mid-luminance** (not near-black, not near-white). Use this to **pick a fitting identity**, not to recolour — engine blend is locked per DNA (see the orientation note above).
+4. **No competing graphical content** — plain paint, uniform foam, or blurred OOF all work; printed wallpaper, picture frames, signage all compete and ruin the illusion.
+
+**If any one fails, don't surface-embed.** Step down to a clean-zone column (Step 2) or the rail.
+
+**Anti-examples (would FAIL):** champion bookshelf — books/vases/frames, 3D + clutter (fails 1, 4); Jobs 60 Minutes — blurry potted plant, no flat surface (fails 1); Randy Pausch — black backdrop, no angle, no mid-tone (fails 2, 3); any handheld vlog — surface moves frame-to-frame, can't lock perspective.
+
+**6-point pre-commit checklist** — read 3 frames (start / mid / end); need all six YES:
+
+- [ ] A single surface behind/beside the subject occupying ≥ 30% of the frame?
+- [ ] Flat (not curved, not 3D-stacked shelving)?
+- [ ] Angled 5–20° to camera (not parallel, not warped)?
+- [ ] Mid-luminance (not near-black bookshelves, not near-white windows)?
+- [ ] No printed/decorative elements competing with caption text?
+- [ ] Stays visible across all 3 frames (subject doesn't step in front of it)?
+
+Even one NO → step down to a clean-zone column or the rail.
+
 ## Step 1: Sample 3 frames
 
 ```bash
