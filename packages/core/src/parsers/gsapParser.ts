@@ -1700,11 +1700,19 @@ export function splitAnimationsInScript(
       continue;
     }
 
+    // `<=` (not `<`) is deliberate: a tween whose end coincides exactly with
+    // the split boundary has fully played by splitTime, so it belongs to the
+    // first half and contributes its resting state to the clone. The spanning
+    // branch below handles only strictly-mid-flight tweens (pos < split < end).
     if (animEnd <= opts.splitTime) {
-      // A completed .from() reverts the element to its natural state, so its
-      // recorded properties are the HIDDEN start (e.g. opacity:0), not the
+      // Only a completed .from() reverts the element to its natural state, so
+      // its recorded properties are the HIDDEN start (e.g. opacity:0), not the
       // resting state — clearing them keeps the clone at its natural value
       // instead of pinning it to the from-values (which made it invisible).
+      // .fromTo() and .to() both END at their to-values (no revert), so they
+      // fall through to `else` and inherit `anim.properties` (the to-values) —
+      // .fromTo() must NOT join the .from() clear-branch or the clone would
+      // drop the very state the fromTo just established.
       if (anim.method === "from") {
         for (const k of Object.keys(anim.properties)) delete inheritedProps[k];
       } else {
@@ -2679,16 +2687,19 @@ export function addMotionPathToScript(
   duration: number,
   point: { x: number; y: number },
   ease = "power1.inOut",
-): { script: string; id: string } {
+): { script: string; id: string | null } {
+  // `id: null` on the failure paths is a deliberate sentinel: callers must
+  // null-check before chaining (e.g. locating the new tween). An empty string
+  // would silently flow into selector/locate calls and match nothing.
   let parsed: ParsedGsapAst;
   try {
     parsed = parseGsapAst(script);
   } catch (e) {
     console.warn("[gsap-parser] addMotionPathToScript parse failed:", e);
-    return { script, id: "" };
+    return { script, id: null };
   }
   if (parsed.located.length === 0 && parsed.detection.timelineVar === null) {
-    return { script, id: "" };
+    return { script, id: null };
   }
 
   const motionPathCode = buildMotionPathObjectCode({
@@ -2711,7 +2722,7 @@ export function addMotionPathToScript(
 
   const result = recast.print(parsed.ast).code;
   const reParsed = parseGsapAst(result);
-  const newId = reParsed.located[reParsed.located.length - 1]?.id ?? "";
+  const newId = reParsed.located[reParsed.located.length - 1]?.id ?? null;
   return { script: result, id: newId };
 }
 

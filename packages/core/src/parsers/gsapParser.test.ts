@@ -494,6 +494,14 @@ describe("property group classification", () => {
     expect(classifyTweenPropertyGroup({ x: 100, y: 50, _auto: 1 })).toBe("position");
   });
 
+  it("ignores the GSAP-reserved `data` key when classifying", () => {
+    // Regression: `data` is GSAP-reserved (Studio stores its hold-set tag there).
+    // It is not an animated property, so it must not pull a single-group tween into
+    // a mixed group (which would return undefined and break group-scoped editing).
+    expect(classifyTweenPropertyGroup({ x: 100, y: 50, data: "hold" })).toBe("position");
+    expect(classifyTweenPropertyGroup({ scale: 0.5, data: "hold" })).toBe("scale");
+  });
+
   it("returns undefined for mixed-group tweens", () => {
     expect(classifyTweenPropertyGroup({ x: 100, scale: 0.5 })).toBeUndefined();
     expect(classifyTweenPropertyGroup({ x: 100, opacity: 0 })).toBeUndefined();
@@ -1970,7 +1978,7 @@ describe("keyframe mutations", () => {
       x: 300,
       y: -100,
     });
-    expect(id).not.toBe("");
+    expect(id).not.toBeNull();
     const reparsed = parseGsapScript(updated);
     const anim = reparsed.animations.find((a) => a.targetSelector === "#el")!;
     expect(anim).toBeDefined();
@@ -1980,6 +1988,18 @@ describe("keyframe mutations", () => {
       [300, -100],
     ]);
     expect(anim.duration).toBe(1.5);
+  });
+
+  it("addMotionPathToScript — returns id:null (not '') when there is no timeline", () => {
+    // No `gsap.timeline()` and no located tweens → failure. The sentinel must be
+    // null so a downstream caller chaining on the id can null-check instead of
+    // silently feeding an empty selector into a locate call that matches nothing.
+    const { script: updated, id } = addMotionPathToScript("const x = 1;", "#el", 0, 1, {
+      x: 10,
+      y: 10,
+    });
+    expect(id).toBeNull();
+    expect(updated).toBe("const x = 1;");
   });
 
   // ── convertToKeyframesInScript ──────────────────────────────────────────
@@ -2365,6 +2385,42 @@ tl.to("#el1", { y: 200, duration: 1 }, 3);`;
     expect(continuation).toBeDefined();
     expect(continuation!.fromProperties?.opacity).toBe(0.5);
     expect(continuation!.properties.opacity).toBe(1);
+  });
+
+  it("splits a mid-flight fromTo straddling the split into two fromTo halves", () => {
+    // Mid-flight: pos(0) < splitTime(2) < animEnd(4). The first half keeps the
+    // original on #el1 ending at the interpolated mid-value; the clone continues
+    // as a fromTo from that mid-value to the original to-value.
+    const script = `${baseScript}\ntl.fromTo("#el1", { x: 0 }, { x: 100, duration: 4 }, 0);`;
+    const result = split(script);
+    const parsed = parseGsapScript(result);
+    const first = parsed.animations.find((a) => a.targetSelector === "#el1")!;
+    const forNew = parsed.animations.filter((a) => a.targetSelector === "#el1-split");
+    const continuation = forNew.find((a) => a.method === "fromTo")!;
+    expect(first.duration).toBe(2);
+    expect(first.properties.x).toBe(50);
+    expect(continuation.duration).toBe(2);
+    expect(continuation.fromProperties?.x).toBe(50);
+    expect(continuation.properties.x).toBe(100);
+  });
+
+  it("splits a mid-flight from straddling the split (no fromProperties on source)", () => {
+    // A .from() has no explicit fromProperties, so the spanning branch seeds the
+    // from-value from accumulated inherited state (defaulting to 0). The clone
+    // continues from the interpolated mid-value as a fromTo so both halves play
+    // a contiguous range.
+    const script = `${baseScript}\ntl.from("#el1", { x: 80, duration: 4 }, 0);`;
+    const result = split(script);
+    const parsed = parseGsapScript(result);
+    const first = parsed.animations.find((a) => a.targetSelector === "#el1")!;
+    const continuation = parsed.animations
+      .filter((a) => a.targetSelector === "#el1-split")
+      .find((a) => a.method === "fromTo")!;
+    expect(first.duration).toBe(2);
+    expect(first.properties.x).toBe(40);
+    expect(continuation.duration).toBe(2);
+    expect(continuation.fromProperties?.x).toBe(40);
+    expect(continuation.properties.x).toBe(80);
   });
 
   it("round-trips correctly through parseGsapScript", () => {
