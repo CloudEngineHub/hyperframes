@@ -291,6 +291,62 @@ section{padding:110px 120px;position:relative}
   </div>
 </section>
 
+<!-- CAPTIONS — preview of caption-skin.html (the preset's lower-third karaoke look) -->
+<style>
+/* mirrors caption-skin.html; the skin's --cap-* vocab mapped to this preset's tokens */
+.capdemo{--cap-ink:var(--ink);--cap-canvas:var(--cream);--cap-accent:var(--pink-deep);--cap-accent-2:var(--pink)}
+.capdemo .stage{position:absolute;left:0;right:0;bottom:0;height:16.67cqh;display:flex;align-items:center;justify-content:center;z-index:4}
+.capdemo .pill{max-width:80cqw;padding:1.4cqw 3cqw 1.7cqw;background:var(--cap-canvas);border:.21cqw solid var(--cap-accent);border-radius:.6cqw}
+.capdemo .line{display:flex;flex-wrap:wrap;justify-content:center;gap:.1em .34em;font-family:var(--serif);font-weight:500;font-size:3.4cqw;line-height:1.16;letter-spacing:-.02em}
+.capdemo .w{display:inline-block;padding:0 .06em;color:color-mix(in srgb,var(--cap-ink) 42%,var(--cap-canvas))}
+.capdemo .w.spoken{color:var(--cap-ink)}
+.capdemo .w.active{color:var(--cap-ink);background:var(--cap-accent);box-shadow:0 0 0 .05em var(--cap-accent);border-radius:.6cqw}
+.capdemo .bandline{position:absolute;left:0;right:0;bottom:16.67cqh;border-top:2px dashed rgba(46,74,42,.32);z-index:3}
+.capdemo .bandtag{position:absolute;right:5cqw;bottom:calc(16.67cqh + .7cqw);font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.12em;font-size:.85cqw;color:var(--green);opacity:.6;z-index:4}
+</style>
+<section style="background:var(--cream-2)">
+  <div class="topbar"><span class="lbl">06 — Captions</span><h2>Lower-Third Karaoke</h2></div>
+  <div class="gallery">
+
+    <div class="fw">
+      <div class="flabel"><b>Active line</b><span>· spoken · current · upcoming</span></div>
+      <div class="frame capdemo">
+        <div class="tb"><span class="l" style="color:var(--green)">Captions</span><span class="l" style="color:var(--green)">05 / 06</span></div>
+        <div class="bandline"></div>
+        <div class="bandtag">caption band · 16.7%</div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Built</span>
+              <span class="w spoken">for</span>
+              <span class="w active">teams</span>
+              <span class="w">who</span>
+              <span class="w">ship.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="flabel"><b>Settled line</b><span>· all spoken · panel cleared</span></div>
+      <div class="frame capdemo">
+        <div class="tb"><span class="l" style="color:var(--green)">Captions</span><span class="l" style="color:var(--green)">06 / 06</span></div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Ship</span>
+              <span class="w spoken">faster</span>
+              <span class="w spoken">today.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <div class="foot">
   <span class="l">Editorial Forest</span>
   <span class="r">Frame Showcase · Atoms Sacred · Composition Free</span>

@@ -49,9 +49,17 @@ Goal: Choose one shipped frame preset and turn it into this video's `frame.md`.
 
 Create `frame.md` from one shipped frame preset. Read `../hyperframes-creative/references/design-spec.md` for available presets and the `frame.md` format. Pick a preset, copy its `FRAME.md` to project root as `frame.md`, then overlay brand tokens by changing only `colors:` and `typography:`. Keep the preset's structure, geometry, and components. Do not invent a custom design system.
 
+Then copy the **same preset's** `caption-skin.html` (it sits next to the `FRAME.md` you just copied) to the project root **verbatim** — no edits, `captions.mjs` injects brand tokens from `frame.md` at build time, so the caption look tracks the same overlay as the frames:
+
+```bash
+cp <SKILL_DIR>/../hyperframes-creative/frame-presets/<preset>/caption-skin.html ./caption-skin.html
+```
+
+This is the preset's own lower-third karaoke caption look; Step 5's `captions.mjs` picks it up automatically. If the chosen preset ships no `caption-skin.html`, skip this copy — captions fall back to the built-in default pill.
+
 If no site was captured or the brief lacks brand style, use the user's `design.md` if present. Otherwise ask once for a logo, brand colors, font direction, or a visual reference.
 
-**Gate:** `frame.md` exists, comes from a named shipped preset, and has brand colors and typography applied.
+**Gate:** `frame.md` exists, comes from a named shipped preset, and has brand colors and typography applied. When the preset ships one, `caption-skin.html` is copied to the project root verbatim.
 
 ---
 
@@ -63,7 +71,7 @@ Read `references/story-design.md`, `../hyperframes-core/references/storyboard-fo
 
 Use `story-design.md` for story archetype, hook, persuasion logic, beats, `VO_MODE`, and asset choices. Choose each visual frame's `asset_candidates` from `capture/extracted/asset-descriptions.md` (the canonical inventory) — don't browse raw `capture/assets/`. Do not ask the user to pick assets unless that inventory is missing or unusable. Use the exact required fields from the storyboard and script references.
 
-After drafting, show a frame-by-frame summary and iterate until the user approves. After approval, offer live preview once: `npx hyperframes preview`. Open preview only if the user asks, and remember that choice for Step 6.
+After drafting, show a frame-by-frame summary and iterate until the user approves. After approval, ask whether they want a live preview (`npx hyperframes preview`) — open it only if they say yes, and carry that choice to Step 6.
 
 **Gate:** `STORYBOARD.md` exists, every visual frame has `asset_candidates`, `SCRIPT.md` exists when narration is needed, and the user approved the frame-by-frame plan.
 
@@ -129,7 +137,7 @@ After audio timings exist, build captions in the background and assemble the ind
 
 `node <SKILL_DIR>/scripts/assemble-index.mjs --storyboard ./STORYBOARD.md --hyperframes .`
 
-`captions: skipped (<reason>)` is valid. Continue without captions when explicitly skipped.
+`captions.mjs` uses the project's `caption-skin.html` (copied in Step 2) as the caption look, injecting brand tokens from `frame.md`; with no skin present it renders the built-in default pill. `captions: skipped (<reason>)` is valid. Continue without captions when explicitly skipped.
 
 **Gate:** every frame is marked `animated`, `index.html` exists, and captions are built or explicitly skipped.
 

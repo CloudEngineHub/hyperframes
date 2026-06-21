@@ -309,6 +309,63 @@ section{padding:120px 100px;position:relative}
   </div>
 </section>
 
+<!-- CAPTIONS — preview of caption-skin.html (the preset's lower-third karaoke look) -->
+<style>
+  /* mirrors caption-skin.html; the skin's --cap-* vocab mapped to this preset's tokens */
+  .capdemo{--cap-ink:var(--ink);--cap-canvas:var(--cream);--cap-accent:var(--coral);--cap-accent-2:var(--yellow)}
+  .capdemo .stage{position:absolute;left:0;right:0;bottom:0;height:16.67cqh;display:flex;align-items:center;justify-content:center;z-index:4}
+  .capdemo .pill{max-width:82cqw;padding:1.3cqw 3.4cqw 1.5cqw;background:var(--cap-canvas);border:.2cqw solid var(--cap-ink);border-radius:9999px;box-shadow:.6cqw .6cqw 0 var(--shadow)}
+  .capdemo .line{display:flex;flex-wrap:wrap;justify-content:center;gap:.12em .36em;font-family:var(--serif);font-weight:700;font-size:3.2cqw;line-height:1.16;letter-spacing:-.02em}
+  .capdemo .w{display:inline-block;padding:0 .1em;border-radius:9999px;color:color-mix(in srgb,var(--cap-ink) 42%,var(--cap-canvas))}
+  .capdemo .w.spoken{color:var(--cap-ink)}
+  .capdemo .w.active{color:var(--cap-ink);background:var(--cap-accent);box-shadow:0 0 0 .14em var(--cap-accent)}
+  .capdemo .bandline{position:absolute;left:0;right:0;bottom:16.67cqh;border-top:.12cqw dashed rgba(30,30,30,.3);z-index:3}
+  .capdemo .bandtag{position:absolute;right:3cqw;bottom:calc(16.67cqh + .7cqw);font-family:var(--sans);font-weight:600;text-transform:uppercase;font-size:.85cqw;letter-spacing:.08em;color:rgba(26,26,26,.5);z-index:4}
+</style>
+<section>
+  <div class="sec-head"><span class="tagpill" style="background:var(--peach)">Captions</span><h2>Captions</h2><span class="sp"></span></div>
+  <div class="gallery">
+
+    <div class="fw">
+      <div class="flabel"><b>Active line</b><span>· spoken · current · upcoming</span></div>
+      <div class="frame capdemo">
+        <span class="ffp" style="background:var(--lavender);top:12%;left:8%;transform:rotate(-11deg)">Live</span>
+        <span class="ffp circ" style="background:var(--lime);top:16%;right:10%;transform:rotate(8deg)">+</span>
+        <div class="bandline"></div>
+        <div class="bandtag">caption band · 16.7%</div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Built</span>
+              <span class="w spoken">for</span>
+              <span class="w active">teams</span>
+              <span class="w">who</span>
+              <span class="w">ship.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="flabel"><b>Settled line</b><span>· all spoken · highlight cleared</span></div>
+      <div class="frame capdemo">
+        <span class="ffp" style="background:var(--sky);bottom:auto;top:14%;right:11%;transform:rotate(9deg)">Promo</span>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Ship</span>
+              <span class="w spoken">faster</span>
+              <span class="w spoken">today.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <div class="foot">
   <span class="l">Capsule</span>
   <span class="r">Frame Showcase · Atoms Sacred · Composition Free</span>

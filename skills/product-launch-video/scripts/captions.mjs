@@ -287,7 +287,11 @@ function semanticColors(colors) {
   const hexes = colors.filter(([, v]) => lum(v) != null);
   const byLum = [...hexes].sort((a, b) => (lum(a[1]) ?? 1e9) - (lum(b[1]) ?? 1e9));
   const pick = (m, fallback) => (m ? m[1] : fallback ? fallback[1] : undefined);
-  const ink = pick(named(/ink|black|charcoal|^text$|outline|noir/i), byLum[0] ?? colors[0]);
+  // "ink" must be a whole word-segment so "soft-pink"/"pink" don't match it.
+  const ink = pick(
+    named(/(?:^|[-_])ink(?:[-_]|$)|black|charcoal|^text(?:-dark)?$|outline|noir/i),
+    byLum[0] ?? colors[0],
+  );
   const canvas = pick(
     named(/cream|paper|canvas|white|bg|ground|surface|base|sand|parchment|off-?white|bone/i),
     byLum[byLum.length - 1] ?? colors[colors.length - 1],

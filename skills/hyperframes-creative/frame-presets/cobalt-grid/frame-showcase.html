@@ -404,6 +404,90 @@ section{padding:110px 80px;position:relative}
   </div>
 </section>
 
+<!-- CAPTIONS — preview of caption-skin.html (the preset's lower-third karaoke look) -->
+<style>
+  /* mirrors caption-skin.html; the skin's --cap-* vocab mapped to this preset's tokens */
+  .capdemo{
+    --cap-ink:var(--ink);
+    --cap-canvas:var(--paper);
+    --cap-accent:var(--ink-soft);
+    --cap-accent-2:var(--paper-2);
+  }
+  .capdemo .stage{position:absolute;left:0;right:0;bottom:0;height:16.67cqh;display:flex;align-items:center;justify-content:center;z-index:7}
+  .capdemo .pill{
+    position:relative;max-width:80cqw;padding:1.4cqw 3cqw 1.7cqw;
+    background:var(--cap-canvas);
+    background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),linear-gradient(to bottom,var(--grid) 1px,transparent 1px);
+    background-size:1.2cqw 1.2cqw;
+    border-top:.16cqw solid var(--cap-ink);border-bottom:.16cqw solid var(--cap-ink);border-radius:0;
+  }
+  .capdemo .line{display:flex;flex-wrap:wrap;justify-content:center;gap:.1em .34em;font-family:var(--serif);font-weight:400;font-size:3.4cqw;line-height:1.16;letter-spacing:-.01em}
+  .capdemo .w{display:inline-block;padding:0 .06em;color:color-mix(in srgb,var(--cap-ink) 42%,var(--cap-canvas))}
+  .capdemo .w.spoken{color:var(--cap-ink)}
+  /* the cobalt flat block — risograph knockout: cobalt fill, cream paper on top */
+  .capdemo .w.active{color:var(--cap-canvas);background:var(--cap-ink);box-shadow:0 0 0 .06em var(--cap-ink)}
+  .capdemo .bandline{position:absolute;left:0;right:0;bottom:16.67cqh;border-top:1px dashed var(--ink-faint);z-index:6}
+  .capdemo .bandtag{position:absolute;right:4cqw;bottom:calc(16.67cqh + .7cqw);font-family:var(--mono);font-size:.95cqw;letter-spacing:.04em;color:var(--ink);opacity:.5;z-index:7}
+</style>
+<section>
+  <div class="sec-head"><span class="tag">06</span><h2>Captions</h2><span class="sp"></span><span class="lab">Lower-third · Karaoke</span></div>
+  <div class="gallery">
+
+    <div class="fw">
+      <div class="flabel"><b>Active line</b><span>· spoken · current · upcoming</span></div>
+      <div class="frame capdemo">
+        <div class="ht"></div><div class="hb"></div>
+        <div class="glitch" style="right:0;width:16cqw;opacity:.5;z-index:2">
+          <div class="step" style="width:60%;height:18%;align-self:flex-end"></div>
+          <div class="step" style="width:100%;height:16%;align-self:flex-end"></div>
+          <div class="step" style="width:42%;height:14%;align-self:flex-end"></div>
+        </div>
+        <div class="bandline"></div>
+        <div class="bandtag">caption band · 16.7%</div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Built</span>
+              <span class="w spoken">for</span>
+              <span class="w active">teams</span>
+              <span class="w">who</span>
+              <span class="w">ship.</span>
+            </div>
+          </div>
+        </div>
+        <div class="pg">05 / 06</div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="flabel"><b>Settled line</b><span>· all spoken · block cleared</span></div>
+      <div class="frame capdemo">
+        <div class="ht"></div><div class="hb"></div>
+        <div class="qr" style="position:absolute;top:6cqw;right:5cqw;width:7cqw;height:7cqw;z-index:6;gap:.2cqw;padding:.4cqw">
+          <i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i>
+          <i></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i>
+          <i class="on"></i><i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i>
+          <i></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i>
+          <i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i>
+          <i></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i>
+          <i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i>
+          <i></i><i class="on"></i><i></i><i></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i>
+        </div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Ship</span>
+              <span class="w spoken">faster</span>
+              <span class="w spoken">today.</span>
+            </div>
+          </div>
+        </div>
+        <div class="pg">06 / 06</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <div class="foot">
   <span class="l">Cobalt Grid</span>
   <span class="r">FRAME SHOWCASE · ATOMS SACRED · COMPOSITION FREE</span>

@@ -293,6 +293,62 @@ section{padding:128px 100px;position:relative;overflow:hidden}
   </div>
 </section>
 
+<!-- CAPTIONS — preview of caption-skin.html (the preset's lower-third karaoke look) -->
+<style>
+/* mirrors caption-skin.html; the skin's --cap-* vocab mapped to this preset's tokens */
+.capdemo{--cap-ink:var(--ink);--cap-canvas:var(--bg);--cap-accent:var(--accent);--cap-accent-2:var(--line)}
+.capdemo .stage{position:absolute;left:0;right:0;bottom:0;height:16.67cqh;display:flex;align-items:center;justify-content:center;z-index:4}
+.capdemo .pill{max-width:80cqw;padding:1.4cqw 3cqw 1.7cqw;background:var(--cap-canvas);border:1px solid var(--cap-accent-2);border-radius:0}
+.capdemo .line{display:flex;flex-wrap:wrap;justify-content:center;gap:0.1em 0.34em;font-family:var(--serif);font-weight:400;font-size:3.4cqw;line-height:1.16;letter-spacing:-0.01em}
+.capdemo .w{display:inline-block;padding:0 0.06em;border-bottom:1px solid transparent;color:color-mix(in srgb,var(--cap-ink) 42%,var(--cap-canvas))}
+.capdemo .w.spoken{color:var(--cap-ink)}
+.capdemo .w.active{color:var(--cap-ink);background:color-mix(in srgb,var(--cap-accent) 18%,var(--cap-canvas));border-bottom:1px solid var(--cap-accent)}
+.capdemo .bandline{position:absolute;left:0;right:0;bottom:16.67cqh;border-top:1px dashed var(--line);z-index:3}
+.capdemo .bandtag{position:absolute;right:3cqw;bottom:calc(16.67cqh + 0.7cqw);font-family:var(--sans);text-transform:uppercase;letter-spacing:.2cqw;font-size:0.95cqw;color:var(--accent);z-index:4}
+</style>
+<section>
+  <div class="sec-head"><span class="n">06</span><h2>Captions</h2><span class="sp"></span><span class="lab">Lower-third · Karaoke</span></div>
+  <div class="gallery">
+
+    <div class="fw">
+      <div class="flabel"><b>Active line</b><span>· spoken · current · upcoming</span></div>
+      <div class="frame capdemo">
+        <div class="fgeo ring dash" style="width:30cqw;height:30cqw;left:8cqw;top:10%;opacity:.3"></div>
+        <div class="bandline"></div>
+        <div class="bandtag">Caption Band · 16.7%</div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Built</span>
+              <span class="w spoken">for</span>
+              <span class="w active">teams</span>
+              <span class="w">who</span>
+              <span class="w">ship.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="flabel"><b>Settled line</b><span>· all spoken · marker cleared</span></div>
+      <div class="frame capdemo">
+        <div class="fgeo ring" style="width:34cqw;height:34cqw;right:-8cqw;top:50%;transform:translateY(-50%);opacity:.28"></div>
+        <div class="stage">
+          <div class="pill">
+            <div class="line">
+              <span class="w spoken">Ship</span>
+              <span class="w spoken">faster</span>
+              <span class="w spoken">today.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <div class="foot">
   <span class="l">Cartesian</span>
   <span class="r">Frame Showcase · Atoms Sacred · Composition Free</span>
