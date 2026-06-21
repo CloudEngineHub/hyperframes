@@ -1,8 +1,8 @@
-// assets.mjs — stage frame-named capture assets into public/.
+// assets.mjs — stage frame-named capture assets into assets/.
 // Shared by stage-assets.mjs (Step 4 close, BEFORE the frame workers run) and
 // assemble-index.mjs (Step 5, idempotent backstop). Only assets a frame names
 // in `asset_candidates` are staged; unnamed assets never reach the project.
-// asset_candidates value form: "public/<basename> — desc; public/… — …".
+// asset_candidates value form: "assets/<basename> — desc; assets/… — …".
 
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -13,11 +13,11 @@ export function basenamesFromCandidates(value) {
     .split(";")
     .map((seg) => seg.split(/\s+[—–-]\s+/)[0].trim()) // strip the " — description"
     .filter(Boolean)
-    .map((p) => basename(p.replace(/^public\//, "")));
+    .map((p) => basename(p.replace(/^assets\//, "")));
 }
 
 // Copy each frame's asset_candidates from capture/{assets,assets/videos,
-// screenshots} into public/. Already-staged files are left as is (first-wins),
+// screenshots} into assets/. Already-staged files are left as is (first-wins),
 // so calling this twice is safe. Returns { staged, wanted, anomalies }.
 export function stageAssets({ hyperframesDir, frames }) {
   const wanted = new Set();
@@ -29,13 +29,13 @@ export function stageAssets({ hyperframesDir, frames }) {
     join(hyperframesDir, "capture/assets/videos"), // videos download into a subdir
     join(hyperframesDir, "capture/screenshots"),
   ];
-  const publicDir = join(hyperframesDir, "public");
+  const assetsDir = join(hyperframesDir, "assets");
   const anomalies = [];
   let staged = 0;
   if (wanted.size > 0) {
-    mkdirSync(publicDir, { recursive: true });
+    mkdirSync(assetsDir, { recursive: true });
     for (const b of wanted) {
-      const dest = join(publicDir, b);
+      const dest = join(assetsDir, b);
       if (existsSync(dest)) {
         staged++;
         continue;

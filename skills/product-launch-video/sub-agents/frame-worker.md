@@ -53,7 +53,7 @@ Generic seek-safety + structure live in `hyperframes-core` (read it; not restate
 
 ## Self-check (fix before finishing)
 
-The orchestrator runs `lint` / `validate` / `inspect` / midpoint `snapshot` after all workers return; catch these yourself first (codes are `hyperframes lint`'s; the rules behind them are in `hyperframes-core`):
+The orchestrator runs `lint` / `validate` / `inspect`; catch these yourself first (codes are `hyperframes lint`'s; the rules behind them are in `hyperframes-core`):
 
 - `missing_template_wrapper` / `missing_composition_id` — root is `<template>`-wrapped and carries `data-composition-id="<frame_id>"`.
 - **Template transport** — every `<style>` and `<script>` block, including the GSAP load, lives inside `<template>`.

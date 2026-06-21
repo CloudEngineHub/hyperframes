@@ -69,7 +69,7 @@ Read `references/story-design.md`, `../hyperframes-core/references/storyboard-fo
 
 Use `story-design.md` for story archetype, hook, persuasion logic, beats, `VO_MODE`, and asset choices. Choose each visual frame's `asset_candidates` from `capture/extracted/asset-descriptions.md` (the canonical inventory) — don't browse raw `capture/assets/`. Do not ask the user to pick assets unless that inventory is missing or unusable. Use the exact required fields from the storyboard and script references.
 
-After drafting, show a frame-by-frame summary and iterate until the user approves. After approval, ask whether they want a live preview (`npx hyperframes preview`) — open it only if they say yes, and carry that choice to Step 6.
+After drafting, show a frame-by-frame summary. In that same message ask the user two things: (a) to approve or request changes, and (b) whether they want a live preview of the storyboard scaffold (npx hyperframes preview) — open it only on a yes. Iterate until approved, and carry the preview choice to Step 6.
 
 **Gate:** `STORYBOARD.md` exists, every visual frame has `asset_candidates`, `SCRIPT.md` exists when narration is needed, and the user approved the frame-by-frame plan.
 
@@ -107,7 +107,7 @@ Stage named assets after visual design is locked:
 
 `node <SKILL_DIR>/scripts/stage-assets.mjs --storyboard ./STORYBOARD.md --hyperframes .`
 
-**Gate:** every visual frame has `effects` plus `focal` and/or `roles`; `## Video direction` exists; `public/` contains the named assets.
+**Gate:** every visual frame has `effects` plus `focal` and/or `roles`; `## Video direction` exists; `assets/` contains the named assets.
 
 ---
 
@@ -179,7 +179,7 @@ Do not rerun `lint`, `validate`, `inspect`, or `snapshot` after rendering unless
 
 **Formats:** landscape `1920x1080` by default; portrait `1080x1920`; square `1080x1080`. Set the format once in the storyboard frontmatter.
 
-**Background scripts:** the workflow ships only these scripts under `scripts/`: `build-frame` for adopting + brand-remixing a frame preset into `frame.md` (+ caption skin); `audio` for TTS, transcription, BGM, SFX, and duration syncing; `captions`; `transitions` for inject and verify; `stage-assets` for copying frame-named assets into `public/`; and `assemble-index`. Everything else is handled by the `hyperframes` CLI.
+**Background scripts:** the workflow ships only these scripts under `scripts/`: `build-frame` for adopting + brand-remixing a frame preset into `frame.md` (+ caption skin); `audio` for TTS, transcription, BGM, SFX, and duration syncing; `captions`; `transitions` for inject and verify; `stage-assets` for copying frame-named assets into `assets/`; and `assemble-index`. Everything else is handled by the `hyperframes` CLI.
 
 | Read                                                                                                         | When                                                     |
 | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |

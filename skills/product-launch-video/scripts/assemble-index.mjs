@@ -2,7 +2,7 @@
 // assemble-index.mjs — deterministic top-level index.html assembly for a
 // product-launch project. No subagent, no judgment: turns STORYBOARD.md + the
 // built frame files (+ optional audio_meta.json) into the standalone index.html
-// the renderer consumes, and stages the frame-named capture assets into public/.
+// the renderer consumes, and stages the frame-named capture assets into assets/.
 //
 // index.html is a *standalone* composition (root <div id="root"> directly in
 // <body>, no <template> wrapper — template is for sub-comps). Structure is
@@ -31,7 +31,7 @@
 // Reads:  --storyboard STORYBOARD.md, --hyperframes <project root>,
 //         [--audio-meta audio_meta.json]. On disk: each built frame's src html,
 //         capture/{assets,assets/videos,screenshots}/<basename> for staging, compositions/captions.html.
-// Writes: <project>/index.html  +  stages public/<basename>.
+// Writes: <project>/index.html  +  stages assets/<basename>.
 //
 // Exit 0 = index.html written + summary. Exit 1 = fatal contract break (no
 // frames, a built/animated frame missing its src/file, a frame with no
@@ -243,8 +243,8 @@ audio.sfx.forEach((cue, i) => {
   sfxEmitted++;
 });
 
-// ---------- stage frame-named assets: capture/ → public/ (idempotent backstop) ----------
-// Frame workers + the live preview reference public/<basename>; stage-assets.mjs
+// ---------- stage frame-named assets: capture/ → assets/ (idempotent backstop) ----------
+// Frame workers + the live preview reference assets/<basename>; stage-assets.mjs
 // already ran this at Step 4 close. Re-run as a backstop so a late-named asset
 // still lands. Shared logic: lib/assets.mjs (first-wins, safe to call twice).
 const {

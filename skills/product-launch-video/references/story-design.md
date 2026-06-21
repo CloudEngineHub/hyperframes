@@ -158,7 +158,7 @@ Rules:
 
 1. Read only `capture/extracted/asset-descriptions.md` to know what assets exist.
 2. Use only filenames listed there.
-3. Write candidates as `public/<basename>`, where `<basename>` is the captured file basename.
+3. Write candidates as `assets/<basename>`, where `<basename>` is the captured file basename.
 4. Put all candidates on one line.
 5. Separate candidates with semicolons.
 6. Add a short description after `—`.
@@ -170,7 +170,7 @@ Rules:
 Example:
 
 ```md
-- asset_candidates: public/dashboard-hero.png — main analytics UI, dark dashboard, wide screenshot; public/demo-loop.mp4 — product interaction clip, query to result flow
+- asset_candidates: assets/dashboard-hero.png — main analytics UI, dark dashboard, wide screenshot; assets/demo-loop.mp4 — product interaction clip, query to result flow
 ```
 
 Do not use nested lists for assets. The parser expects a single metadata line.
@@ -244,7 +244,7 @@ Use the exact fields required by the core storyboard format. This is the narrati
 - type: hook
 - persuasion: Pain validation
 - beat: urgency
-- asset_candidates: public/example.png — short asset description
+- asset_candidates: assets/example.png — short asset description
 
 narrativeRole: What this frame does in the viewer journey.
 keyMessage: The one idea the viewer should remember.

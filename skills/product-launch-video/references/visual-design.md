@@ -22,7 +22,7 @@ Story-design's `## Frame N` block already carries the narrative. You append the 
 - beat: frustration
 - effects: slow-push, count-up, vignette-pulse   ← you add: cite effect ids (≥3, sequenced into the phases below)
 - blueprint: messaging-multi-phase         ← you add (optional): one multi-phase blueprint id
-- focal: public/timer-stack.png             ← you add: which existing candidate is the hero
+- focal: assets/timer-stack.png             ← you add: which existing candidate is the hero
 - roles: timer-stack = background (dim ~40%) ← you add: cutout / background / supporting per candidate
 - sfx: impact-soft, riser                    ← you add: the sound the beat wants (fetched + mounted at root; never yours to embed)
 
