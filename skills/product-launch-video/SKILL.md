@@ -45,21 +45,19 @@ No-capture path: create `capture/extracted/tokens.json`, `capture/extracted/visi
 
 ## Step 2: Design System
 
-Goal: Choose one shipped frame preset and turn it into this video's `frame.md`.
+Goal: Choose one shipped frame preset; a script turns it into this video's `frame.md` + caption skin.
 
-Create `frame.md` from one shipped frame preset. Read `../hyperframes-creative/references/design-spec.md` for available presets and the `frame.md` format. Pick a preset, copy its `FRAME.md` to project root as `frame.md`, then overlay brand tokens by changing only `colors:` and `typography:`. Keep the preset's structure, geometry, and components. Do not invent a custom design system.
-
-Then copy the **same preset's** `caption-skin.html` (it sits next to the `FRAME.md` you just copied) to the project root **verbatim** — no edits, `captions.mjs` injects brand tokens from `frame.md` at build time, so the caption look tracks the same overlay as the frames:
+You make the one judgment call — **which preset**. Read `../hyperframes-creative/references/design-spec.md` and pick the preset whose look best fits the brand and brief. Then run:
 
 ```bash
-cp <SKILL_DIR>/../hyperframes-creative/frame-presets/<preset>/caption-skin.html ./caption-skin.html
+node <SKILL_DIR>/scripts/build-frame.mjs --preset <name> --hyperframes .
 ```
 
-This is the preset's own lower-third karaoke caption look; Step 5's `captions.mjs` picks it up automatically. If the chosen preset ships no `caption-skin.html`, skip this copy — captions fall back to the built-in default pill.
+The script does the rest deterministically: copies the preset's `FRAME.md` → `frame.md` and **remixes** it onto the brand tokens in `capture/extracted/tokens.json` (brand colors mapped onto the preset's color keys by role — ink, canvas, accents — keeping keys/structure/components; the preset's display + body fonts swapped for the brand's), copies the preset's `caption-skin.html` verbatim, and self-validates (exits 1 on a broken mapping). Proceed to the next step as soon as it exits 0 — no hand-editing of the spec.
 
-If no site was captured or the brief lacks brand style, use the user's `design.md` if present. Otherwise ask once for a logo, brand colors, font direction, or a visual reference.
+`tokens.json` with no brand colors/fonts (e.g. no capture) → the script keeps the preset's own palette, a complete shippable design. If the brief names brand colors/fonts the capture missed, add them to `capture/extracted/tokens.json` before running (or use the user's `design.md` to populate it); only adjust `frame.md` by hand afterward if a mapping truly needs it.
 
-**Gate:** `frame.md` exists, comes from a named shipped preset, and has brand colors and typography applied. When the preset ships one, `caption-skin.html` is copied to the project root verbatim.
+**Gate:** `build-frame.mjs` exited 0 — `frame.md` exists from a named preset, and (when the preset ships one) `caption-skin.html` is at the project root.
 
 ---
 
@@ -181,7 +179,7 @@ Do not rerun `lint`, `validate`, `inspect`, or `snapshot` after rendering unless
 
 **Formats:** landscape `1920x1080` by default; portrait `1080x1920`; square `1080x1080`. Set the format once in the storyboard frontmatter.
 
-**Background scripts:** the workflow ships only these scripts under `scripts/`: `audio` for TTS, transcription, BGM, SFX, and duration syncing; `captions`; `transitions` for inject and verify; `stage-assets` for copying frame-named assets into `public/`; and `assemble-index`. Everything else is handled by the `hyperframes` CLI.
+**Background scripts:** the workflow ships only these scripts under `scripts/`: `build-frame` for adopting + brand-remixing a frame preset into `frame.md` (+ caption skin); `audio` for TTS, transcription, BGM, SFX, and duration syncing; `captions`; `transitions` for inject and verify; `stage-assets` for copying frame-named assets into `public/`; and `assemble-index`. Everything else is handled by the `hyperframes` CLI.
 
 | Read                                                                                                         | When                                                     |
 | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
