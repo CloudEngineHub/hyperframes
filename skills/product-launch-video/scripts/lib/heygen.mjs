@@ -67,8 +67,12 @@ export function heygenAuthHeaders() {
   const cred = heygenCredential();
   if (cred?.headers) return cred.headers;
   if (cred?.expired)
-    throw new Error("HeyGen OAuth token expired — run `hyperframes auth refresh` (or `hyperframes auth login`)");
-  throw new Error("no HeyGen credentials — set $HEYGEN_API_KEY, or run `hyperframes auth login` (writes ~/.heygen/credentials)");
+    throw new Error(
+      "HeyGen OAuth token expired — run `hyperframes auth refresh` (or `hyperframes auth login`)",
+    );
+  throw new Error(
+    "no HeyGen credentials — set $HEYGEN_API_KEY, or run `hyperframes auth login` (writes ~/.heygen/credentials)",
+  );
 }
 
 // Authed JSON request against the v3 API; throws on a non-OK status.
@@ -81,7 +85,9 @@ export async function heygenJSON(path, { method = "GET", headers = {}, body } = 
   const res = await fetch(`${HEYGEN_BASE}${path}`, opts);
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    throw new Error(`HeyGen ${method} ${path} → HTTP ${res.status}${detail ? `\n${detail.slice(0, 300)}` : ""}`);
+    throw new Error(
+      `HeyGen ${method} ${path} → HTTP ${res.status}${detail ? `\n${detail.slice(0, 300)}` : ""}`,
+    );
   }
   return res.json();
 }
@@ -97,17 +103,22 @@ export async function downloadTo(url, destPath) {
 }
 
 // Retrieval search over HeyGen's audio catalog (NOT generation). type =
-// "music" | "sound_effects". Returns the ranked results array; each item has a
-// presigned `audio_url` (+ `duration`, `description`, `score`). Envelope is
-// handled defensively — the live shape is confirmed at first run.
+// "music" | "sound_effects". Returns the ranked results array (best first); each
+// item has a presigned `audio_url` (+ `duration`, `description`, `name`, `score`).
+// `query` is required (≥1 char, empty → HTTP 400) and `limit` is capped at 50.
+// `minScore`: omit to use the server default (0.7). That default is TOO HIGH for
+// sound_effects — good SFX hits score ~0.5–0.67, so callers wanting SFX should
+// pass a lower floor (~0.4); music scores high and is fine at the default.
 export async function searchSounds(query, type, headers, { limit = 5, minScore } = {}) {
   const params = new URLSearchParams({ query, type, limit: String(limit) });
   if (minScore != null) params.set("min_score", String(minScore));
   const payload = await heygenJSON(`/audio/sounds?${params.toString()}`, { headers });
-  // The API returns `data` as an object keyed by numeric index ("0","1",…),
-  // ranked by score (key "0" = best); normalize to an array (empty → {} → []).
+  // `data` comes back as a ranked array (best first). Older responses keyed it by
+  // numeric index ("0","1",…); normalize both shapes to an array (empty → []).
   const data = payload?.data ?? payload;
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object") return Object.values(data);
-  throw new Error(`unexpected /audio/sounds shape — top keys: ${Object.keys(payload ?? {}).join(", ")}`);
+  throw new Error(
+    `unexpected /audio/sounds shape — top keys: ${Object.keys(payload ?? {}).join(", ")}`,
+  );
 }

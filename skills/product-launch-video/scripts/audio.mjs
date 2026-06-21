@@ -84,7 +84,8 @@ function transcodeToWav(mp3Bytes, destWav, die) {
     { stdio: "inherit" },
   );
   rmSync(td, { recursive: true, force: true });
-  if (ff.status !== 0 || !existsSync(destWav)) die("ffmpeg transcode failed (install ffmpeg on PATH)");
+  if (ff.status !== 0 || !existsSync(destWav))
+    die("ffmpeg transcode failed (install ffmpeg on PATH)");
 }
 
 async function fetchBytes(url, die) {
@@ -145,7 +146,9 @@ async function runGenerate(argv) {
         transcodeToWav(await fetchBytes(inner.audio_url, die), join(hyperframesDir, rel), die);
         const words = Array.isArray(inner.word_timestamps)
           ? inner.word_timestamps
-              .filter((w) => w && typeof w.word === "string" && isFinite(w.start) && isFinite(w.end))
+              .filter(
+                (w) => w && typeof w.word === "string" && isFinite(w.start) && isFinite(w.end),
+              )
               .filter((w) => !/^<.*>$/.test(w.word.trim()))
               .map((w, i) => ({ id: `w${i}`, text: w.word, start: w.start, end: w.end }))
           : [];
@@ -179,7 +182,9 @@ async function runGenerate(argv) {
         query,
         duration_s: typeof top.duration === "number" ? r3(top.duration) : null,
       };
-      console.error(`  bgm: ${rel} (query "${query}"${top.score != null ? `, score ${top.score}` : ""})`);
+      console.error(
+        `  bgm: ${rel} (query "${query}"${top.score != null ? `, score ${top.score}` : ""})`,
+      );
     } else {
       console.error(`  ! no BGM match for "${query}" — skipping`);
     }
@@ -272,7 +277,15 @@ async function runFetchSfx(argv) {
       if (seen.has(key)) continue;
       seen.add(key);
       try {
-        const results = await searchSounds(name, "sound_effects", headers, { limit: 3 });
+        // SFX matches score low — good hits land ~0.52–0.67, below the API's
+        // default min_score of 0.7, which silently drops most named cues (only
+        // whoosh/swoosh-family hits clear 0.7). Floor it to 0.4 so click/pop/
+        // ding/sparkle/notification/impact/etc. resolve. (BGM keeps the default;
+        // music scores high.)
+        const results = await searchSounds(name, "sound_effects", headers, {
+          limit: 3,
+          minScore: 0.4,
+        });
         if (!results.length) {
           console.error(`  ! no SFX match for "${name}" (frame ${f.number}) — skipped`);
           continue;
