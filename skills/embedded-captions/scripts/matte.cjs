@@ -196,34 +196,29 @@ async function main() {
     matteSrc = cfr;
   }
   const t0 = Date.now();
-  // Subject matte engine. DEFAULT = cloud (HeyGen Bria via the heygen CLI) WHENEVER AVAILABLE:
-  // the `background-removal` command is installed AND a HeyGen credential is present. Otherwise
-  // local hyperframes remove-background. EC_MATTE=local forces local; EC_MATTE=cloud forces a
-  // cloud attempt and surfaces why if it can't. Any cloud failure falls back to local.
+  // Subject matte engine. DEFAULT = local hyperframes remove-background (u2net) — byte-stable,
+  // and the right call per the 5-model A/B (Bria isn't a universal win: it keeps mic booms that
+  // u2net drops). EC_MATTE=cloud OPTS IN to the HeyGen Background Removal API (real Bria GPU,
+  // /v3/background-removals via matte-cloud.cjs — self-contained REST, no extra binary). Any cloud
+  // failure (incl. missing credential) falls back to local, so the opt-in never breaks a render.
   let cloudOk = false;
   const matteMode = (process.env.EC_MATTE || "").toLowerCase();
-  if (matteMode !== "local") {
+  if (matteMode === "cloud") {
     const cloud = require("./matte-cloud.cjs");
     const avail = cloud.available();
     if (avail.ok) {
       try {
-        cloud.toFramesFg({ matteSrc, fps, framesFg });
+        await cloud.toFramesFg({ matteSrc, fps, framesFg });
         cloudOk = countPngs(framesFg) > 0;
         if (cloudOk) console.log("[matte] cloud background-removal (HeyGen Bria) → frames_fg");
       } catch (e) {
         console.error(`[matte] cloud matte failed (${e.message}) → falling back to local`);
       }
-    } else if (matteMode === "cloud") {
+    } else {
       console.error(
         `[matte] cloud matte requested but unavailable — ${avail.reason}\n[matte] → falling back to local hyperframes remove-background`,
       );
-    } else if (avail.code === "no-cred") {
-      // auto/default: cloud matte is installed but unauthenticated — nudge once, use local.
-      console.error(
-        `[matte] a higher-quality cloud matte (HeyGen Bria) is available — ${avail.reason}\n[matte] using local this run; add the key above (or set EC_MATTE=local to silence).`,
-      );
     }
-    // else (auto + no CLI / no command): silently use local.
   }
   if (!cloudOk) {
     const mov = path.join(project, "_matte_tmp.mov");
