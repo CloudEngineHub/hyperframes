@@ -1,5 +1,4 @@
-// ponytail: stub providers — real implementations in audio-provider.mjs, image-provider.mjs, brand-provider.mjs
-// each provider: { search(intent, opts): Promise<{url, localPath?, metadata}|null>, generate?(intent, opts): Promise<{url, localPath?, metadata}|null> }
+import { sfxProvider } from "./sfx-provider.mjs";
 
 function stubProvider(type) {
   return {
@@ -15,7 +14,7 @@ function stubProvider(type) {
 
 const registry = {
   bgm: stubProvider("bgm"),
-  sfx: stubProvider("sfx"),
+  sfx: { ...sfxProvider, type: "sfx" },
   voice: stubProvider("voice"),
   image: stubProvider("image"),
   icon: stubProvider("icon"),

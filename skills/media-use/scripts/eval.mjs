@@ -62,6 +62,24 @@ function evalBlock(blockPath) {
     const baseline = countAssetFiles(tmp);
     const htmlFiles = readdirSync(tmp).filter((f) => f.endsWith(".html"));
 
+    // parse compositions for asset references
+    const assetRefs = [];
+    for (const hf of htmlFiles) {
+      const html = readFileSync(join(tmp, hf), "utf8");
+      const srcMatches = html.matchAll(/src=["']([^"']+?)["']/g);
+      for (const m of srcMatches) {
+        const ref = m[1];
+        if (ref.startsWith("data:") || ref.startsWith("http")) continue;
+        assetRefs.push({ composition: hf, ref });
+      }
+      const urlMatches = html.matchAll(/url\(["']?([^"')]+?)["']?\)/g);
+      for (const m of urlMatches) {
+        const ref = m[1];
+        if (ref.startsWith("data:") || ref.startsWith("http") || ref.startsWith("#")) continue;
+        assetRefs.push({ composition: hf, ref });
+      }
+    }
+
     // with media-use: run --adopt
     const adoptResult = run(`node "${RESOLVE_SCRIPT}" --adopt --project "${tmp}" --json`);
     let adopted = { ok: false, adopted: 0, assets: [] };
@@ -97,9 +115,18 @@ function evalBlock(blockPath) {
       try { resolveMiss = JSON.parse(missResult.output); } catch { /* */ }
     }
 
+    // coverage: which composition refs are covered by the manifest
+    const manifestPaths = new Set(manifest.map((m) => m.path));
+    const coverage = assetRefs.map((r) => ({
+      ...r,
+      covered: manifestPaths.has(r.ref),
+    }));
+
     return {
       name,
       baseline: { fileCount: baseline.count, files: baseline.files, htmlCount: htmlFiles.length },
+      compositions: htmlFiles,
+      assetRefs: coverage,
       adopted: { count: adopted.adopted, assets: adopted.assets || [] },
       index: indexContent,
       manifest,
@@ -112,8 +139,8 @@ function evalBlock(blockPath) {
 }
 
 function generateReport(results) {
-  const passed = results.filter((r) => r && r.adopted.count > 0);
-  const valid = valid;
+  const all = results.filter(Boolean);
+  const passed = all.filter((r) => r.adopted.count > 0);
 
   const rows = results
     .filter(Boolean)
@@ -145,12 +172,22 @@ function generateReport(results) {
         })
         .join("\n");
 
+      const coveredCount = r.assetRefs.filter((c) => c.covered).length;
+      const totalRefs = r.assetRefs.length;
+      const coveragePct = totalRefs > 0 ? Math.round((coveredCount / totalRefs) * 100) : 100;
+
+      const refRows = r.assetRefs
+        .map((c) => `<tr><td class="path">${c.composition}</td><td class="path">${c.ref}</td><td>${c.covered ? "<span class='pass'>covered</span>" : "<span class='warn'>not in manifest</span>"}</td></tr>`)
+        .join("\n");
+
       return `<div class="block-detail">
         <h3>${r.name}</h3>
+        <p style="font-size:13px;color:var(--muted)">${r.compositions.length} composition${r.compositions.length === 1 ? "" : "s"}: ${r.compositions.join(", ")}</p>
+
         <div class="comparison">
           <div class="col">
             <h4>Baseline (no media-use)</h4>
-            <p>Agent sees: ${r.baseline.fileCount} raw files in assets/<br>No metadata, no search, no type info.</p>
+            <p>Agent sees: ${r.baseline.fileCount} raw files in assets/<br>No metadata, no type info, no relationship to compositions.</p>
             <pre class="file-list">${r.baseline.files.join("\n") || "(no assets)"}</pre>
           </div>
           <div class="col">
@@ -159,6 +196,13 @@ function generateReport(results) {
             <pre class="index">${escapeHtml(r.index)}</pre>
           </div>
         </div>
+
+        ${totalRefs > 0 ? `<h4>Composition → asset coverage <span class="${coveragePct === 100 ? "pass" : "warn"}">${coveragePct}%</span> (${coveredCount}/${totalRefs} refs)</h4>
+        <table class="manifest">
+          <thead><tr><th>composition</th><th>asset reference</th><th>in manifest?</th></tr></thead>
+          <tbody>${refRows}</tbody>
+        </table>` : ""}
+
         <h4>Manifest records</h4>
         <table class="manifest">
           <thead><tr><th>id</th><th>type</th><th>dur</th><th>dims</th><th>path</th><th>description</th></tr></thead>
@@ -202,13 +246,14 @@ pre.index { white-space: pre; }
 </style>
 <div class="wrap">
 <h1>media-use eval report</h1>
-<p class="meta">${new Date().toISOString().slice(0, 10)} · ${valid.length} blocks evaluated · baseline vs. media-use --adopt</p>
+<p class="meta">${new Date().toISOString().slice(0, 10)} · ${all.length} blocks evaluated · baseline vs. media-use --adopt</p>
 
 <div class="summary">
-  <div class="stat"><div class="num">${valid.length}</div><div class="label">blocks tested</div></div>
+  <div class="stat"><div class="num">${all.length}</div><div class="label">blocks tested</div></div>
   <div class="stat"><div class="num">${passed.length}</div><div class="label">with assets</div></div>
-  <div class="stat"><div class="num">${valid.reduce((s, r) => s + r.adopted.count, 0)}</div><div class="label">assets adopted</div></div>
-  <div class="stat"><div class="num">${valid.filter((r) => r.manifest.some((m) => m.duration || m.width)).length}</div><div class="label">with ffprobe metadata</div></div>
+  <div class="stat"><div class="num">${all.reduce((s, r) => s + r.adopted.count, 0)}</div><div class="label">assets adopted</div></div>
+  <div class="stat"><div class="num">${all.filter((r) => r.manifest.some((m) => m.duration || m.width)).length}</div><div class="label">with ffprobe metadata</div></div>
+  <div class="stat"><div class="num">${(() => { const refs = all.flatMap((r) => r.assetRefs); const covered = refs.filter((c) => c.covered).length; return refs.length > 0 ? Math.round((covered / refs.length) * 100) + "%" : "—"; })()}</div><div class="label">composition coverage</div></div>
 </div>
 
 <h2>Results matrix</h2>
@@ -222,7 +267,7 @@ ${details}
 
 <div class="verdict ${passed.length >= 3 ? "ship" : "wait"}">
   ${passed.length >= 3
-    ? `<strong>Ship it.</strong> ${passed.length}/${valid.length} blocks adopted successfully with metadata. Resolve cache hits work. Miss handling is clean.`
+    ? `<strong>Ship it.</strong> ${passed.length}/${all.length} blocks adopted successfully with metadata. Resolve cache hits work. Miss handling is clean.`
     : `<strong>Needs work.</strong> Only ${passed.length} blocks adopted. Check the failures above.`}
 </div>
 </div>`;
