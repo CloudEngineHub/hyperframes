@@ -44,7 +44,9 @@ const F = 1 / 24;
 
 // ---------- load inputs ----------
 const theme = JSON.parse(fs.readFileSync(path.join(PROJECT, "theme.json"), "utf8"));
-const dna = JSON.parse(fs.readFileSync(path.join(SKILL, "identities", "themes", theme.dna + ".json"), "utf8"));
+const dna = JSON.parse(
+  fs.readFileSync(path.join(SKILL, "identities", "themes", theme.dna + ".json"), "utf8"),
+);
 const transcript = JSON.parse(fs.readFileSync(path.join(PROJECT, "transcript.json"), "utf8"));
 const W = theme.width || 1280,
   H = theme.height || 720;
@@ -304,9 +306,17 @@ const LASTWORD = LINES[LINES.length - 1].words[LINES[LINES.length - 1].words.len
 // lit-sign design). Unbounded default holds turned short clips into wallpaper.
 const heroIn = hero ? hero.start : -999;
 const MAXHOLD = dna.hero.maxHold ?? 3.2;
-const heroOut = hero
+const heroWouldOut = hero
   ? Math.min(DUR - 0.06, theme.hero.out ?? (MAXHOLD > 0 ? heroIn + MAXHOLD : DUR - 0.1))
   : -999;
+// Final climax: if the hero lands within HOLD_EPS of the clip end, hold it to the LAST frame.
+// Every setpiece schedules its exit at `heroOut − X`; pushing heroOut past DUR parks those
+// exits beyond the render window, so the payoff word never shears/fades out before the cut
+// (the bug where a late-spoken climax like "sharp" vanished ~0.2s early). A deliberately
+// mid-clip hero (explicit theme.hero.out, or a short maxHold) stays put.
+const HERO_HOLD_EPS = 0.34;
+const heroHoldsToEnd = hero && heroWouldOut >= DUR - HERO_HOLD_EPS;
+const heroOut = heroHoldsToEnd ? DUR + 0.8 : heroWouldOut;
 
 // ---------- hero geometry: scene-aware position + width-fit size (computed ONCE,
 // shared by the setpiece and the front fx so flash/rings/sparks stay centered) ----
@@ -1309,7 +1319,13 @@ function paradigmTakeover() {
                   duration: Math.max(0.08, c.out - c.in - 0.02),
                   ease: c.creep ? "power1.in" : "power2.out" }, c.in + 0.01);
     }
-    if (c.last && ${J(!!dna.hero.params.dissolveLast)}) {
+    if (c.last && c.out >= ${(DUR - 0.34).toFixed(3)}) {
+      // the FINAL card reaches the clip end — HOLD it to the last frame (no dissolve, no hard-cut).
+      // Takeover hard-cuts one card at a time, so holding the apex while a trailing card renders
+      // would COLLIDE; instead the last card always holds. A combined "SHARP AGAIN." apex card
+      // thus holds as the climax; a split trailing word lands cleanly — neither fades to blank
+      // before the cut (the "vanishes early" bug), neither overlaps.
+    } else if (c.last && ${J(!!dna.hero.params.dissolveLast)}) {
       tl.to(el, { filter: "blur(9px)", opacity: 0, duration: 0.32, ease: "power2.in" }, c.out - 0.23);
       tl.set(el, { display: "none" }, c.out + 0.1);
     } else {

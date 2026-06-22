@@ -163,6 +163,12 @@
 
       var EXIT = MOTION.exit || { dur: 0.5, ease: "power2.in", stagger: 0 };
       var LINE_REVEAL = MOTION.lineReveal || null;
+      /* A beat whose `out` lands within HOLD_EPS of the clip end IS the final beat — it holds
+         to the last frame (no exit fade, no early hard-kill). Exiting a hair before clip-end
+         reads as a premature disappear; worst on a climax/hero word that would otherwise begin
+         its exit fade while still entering. */
+      var HOLD_EPS = 0.34;
+      function holdsToEnd(out) { return out >= DUR - HOLD_EPS; }
 
       /* exit cascade: lines of the same plane sharing one page-flip `out` can leave
          top-to-bottom (editorial). Slot layout = absolute positions, so staggered
@@ -205,8 +211,11 @@
         if (EXIT.y) to.y = EXIT.y;
         if (EXIT.x) to.x = EXIT.x;
         if (EXIT.scale && EXIT.scale !== 1) to.scale = EXIT.scale;
-        if (g.out < DUR) tl.to(sel, to, exitAt);
-        tl.set(sel, { opacity: 0, display: "none" }, g.out);
+        if (!holdsToEnd(g.out)) {
+          tl.to(sel, to, exitAt);
+          tl.set(sel, { opacity: 0, display: "none" }, g.out);
+        }
+        // else: the final beat holds to the last frame.
       });
 
       /* ── HEROES: three-act orchestration, one per promoted beat ──────────── */
@@ -215,6 +224,7 @@
         var gsel = "#" + HERO.id + "-glow";
         var hg = GROUPS.filter(function (g) { return g.id === HERO.id; })[0];
         var amp = HERO.amp || 1;
+        var heroHolds = holdsToEnd(HERO.out); // final climax → no exit, hold to the last frame
 
         /* act 1 — SETUP: co-visible groups yield (dim) just before the hero lands.
            Minor heroes are emphasis-plus: no dim, no ripple, no breathe — the apex
@@ -302,8 +312,10 @@
           tl.fromTo(gsel, { opacity: 0 },
             { opacity: glowPeak, duration: HERO.entrance === "slam" ? 0.3 : 0.5, ease: "power2.out", overwrite: "auto" },
             glowAt);
-          tl.to(gsel, { opacity: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.5);
-          tl.set(gsel, { opacity: 0, display: "none" }, HERO.out);
+          if (!heroHolds) {
+            tl.to(gsel, { opacity: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.5);
+            tl.set(gsel, { opacity: 0, display: "none" }, HERO.out);
+          }
         }
 
         /* fx: ECHO layers (RGB-split fringe / speed trails) — colored duplicates that
@@ -316,8 +328,10 @@
               { x: (ec.dx || 0) * 4, y: (ec.dy || 0) * 4, opacity: 0 },
               { x: ec.dx || 0, y: ec.dy || 0, opacity: ec.opacity != null ? ec.opacity : 0.5,
                 duration: 0.22, ease: "power4.out", overwrite: "auto" }, HERO.in);
-            tl.to(esel, { opacity: 0, duration: 0.4, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.45);
-            tl.set(esel, { opacity: 0, display: "none" }, HERO.out);
+            if (!heroHolds) {
+              tl.to(esel, { opacity: 0, duration: 0.4, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.45);
+              tl.set(esel, { opacity: 0, display: "none" }, HERO.out);
+            }
           });
         }
 
@@ -341,11 +355,15 @@
             HERO.in + 0.7);
         }
 
-        /* exit */
-        if (HERO.out < DUR) {
-          tl.to(hsel, { opacity: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.5);
+        /* exit — the final climax holds to the last frame (no fade, no early kill): a fade
+           starting at out−0.5 would overlap the entrance and the payoff word would vanish as
+           it arrives. */
+        if (!heroHolds) {
+          if (HERO.out < DUR) {
+            tl.to(hsel, { opacity: 0, duration: 0.5, ease: "power2.in", overwrite: "auto" }, HERO.out - 0.5);
+          }
+          tl.set(hsel, { opacity: 0, display: "none" }, HERO.out);
         }
-        tl.set(hsel, { opacity: 0, display: "none" }, HERO.out);
       });
 
       tl.seek(0);
