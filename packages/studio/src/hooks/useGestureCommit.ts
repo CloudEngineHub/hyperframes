@@ -6,6 +6,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { editLog } from "../utils/editDebugLog";
 import { useGestureRecording } from "./useGestureRecording";
 import { simplifyGestureSamples } from "../utils/rdpSimplify";
+import { smoothGestureKeyframes } from "../utils/gestureSmoother";
 import { usePlayerStore } from "../player";
 import type { DomEditSelection } from "../components/editor/domEditing";
 import type { GsapAnimation } from "@hyperframes/core/gsap-parser";
@@ -150,10 +151,13 @@ export function useGestureCommit({
       }
       if (liveSession.commitMutation) {
         const recStart = recordingStartTimeRef.current;
-        const keyframes = sortedPcts.map((pct) => ({
+        const rawKeyframes = sortedPcts.map((pct) => ({
           percentage: pct,
           properties: simplified.get(pct) as Record<string, number | string>,
         }));
+        // Smooth jittery pointer input — Gaussian-weighted moving average
+        // rounds off sharp corners while preserving overall path shape.
+        const keyframes = smoothGestureKeyframes(rawKeyframes, 3);
         const hasPositionProps = keyframes.some((kf) =>
           Object.keys(kf.properties).some((k) => classifyPropertyGroup(k) === "position"),
         );
@@ -236,6 +240,7 @@ export function useGestureCommit({
                     position: roundTo3(recStart),
                     duration: roundTo3(duration),
                     keyframes: groupKfs,
+                    easeEach: "power1.inOut",
                   },
                   { label: "Gesture recording (new range)", softReload: true },
                 );
@@ -252,6 +257,7 @@ export function useGestureCommit({
                 position: roundTo3(recStart),
                 duration: roundTo3(duration),
                 keyframes: groupKfs,
+                easeEach: "power1.inOut",
               },
               { label: "Gesture recording", softReload: true },
             );

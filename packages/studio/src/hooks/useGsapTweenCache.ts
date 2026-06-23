@@ -106,7 +106,7 @@ export async function fetchParsedAnimations(
 ): Promise<ParsedGsap | null> {
   try {
     const res = await fetch(
-      `/api/projects/${encodeURIComponent(projectId)}/gsap-animations/${encodeURIComponent(sourceFile)}`,
+      `/api/projects/${encodeURIComponent(projectId)}/gsap-animations/${encodeURIComponent(sourceFile)}?_t=${Date.now()}`,
     );
     if (!res.ok) return null;
     const parsed = (await res.json()) as ParsedGsap;
@@ -169,7 +169,7 @@ export function useGsapAnimationsForElement(
 
       // Retry once if initial fetch returned 0 animations — handles
       // cold-load race where the sourceFile isn't resolved yet.
-      if (parsed.animations.length === 0 && target) {
+      if (parsed.animations.length === 0 && targetKey) {
         retryTimerRef.current = setTimeout(() => {
           if (cancelled) return;
           fetchParsedAnimations(projectId, sourceFile).then((retryParsed) => {
@@ -189,7 +189,7 @@ export function useGsapAnimationsForElement(
         retryTimerRef.current = null;
       }
     };
-  }, [projectId, sourceFile, version, target]);
+  }, [projectId, sourceFile, version, target?.id, target?.selector]);
 
   const targetId = target?.id ?? null;
   const targetSelector = target?.selector ?? null;

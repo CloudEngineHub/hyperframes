@@ -1243,13 +1243,17 @@ function applyEaseUpdate(varsArg: AstNode, ease: string): void {
   }
 }
 
-function applyUpdatesToCall(call: TweenCallInfo, updates: Partial<GsapAnimation>): void {
+function applyUpdatesToCall(
+  call: TweenCallInfo,
+  updates: Partial<GsapAnimation> & { easeEach?: string },
+): void {
   if (updates.properties) reconcileEditableProperties(call.varsArg, updates.properties);
   if (updates.fromProperties && call.method === "fromTo" && call.fromArg) {
     reconcileEditableProperties(call.fromArg, updates.fromProperties);
   }
   if (updates.duration !== undefined) setVarsKey(call.varsArg, "duration", updates.duration);
-  if (updates.ease !== undefined) applyEaseUpdate(call.varsArg, updates.ease);
+  if (updates.easeEach !== undefined) applyEaseUpdate(call.varsArg, updates.easeEach);
+  else if (updates.ease !== undefined) applyEaseUpdate(call.varsArg, updates.ease);
   if (updates.position !== undefined) {
     const posIdx = call.method === "fromTo" ? 3 : 2;
     call.node.arguments[posIdx] = parseExpr(valueToCode(updates.position));
@@ -1308,7 +1312,7 @@ function buildTweenStatementCode(timelineVar: string, anim: Omit<GsapAnimation, 
 export function updateAnimationInScript(
   script: string,
   animationId: string,
-  updates: Partial<GsapAnimation>,
+  updates: Partial<GsapAnimation> & { easeEach?: string },
 ): string {
   let parsed: ParsedGsapAst;
   try {
@@ -1437,6 +1441,7 @@ export function addAnimationWithKeyframesToScript(
     auto?: boolean;
   }>,
   ease?: string,
+  easeEach?: string,
 ): { script: string; id: string } {
   let parsed: ParsedGsapAst;
   try {
@@ -1450,7 +1455,7 @@ export function addAnimationWithKeyframesToScript(
   }
 
   const selector = JSON.stringify(targetSelector);
-  const kfCode = buildKeyframeObjectCode(keyframes);
+  const kfCode = buildKeyframeObjectCode(keyframes, easeEach ? { easeEach } : undefined);
   const varEntries = [`keyframes: ${kfCode}`, `duration: ${valueToCode(duration)}`];
   if (ease) varEntries.push(`ease: ${JSON.stringify(ease)}`);
   const posCode = valueToCode(position);

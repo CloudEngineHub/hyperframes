@@ -328,9 +328,13 @@ export const AnimationCard = memo(function AnimationCard({
   );
 
   const [copied, setCopied] = useState(false);
+  const [optimisticEase, setOptimisticEase] = useState<string | null>(null);
 
   const methodLabel = METHOD_LABELS[animation.method] ?? animation.method;
-  const easeName = animation.ease ?? animation.keyframes?.easeEach ?? "none";
+  const propEase =
+    (animation.keyframes ? animation.keyframes.easeEach : undefined) ?? animation.ease ?? "none";
+  const easeName = optimisticEase ?? propEase;
+  if (optimisticEase && propEase === optimisticEase) setOptimisticEase(null);
   const easeLabel = easeName.startsWith("custom(")
     ? "Custom curve"
     : (EASE_LABELS[easeName] ?? easeName);
@@ -440,23 +444,28 @@ export const AnimationCard = memo(function AnimationCard({
                   value={easeName.startsWith("custom(") ? "custom" : easeName}
                   options={[...SUPPORTED_EASES, "custom"]}
                   onChange={(next) => {
+                    const easeKey = animation.keyframes ? "easeEach" : "ease";
                     if (next === "custom") {
                       const points = controlPointsForGsapEase(
                         easeName !== "none" ? easeName : "power2.out",
                       );
                       const path = `M0,0 C${points.x1},${points.y1} ${points.x2},${points.y2} 1,1`;
-                      onUpdateMeta(animation.id, { ease: `custom(${path})` });
+                      setOptimisticEase(`custom(${path})`);
+                      onUpdateMeta(animation.id, { [easeKey]: `custom(${path})` });
                     } else {
-                      onUpdateMeta(animation.id, { ease: next });
+                      setOptimisticEase(next);
+                      onUpdateMeta(animation.id, { [easeKey]: next });
                     }
                   }}
                 />
                 <EaseCurveSection
                   ease={easeName}
                   duration={animation.duration}
-                  onCustomEaseCommit={(customEase) =>
-                    onUpdateMeta(animation.id, { ease: customEase })
-                  }
+                  onCustomEaseCommit={(customEase) => {
+                    const easeKey = animation.keyframes ? "easeEach" : "ease";
+                    setOptimisticEase(customEase);
+                    onUpdateMeta(animation.id, { [easeKey]: customEase });
+                  }}
                 />
               </>
             )}
