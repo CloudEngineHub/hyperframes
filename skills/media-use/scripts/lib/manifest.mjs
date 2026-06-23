@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const MANIFEST_FILE = "manifest.jsonl";
@@ -11,6 +11,7 @@ const TYPE_DIRS = {
   image: "images",
   icon: "images",
   brand: "images",
+  video: "video",
 };
 
 export function mediaDir(projectDir) {
@@ -60,31 +61,21 @@ export function appendRecord(projectDir, record) {
 
   const p = manifestPath(projectDir);
   const line = JSON.stringify(record) + "\n";
-  if (existsSync(p)) {
-    const existing = readFileSync(p, "utf8");
-    const sep = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
-    writeFileSync(p, existing + sep + line);
-  } else {
-    writeFileSync(p, line);
-  }
+  appendFileSync(p, line);
 }
 
 export function findByPrompt(projectDir, prompt, type) {
   const records = readManifest(projectDir);
   return (
-    records.find(
-      (r) =>
-        r.provenance?.prompt === prompt && (type == null || r.type === type),
-    ) || null
+    records.find((r) => r.provenance?.prompt === prompt && (type == null || r.type === type)) ||
+    null
   );
 }
 
 export function findByEntity(projectDir, entity) {
   const lower = entity.toLowerCase();
   const records = readManifest(projectDir);
-  return (
-    records.find((r) => r.entity && r.entity.toLowerCase() === lower) || null
-  );
+  return records.find((r) => r.entity && r.entity.toLowerCase() === lower) || null;
 }
 
 export function nextId(projectDir, type) {
