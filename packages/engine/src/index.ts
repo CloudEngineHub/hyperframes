@@ -96,6 +96,7 @@ export {
   syncVideoFrameVisibility,
   cdpSessionCache,
   initTransparentBackground,
+  initOpaqueBackgroundOverride,
   captureAlphaPng,
   applyDomLayerMask,
   removeDomLayerMask,

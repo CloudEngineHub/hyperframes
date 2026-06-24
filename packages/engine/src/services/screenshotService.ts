@@ -146,6 +146,30 @@ export async function pageScreenshotCapture(page: Page, options: CaptureOptions)
 }
 
 /**
+ * Set the page's default background color to transparent for opaque capture
+ * sessions. Unlike `initTransparentBackground` (which also injects CSS to
+ * force composition roots transparent — needed for alpha/HDR capture), this
+ * only overrides the browser's *canvas* background.
+ *
+ * The page's own CSS backgrounds (`body`, `#root`, etc.) paint on top and
+ * are unaffected. The transparent default only matters if the compositor
+ * surface is shorter than the viewport clip — e.g. system Chrome on macOS
+ * where `--window-size` includes window decorations (#1699). Without the
+ * override, the gap fills with the page's canvas background color (the
+ * propagated `body` background), producing a visible band at the bottom of
+ * every frame. With the override, the gap is transparent — composited to
+ * white for JPEG, true transparent for PNG — a safe neutral.
+ *
+ * Call once after navigation (Chrome resets the override on `page.goto`).
+ */
+export async function initOpaqueBackgroundOverride(page: Page): Promise<void> {
+  const client = await getCdpSession(page);
+  await client.send("Emulation.setDefaultBackgroundColorOverride", {
+    color: { r: 0, g: 0, b: 0, a: 0 },
+  });
+}
+
+/**
  * Capture a screenshot with transparent background (PNG + alpha channel).
  *
  * Used in the two-pass HDR compositing pipeline — captures DOM content

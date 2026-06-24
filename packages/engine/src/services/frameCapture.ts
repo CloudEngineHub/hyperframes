@@ -28,6 +28,7 @@ import {
   getCdpSession,
   pageScreenshotCapture,
   initTransparentBackground,
+  initOpaqueBackgroundOverride,
 } from "./screenshotService.js";
 import { DEFAULT_CONFIG, type EngineConfig } from "../config.js";
 import type {
@@ -361,7 +362,12 @@ export async function createCaptureSession(
     browserTimeout: config?.browserTimeout,
   });
   const chromeArgs = buildChromeArgs(
-    { width: options.width, height: options.height, captureMode: preMode },
+    {
+      width: options.width,
+      height: options.height,
+      captureMode: preMode,
+      headlessShell: !!headlessShell,
+    },
     { ...config, browserGpuMode: resolvedGpuMode },
   );
 
@@ -1043,6 +1049,11 @@ export async function initializeSession(session: CaptureSession): Promise<void> 
     // `[data-composition-id]{background:transparent !important}` injection.
     if (session.options.format === "png") {
       await initTransparentBackground(session.page);
+    } else {
+      // For opaque captures, override the default canvas background to
+      // transparent as defense-in-depth against surface-height mismatches
+      // (#1699). The page's own CSS backgrounds are unaffected.
+      await initOpaqueBackgroundOverride(session.page);
     }
 
     await armStaticDedup(session, session.page, logInitPhase);

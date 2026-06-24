@@ -66,6 +66,28 @@ describe("buildChromeArgs browser GPU mode", () => {
   });
 });
 
+describe("buildChromeArgs — window size height buffer (#1699)", () => {
+  const base = { width: 1920, height: 1080 };
+
+  it("inflates --window-size height when using system Chrome (no headless-shell)", () => {
+    const args = buildChromeArgs({ ...base, headlessShell: false });
+    const windowSize = args.find((a) => a.startsWith("--window-size="));
+    expect(windowSize).toBe("--window-size=1920,1280");
+  });
+
+  it("uses exact --window-size height when using headless-shell", () => {
+    const args = buildChromeArgs({ ...base, headlessShell: true });
+    const windowSize = args.find((a) => a.startsWith("--window-size="));
+    expect(windowSize).toBe("--window-size=1920,1080");
+  });
+
+  it("defaults to inflated height when headlessShell is not specified", () => {
+    const args = buildChromeArgs(base);
+    const windowSize = args.find((a) => a.startsWith("--window-size="));
+    expect(windowSize).toBe("--window-size=1920,1280");
+  });
+});
+
 describe("resolveBrowserGpuMode", () => {
   beforeEach(() => {
     _resetAutoBrowserGpuModeCacheForTests();

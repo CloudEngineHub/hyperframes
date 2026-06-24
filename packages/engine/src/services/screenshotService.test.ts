@@ -5,6 +5,7 @@ import { type Page } from "puppeteer-core";
 import {
   pageScreenshotCapture,
   cdpSessionCache,
+  initOpaqueBackgroundOverride,
   injectVideoFramesBatch,
   syncVideoFrameVisibility,
 } from "./screenshotService.js";
@@ -118,6 +119,19 @@ describe("pageScreenshotCapture supersample plumbing", () => {
 
     const params = send.mock.calls[0]?.[1] as { clip?: { scale: number } };
     expect(params.clip?.scale).toBe(3);
+  });
+});
+
+describe("initOpaqueBackgroundOverride (#1699)", () => {
+  it("sets the default background color to transparent via CDP", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    const page = makeFakePageWithCdp(send);
+
+    await initOpaqueBackgroundOverride(page);
+
+    expect(send).toHaveBeenCalledWith("Emulation.setDefaultBackgroundColorOverride", {
+      color: { r: 0, g: 0, b: 0, a: 0 },
+    });
   });
 });
 

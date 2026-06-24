@@ -538,6 +538,8 @@ export interface BuildChromeArgsOptions {
   height: number;
   captureMode?: CaptureMode;
   platform?: NodeJS.Platform;
+  /** True when launching chrome-headless-shell (no window decorations). */
+  headlessShell?: boolean;
 }
 
 const CANVAS_DRAW_ELEMENT_FEATURE_FLAG = "--enable-features=CanvasDrawElement";
@@ -552,6 +554,14 @@ export function buildChromeArgs(
   const browserGpuMode = gpuDisabled
     ? "software"
     : (config?.browserGpuMode ?? DEFAULT_CONFIG.browserGpuMode);
+  // chrome-headless-shell has no window decorations; system Chrome's "new
+  // headless" mode on macOS/Windows creates a virtual window whose outer size
+  // includes title bar + tab strip (~85px on macOS). --window-size sets the
+  // OUTER size, so the compositor surface ends up shorter than the viewport
+  // set by page.setViewport(). Inflate the window height so the content area
+  // is always >= the requested viewport, preventing the page background from
+  // bleeding into the bottom of captured frames (#1699).
+  const windowHeightBuffer = options.headlessShell ? 0 : 200;
   // Chrome flags tuned for headless rendering performance. The set below is a
   // fairly standard "headless-for-capture" configuration — similar profiles
   // appear in Puppeteer's defaults, Playwright, Remotion, and Chrome's own
@@ -566,7 +576,7 @@ export function buildChromeArgs(
     ...getBrowserGpuArgs(browserGpuMode, platform),
     "--font-render-hinting=none",
     "--force-color-profile=srgb",
-    `--window-size=${options.width},${options.height}`,
+    `--window-size=${options.width},${options.height + windowHeightBuffer}`,
     // Prevent Chrome from throttling background tabs/timers — critical when the
     // page is offscreen during headless capture
     "--disable-background-timer-throttling",
