@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+<style>
+html, body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  background: #FAF9F5;
+}
+</style>
+</head>
+<body>
+  <template id="repro-template">
+    <style>
+      #root {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      .card {
+        width: 860px;
+        padding: 60px 80px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 24px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      }
+      h1 { font-size: 44px; margin: 0 0 16px; font-weight: 700; }
+      .subtitle { font-size: 22px; opacity: 0.7; margin: 0 0 40px; }
+      .indicator {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        margin-top: 32px;
+      }
+      .indicator div {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .pass { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+      .fail { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+      .bottom-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to right, #e11d48, #7c3aed);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+    </style>
+    <div data-composition-id="surface-repro" data-width="1920" data-height="1080" data-duration="3">
+      <div id="root">
+        <div class="card">
+          <h1>Surface Height Repro (#1699)</h1>
+          <p class="subtitle">The gradient and pink bar should extend to the very bottom edge.</p>
+          <div class="indicator">
+            <div class="pass">PASS: gradient fills full 1080px</div>
+            <div class="fail">FAIL: beige #FAF9F5 band at bottom</div>
+          </div>
+        </div>
+        <div class="bottom-bar">THIS BAR MUST BE VISIBLE AT THE BOTTOM EDGE</div>
+      </div>
+    </div>
+  </template>
+</body>
+</html>
