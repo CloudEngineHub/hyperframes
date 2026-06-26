@@ -193,6 +193,37 @@ export function useDomSelection({
       setDomEditSelection(nextSelection);
       setDomEditGroupSelections(nextGroup);
 
+      // Selecting something outside the drilled-into group exits the drill-in, so
+      // a later click on the group selects it as a unit again (non-sticky drill-in).
+      const activeGroup = activeGroupElementRef.current;
+      if (activeGroup && nextSelection && !activeGroup.contains(nextSelection.element)) {
+        activeGroupElementRef.current = null;
+        setActiveGroupElementState(null);
+      }
+
+      // eslint-disable-next-line no-console
+      console.log(
+        "[HF-DBG] applyDomSelection",
+        JSON.stringify({
+          additive: isAdditiveSelection,
+          preserveGroup: options?.preserveGroup ?? false,
+          incoming:
+            selection.element.id ||
+            selection.element.getAttribute("data-hf-group") ||
+            selection.element.tagName,
+          nextSelection: nextSelection
+            ? nextSelection.element.id ||
+              nextSelection.element.getAttribute("data-hf-group") ||
+              nextSelection.element.tagName
+            : null,
+          nextGroupCount: nextGroup.length,
+          nextGroup: nextGroup.map(
+            (s) => s.element.id || s.element.getAttribute("data-hf-group") || s.element.tagName,
+          ),
+          activeGroupElement: activeGroupElementRef.current?.getAttribute("data-hf-group") ?? null,
+        }),
+      );
+
       if (nextSelection) {
         if (options?.revealPanel !== false) {
           setRightCollapsed(false);
