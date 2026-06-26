@@ -15,27 +15,33 @@
   "types": "./src/index.ts",
   "exports": {
     ".": {
+      "node": "./dist/index.js",
       "import": "./src/index.ts",
       "types": "./src/index.ts"
     },
     "./package.json": "./package.json",
     "./screenshot-clip": {
+      "node": "./dist/helpers/screenshotClip.js",
       "import": "./src/helpers/screenshotClip.ts",
       "types": "./src/helpers/screenshotClip.ts"
     },
     "./manual-edits-render-script": {
+      "node": "./dist/helpers/manualEditsRenderScript.js",
       "import": "./src/helpers/manualEditsRenderScript.ts",
       "types": "./src/helpers/manualEditsRenderScript.ts"
     },
     "./studio-motion-render-script": {
+      "node": "./dist/helpers/studioMotionRenderScript.js",
       "import": "./src/helpers/studioMotionRenderScript.ts",
       "types": "./src/helpers/studioMotionRenderScript.ts"
     },
     "./draft-markers": {
+      "node": "./dist/helpers/draftMarkers.js",
       "import": "./src/helpers/draftMarkers.ts",
       "types": "./src/helpers/draftMarkers.ts"
     },
     "./finite-mutation": {
+      "node": "./dist/helpers/finiteMutation.js",
       "import": "./src/helpers/finiteMutation.ts",
       "types": "./src/helpers/finiteMutation.ts"
     }
