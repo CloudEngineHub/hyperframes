@@ -282,6 +282,7 @@
   "dependencies": {
     "@babel/parser": "^7.27.0",
     "@chenglou/pretext": "^0.0.5",
+    "@hyperframes/parsers": "workspace:*",
     "acorn": "^8.17.0",
     "acorn-walk": "^8.3.5",
     "bpm-detective": "^2.0.5",

@@ -22,7 +22,7 @@
     },
     "packages/aws-lambda": {
       "name": "@hyperframes/aws-lambda",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.700.0",
         "@aws-sdk/client-sfn": "^3.700.0",
@@ -54,7 +54,7 @@
     },
     "packages/cli": {
       "name": "@hyperframes/cli",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "bin": {
         "hyperframes": "./dist/cli.js",
       },
@@ -101,10 +101,11 @@
     },
     "packages/core": {
       "name": "@hyperframes/core",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@babel/parser": "^7.27.0",
         "@chenglou/pretext": "^0.0.5",
+        "@hyperframes/parsers": "workspace:*",
         "acorn": "^8.17.0",
         "acorn-walk": "^8.3.5",
         "bpm-detective": "^2.0.5",
@@ -135,7 +136,7 @@
     },
     "packages/engine": {
       "name": "@hyperframes/engine",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@hono/node-server": "^1.13.0",
         "@hyperframes/core": "workspace:^",
@@ -153,7 +154,7 @@
     },
     "packages/gcp-cloud-run": {
       "name": "@hyperframes/gcp-cloud-run",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@google-cloud/storage": "^7.14.0",
         "@google-cloud/workflows": "^4.2.0",
@@ -171,9 +172,20 @@
         "typescript": "^5.7.2",
       },
     },
+    "packages/parsers": {
+      "name": "@hyperframes/parsers",
+      "version": "0.7.11",
+      "devDependencies": {
+        "@types/node": "^25.0.10",
+        "tsup": "^8.0.0",
+        "tsx": "^4.21.0",
+        "typescript": "^5.0.0",
+        "vitest": "^3.2.4",
+      },
+    },
     "packages/player": {
       "name": "@hyperframes/player",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@hyperframes/core": "workspace:*",
       },
@@ -188,7 +200,7 @@
     },
     "packages/producer": {
       "name": "@hyperframes/producer",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@fontsource/archivo-black": "^5.2.8",
         "@fontsource/eb-garamond": "^5.2.7",
@@ -229,7 +241,7 @@
     },
     "packages/sdk": {
       "name": "@hyperframes/sdk",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@hyperframes/core": "workspace:*",
         "linkedom": "^0.18.12",
@@ -254,7 +266,7 @@
     },
     "packages/shader-transitions": {
       "name": "@hyperframes/shader-transitions",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "html2canvas": "^1.4.1",
       },
@@ -266,7 +278,7 @@
     },
     "packages/studio": {
       "name": "@hyperframes/studio",
-      "version": "0.6.119",
+      "version": "0.7.11",
       "dependencies": {
         "@codemirror/autocomplete": "^6.20.1",
         "@codemirror/commands": "^6.10.3",
@@ -666,6 +678,8 @@
     "@hyperframes/engine": ["@hyperframes/engine@workspace:packages/engine"],
 
     "@hyperframes/gcp-cloud-run": ["@hyperframes/gcp-cloud-run@workspace:packages/gcp-cloud-run"],
+
+    "@hyperframes/parsers": ["@hyperframes/parsers@workspace:packages/parsers"],
 
     "@hyperframes/player": ["@hyperframes/player@workspace:packages/player"],
 
