@@ -1111,6 +1111,140 @@ export const gsapRules: LintRule<LintContext>[] = [
     return findings;
   },
 
+  // gsap_non_transform_motion — animating layout props (left/top/right/bottom/margin*)
+  // or using roundProps snaps motion to integer device pixels. On the seek-by-frame
+  // capture engine this looks smooth at high per-frame deltas (fast tweens) but visibly
+  // stutters at low deltas (slow tweens / ease-out tails): sub-pixel movement rounds to
+  // the same pixel for several frames, then jumps a whole pixel. Transforms (x/y/scale)
+  // interpolate sub-pixel and stay smooth.
+  //
+  // EXEMPTION: elements rasterized via the html-in-canvas API — those under a
+  // `<canvas layoutsubtree>` ancestor (e.g. the liquid-glass blocks) — are NOT laid out
+  // by the browser compositor. The canvas lib reads getComputedStyle().left/top (a
+  // sub-pixel value) and draws the element to a bitmap, so animating a layout prop on
+  // them does not integer-snap and does not stutter. We resolve each tween's target to
+  // its element(s) and skip the finding only when EVERY target is html-in-canvas; a
+  // grouped tween that also touches a plain-DOM element (which does stutter) still fires.
+  async ({ scripts, tags, source }) => {
+    const findings: HyperframeLintFinding[] = [];
+
+    // Byte-ranges of every <canvas layoutsubtree>. An element whose open-tag index falls
+    // inside one of these ranges is html-in-canvas composited.
+    const layoutSubtreeRanges = tags
+      .filter((t) => t.name.toLowerCase() === "canvas" && /\blayoutsubtree\b/i.test(t.raw))
+      .map((t) => ({ start: t.index, end: findTagEnd(source, t) }));
+    const isHtmlInCanvas = (tag: OpenTag): boolean =>
+      layoutSubtreeRanges.some((r) => tag.index > r.start && tag.index < r.end);
+
+    // Resolve a simple #id / .class token to the element tag(s) it matches.
+    const tagsByToken = new Map<string, OpenTag[]>();
+    const addToken = (token: string, tag: OpenTag): void => {
+      const list = tagsByToken.get(token);
+      if (list) list.push(tag);
+      else tagsByToken.set(token, [tag]);
+    };
+    for (const tag of tags) {
+      const id = readAttr(tag.raw, "id");
+      if (id) addToken(`#${id}`, tag);
+      for (const cls of readAttr(tag.raw, "class")?.split(/\s+/).filter(Boolean) ?? [])
+        addToken(`.${cls}`, tag);
+    }
+
+    // True only when the selector resolves to at least one element AND every resolved
+    // element is html-in-canvas. Unresolvable selectors (no match) are NOT exempt — we
+    // stay conservative and let the finding fire rather than risk a false negative.
+    const allTargetsHtmlInCanvas = (selector: string): boolean => {
+      if (layoutSubtreeRanges.length === 0) return false;
+      const matched = [...targetedSelectorTokens(selector)].flatMap(
+        (token) => tagsByToken.get(token) ?? [],
+      );
+      return matched.length > 0 && matched.every(isHtmlInCanvas);
+    };
+    // Map each flagged layout prop to its transform replacement axis. roundProps is
+    // handled separately (it has no positional replacement — the fix is to remove it).
+    const LAYOUT_FIX: Record<string, string[]> = {
+      left: ["x"],
+      right: ["x"],
+      top: ["y"],
+      bottom: ["y"],
+      margin: ["x", "y"],
+      marginLeft: ["x"],
+      marginRight: ["x"],
+      marginTop: ["y"],
+      marginBottom: ["y"],
+    };
+    for (const script of scripts) {
+      if (!/gsap\.timeline/.test(script.content)) continue;
+
+      // Two sources: timeline-rooted tweens (tl.to/from/fromTo) and standalone
+      // gsap.to/from/fromTo calls the acorn parser ignores.
+      //
+      // Timeline tweens come straight from the acorn parser's animation list — NOT
+      // cachedExtractGsapWindows, which drops every tween with a non-numeric timeline
+      // position (a string label or `+=`/`-=` offset, e.g. `tl.to("#x",{left:9},"hold6")`).
+      // Position is irrelevant to whether a tween animates a layout prop, so dropping
+      // those would let real stutter-prone tweens escape. The parser also gives real AST
+      // keys, so a nested `{}` value (an onComplete body, modifiers) and a layout-prop
+      // name appearing inside a string value can't be misread — both hazards of a raw scan.
+      const parseGsapScript = await loadParseGsapScript();
+      const parsed = parseGsapScript(script.content);
+      const calls: GsapTransformCall[] = [
+        ...parsed.animations.map((anim) => ({
+          method: anim.method,
+          selector: anim.targetSelector,
+          properties: Object.keys(anim.properties),
+          raw: synthesizeWindowRaw(parsed.timelineVar, anim),
+        })),
+        ...extractStandaloneGsapTransformCalls(stripJsComments(script.content)),
+      ];
+
+      for (const call of calls) {
+        // set() is instantaneous — it never animates, so it cannot stutter.
+        if (call.method === "set") continue;
+        const usesRoundProps = call.properties.includes("roundProps");
+        // Object.hasOwn, not `in`: a tween property named `toString`/`constructor` would
+        // match the prototype chain and resolve LAYOUT_FIX[p] to an inherited function.
+        let layoutProps = call.properties.filter((p) => Object.hasOwn(LAYOUT_FIX, p));
+        // html-in-canvas elements don't integer-snap on layout props (canvas reads
+        // sub-pixel computed left/top — see EXEMPTION above). roundProps is NOT exempt:
+        // it rounds the value BEFORE it reaches the style, so the canvas reads the rounded
+        // value and still stutters (matching this rule's "even on transforms" message).
+        if (layoutProps.length > 0 && allTargetsHtmlInCanvas(call.selector)) layoutProps = [];
+        if (layoutProps.length === 0 && !usesRoundProps) continue;
+
+        const message =
+          layoutProps.length > 0
+            ? `GSAP tween animates layout propert${layoutProps.length > 1 ? "ies" : "y"} ` +
+              `${layoutProps.join(", ")}${usesRoundProps ? " with roundProps" : ""} on ` +
+              `"${call.selector}". Layout properties snap to integer device pixels, so slow motion ` +
+              "(or an ease-out tail) stutters under the seek-by-frame capture engine. Animate " +
+              "transforms instead."
+            : `GSAP tween uses roundProps on "${call.selector}", which snaps animated values to ` +
+              "whole integers. Integer snapping stutters under slow motion on the seek-by-frame " +
+              "capture engine, even on transforms.";
+
+        const fixTokens = [...new Set(layoutProps.flatMap((p) => LAYOUT_FIX[p] ?? []))];
+        const fixHint =
+          layoutProps.length > 0
+            ? `Replace ${layoutProps.join("/")} with the transform equivalent (${fixTokens.join(", ")})` +
+              `${usesRoundProps ? " and remove roundProps" : ""}, e.g. ` +
+              `tl.fromTo("${call.selector}", { x: -1300 }, { x: 0, ...yourAnimation }). ` +
+              "Transforms interpolate sub-pixel and stay smooth at any speed."
+            : "Remove roundProps. Let transforms (x/y/scale) interpolate sub-pixel for smooth motion.";
+
+        findings.push({
+          code: "gsap_non_transform_motion",
+          severity: "error",
+          message,
+          selector: call.selector,
+          fixHint,
+          snippet: truncateSnippet(call.raw),
+        });
+      }
+    }
+    return findings;
+  },
+
   // gsap_group_selector_keyframes
   ({ scripts }) => {
     const findings: HyperframeLintFinding[] = [];
