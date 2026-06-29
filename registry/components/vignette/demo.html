@@ -181,11 +181,14 @@
           tl.to(".haze-near", { opacity: 1, duration: 0.8, ease: "power2.out" }, 0.15);
           tl.to(".demo-subject", { opacity: 1, scale: 1, duration: 1.0, ease: "power3.out" }, 0.1);
 
-          // Title + subtitle settle in.
+          // Title + subtitle settle in. Settle via scale (transform), not letterSpacing:
+          // animating letter-spacing reflows text and snaps glyph positions to the pixel
+          // grid, so a slow ease-out tail micro-stutters. letter-spacing holds at its CSS
+          // resting value (0.18em); the subtle scale gives the same "settle into place" feel.
           tl.fromTo(
             ".demo-title",
-            { opacity: 0, y: 18, letterSpacing: "0.32em" },
-            { opacity: 1, y: 0, letterSpacing: "0.18em", duration: 1.0, ease: "power3.out" },
+            { opacity: 0, y: 18, scale: 1.04 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: "power3.out" },
             0.6,
           );
           tl.to(".demo-subtitle", { opacity: 1, duration: 0.8, ease: "power3.out" }, 1.0);

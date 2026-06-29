@@ -1499,6 +1499,44 @@ describe("GSAP rules", () => {
     expect(finding).toBeDefined();
   });
 
+  it("gsap_non_transform_motion: fires on text-reflow props (letterSpacing / fontSize)", async () => {
+    const html = `
+<html><body>
+  <div data-composition-id="c1" data-width="1920" data-height="1080"><div id="t"></div></div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.to("#t", { letterSpacing: "-4px", duration: 4, ease: "power1.out" }, 0);
+    tl.to("#t", { fontSize: 80, duration: 4 }, 0);
+    window.__timelines["c1"] = tl;
+  </script>
+</body></html>`;
+    const result = await lintHyperframeHtml(html);
+    const findings = result.findings.filter((f) => f.code === "gsap_non_transform_motion");
+    expect(findings).toHaveLength(2);
+    expect(findings.every((f) => f.severity === "error")).toBe(true);
+  });
+
+  it("gsap_non_transform_motion: text-reflow props are NOT html-in-canvas-exempt", async () => {
+    const html = `
+<html><body>
+  <div data-composition-id="c1" data-width="1920" data-height="1080">
+    <canvas layoutsubtree width="1920" height="1080">
+      <div class="liquid-glass" id="gp1">label</div>
+    </canvas>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.to("#gp1", { letterSpacing: "-4px", duration: 4 }, 0);
+    window.__timelines["c1"] = tl;
+  </script>
+</body></html>`;
+    const result = await lintHyperframeHtml(html);
+    const finding = result.findings.find((f) => f.code === "gsap_non_transform_motion");
+    expect(finding).toBeDefined();
+  });
+
   it("gsap_non_transform_motion: does NOT fire on the literal text 'roundProps:' inside a string", async () => {
     const html = `
 <html><body>

@@ -59,9 +59,11 @@ Animate any custom property. Works for color, length, number — anything CSS wi
 
 ### Animate transforms, not layout properties
 
-Animate `x`, `y`, `scale`, `rotation`, `opacity`. Never animate `left`, `right`, `top`, `bottom`, `width`, `height`, `margin*` — and never `roundProps`.
+Animate `x`, `y`, `scale`, `rotation`, `opacity`. Never animate `left`, `right`, `top`, `bottom`, `width`, `height`, `margin*`, the text-reflow props `letterSpacing` / `wordSpacing` / `fontSize` — and never `roundProps`.
 
 This is a **render-correctness** rule in HyperFrames, not just a GPU-performance nicety. The renderer seeks frame-by-frame and screenshots each frame, and the browser compositor snaps layout properties to whole device pixels. On a fast tween the per-frame step is several pixels, so the snap is invisible; on a slow tween or a long ease-out tail the value moves less than a pixel per frame — it holds the same pixel for several frames, then jumps a whole one. The result is motion that looks smooth when fast but visibly stutters when slow. Transforms interpolate sub-pixel and stay smooth at any speed. `roundProps` forces the same integer snap onto a transform — don't use it.
+
+"Layout property" is broader than position: anything that triggers **reflow** snaps the same way. `letterSpacing` / `fontSize` are the common trap — a slow "settle" that crawls letter-spacing or font-size by a fraction of a pixel per frame dwells on a handful of discrete glyph layouts (visible micro-stutter). For a text settle, animate `scale` (or hold the final value) instead. Unlike positional props, reflow props snap during browser **layout** — upstream of the canvas raster — so they stutter even in html-in-canvas, and the exception below does **not** apply to them.
 
 **Convert a position animation to a transform** by leaving the element at its resting `left`/`top` in CSS and animating the _offset_ with `x`/`y`:
 

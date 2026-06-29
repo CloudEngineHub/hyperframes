@@ -1160,8 +1160,7 @@ export const gsapRules: LintRule<LintContext>[] = [
       );
       return matched.length > 0 && matched.every(isHtmlInCanvas);
     };
-    // Map each flagged layout prop to its transform replacement axis. roundProps is
-    // handled separately (it has no positional replacement — the fix is to remove it).
+    // Positional layout props → each maps to its transform replacement axis (x/y).
     const LAYOUT_FIX: Record<string, string[]> = {
       left: ["x"],
       right: ["x"],
@@ -1173,6 +1172,13 @@ export const gsapRules: LintRule<LintContext>[] = [
       marginTop: ["y"],
       marginBottom: ["y"],
     };
+    // Text-reflow props: animating them reflows text and snaps glyph positions to the
+    // pixel grid, stuttering on slow motion exactly like positional props. They have no
+    // transform replacement (the fix is to not animate them — settle via scale or hold the
+    // value), and the snap happens during browser layout, UPSTREAM of any canvas raster, so
+    // they are never html-in-canvas-exempt. (width/height are deliberately omitted: they
+    // have legitimate animated uses — progress bars, reveals — and would over-report.)
+    const REFLOW_PROPS = ["letterSpacing", "wordSpacing", "fontSize"];
     for (const script of scripts) {
       if (!/gsap\.timeline/.test(script.content)) continue;
 
@@ -1201,36 +1207,40 @@ export const gsapRules: LintRule<LintContext>[] = [
       for (const call of calls) {
         // set() is instantaneous — it never animates, so it cannot stutter.
         if (call.method === "set") continue;
-        const usesRoundProps = call.properties.includes("roundProps");
         // Object.hasOwn, not `in`: a tween property named `toString`/`constructor` would
         // match the prototype chain and resolve LAYOUT_FIX[p] to an inherited function.
         let layoutProps = call.properties.filter((p) => Object.hasOwn(LAYOUT_FIX, p));
-        // html-in-canvas elements don't integer-snap on layout props (canvas reads
-        // sub-pixel computed left/top — see EXEMPTION above). roundProps is NOT exempt:
-        // it rounds the value BEFORE it reaches the style, so the canvas reads the rounded
-        // value and still stutters (matching this rule's "even on transforms" message).
+        const reflowProps = call.properties.filter((p) => REFLOW_PROPS.includes(p));
+        const usesRoundProps = call.properties.includes("roundProps");
+        // Only positional props are html-in-canvas-exempt: the canvas positions the draw
+        // from sub-pixel computed left/top. Reflow props (glyph layout) and roundProps
+        // (value rounding) snap upstream of the raster, so they always fire.
         if (layoutProps.length > 0 && allTargetsHtmlInCanvas(call.selector)) layoutProps = [];
-        if (layoutProps.length === 0 && !usesRoundProps) continue;
+        if (layoutProps.length === 0 && reflowProps.length === 0 && !usesRoundProps) continue;
 
+        const flagged = [...layoutProps, ...reflowProps, ...(usesRoundProps ? ["roundProps"] : [])];
         const message =
-          layoutProps.length > 0
-            ? `GSAP tween animates layout propert${layoutProps.length > 1 ? "ies" : "y"} ` +
-              `${layoutProps.join(", ")}${usesRoundProps ? " with roundProps" : ""} on ` +
-              `"${call.selector}". Layout properties snap to integer device pixels, so slow motion ` +
-              "(or an ease-out tail) stutters under the seek-by-frame capture engine. Animate " +
-              "transforms instead."
-            : `GSAP tween uses roundProps on "${call.selector}", which snaps animated values to ` +
-              "whole integers. Integer snapping stutters under slow motion on the seek-by-frame " +
-              "capture engine, even on transforms.";
+          `GSAP tween on "${call.selector}" uses motion that snaps to integer device pixels: ` +
+          `${flagged.join(", ")}. Layout and text-reflow properties snap during browser layout; ` +
+          "roundProps rounds the tween value. Slow motion or an ease-out tail then stutters under " +
+          "the seek-by-frame capture engine — animate transforms (x/y/scale/opacity) instead.";
 
-        const fixTokens = [...new Set(layoutProps.flatMap((p) => LAYOUT_FIX[p] ?? []))];
-        const fixHint =
-          layoutProps.length > 0
-            ? `Replace ${layoutProps.join("/")} with the transform equivalent (${fixTokens.join(", ")})` +
-              `${usesRoundProps ? " and remove roundProps" : ""}, e.g. ` +
-              `tl.fromTo("${call.selector}", { x: -1300 }, { x: 0, ...yourAnimation }). ` +
-              "Transforms interpolate sub-pixel and stay smooth at any speed."
-            : "Remove roundProps. Let transforms (x/y/scale) interpolate sub-pixel for smooth motion.";
+        const fixes: string[] = [];
+        if (layoutProps.length > 0) {
+          const tokens = [...new Set(layoutProps.flatMap((p) => LAYOUT_FIX[p] ?? []))];
+          fixes.push(
+            `replace ${layoutProps.join("/")} with the transform equivalent (${tokens.join(", ")}) — ` +
+              `e.g. tl.fromTo("${call.selector}", { x: -1300 }, { x: 0, ...yourAnimation })`,
+          );
+        }
+        if (reflowProps.length > 0) {
+          fixes.push(
+            `do not animate ${reflowProps.join("/")} (they reflow text and snap glyph positions) — ` +
+              "settle via scale, or set the final value statically",
+          );
+        }
+        if (usesRoundProps) fixes.push("remove roundProps");
+        const fixHint = `${fixes.join("; ")}. Transforms interpolate sub-pixel and stay smooth at any speed.`;
 
         findings.push({
           code: "gsap_non_transform_motion",
