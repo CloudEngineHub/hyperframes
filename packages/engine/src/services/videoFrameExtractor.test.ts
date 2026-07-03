@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   existsSync,
   mkdirSync,
-  readFileSync,
   mkdtempSync,
+  readFileSync,
   readdirSync,
   rmSync,
   statSync,
@@ -31,7 +31,7 @@ import {
 } from "./videoFrameExtractor.js";
 import { extractVideoMetadata, type VideoMetadata } from "../utils/ffprobe.js";
 import { runFfmpeg } from "../utils/runFfmpeg.js";
-import { COMPLETE_SENTINEL, SCHEMA_PREFIX } from "./extractionCache.js";
+import { COMPLETE_SENTINEL, GC_MARKER, SCHEMA_PREFIX } from "./extractionCache.js";
 
 // ffmpeg is not preinstalled on GitHub's ubuntu-24.04 runners. The producer
 // regression test at packages/producer/tests/vfr-screen-recording/ runs inside
@@ -853,23 +853,6 @@ describe.skipIf(!HAS_FFMPEG)("extractAllVideoFrames on a VFR source", () => {
     return src;
   }
 
-  function cfrClipElement(id: string, src: string, endSeconds: number): VideoElement {
-    return { id, src, start: 0, end: endSeconds, mediaStart: 0, loop: false, hasAudio: false };
-  }
-
-  async function extractWithCache(
-    video: VideoElement,
-    outName: string,
-    cacheDir: string,
-    fps = 30,
-  ): Promise<ExtractionResult> {
-    const outputDir = join(FIXTURE_DIR, outName);
-    mkdirSync(outputDir, { recursive: true });
-    return extractAllVideoFrames([video], FIXTURE_DIR, { fps, outputDir }, undefined, {
-      extractCacheDir: cacheDir,
-    });
-  }
-
   async function synthHdrTaggedClip(name: string, durationSeconds: number): Promise<string> {
     const src = join(FIXTURE_DIR, name);
     const synth = await runFfmpeg([
@@ -901,8 +884,43 @@ describe.skipIf(!HAS_FFMPEG)("extractAllVideoFrames on a VFR source", () => {
     return src;
   }
 
+  function cfrClipElement(
+    id: string,
+    src: string,
+    endSeconds: number,
+    mediaStart = 0,
+  ): VideoElement {
+    return {
+      id,
+      src,
+      start: 0,
+      end: endSeconds,
+      mediaStart,
+      loop: false,
+      hasAudio: false,
+    };
+  }
+
+  async function extractWithCache(
+    video: VideoElement,
+    outName: string,
+    cacheDir: string,
+    fps = 30,
+  ): Promise<ExtractionResult> {
+    const outputDir = join(FIXTURE_DIR, outName);
+    mkdirSync(outputDir, { recursive: true });
+    return extractAllVideoFrames([video], FIXTURE_DIR, { fps, outputDir }, undefined, {
+      extractCacheDir: cacheDir,
+    });
+  }
+
   function cacheEntryNames(cacheDir: string): string[] {
     return readdirSync(cacheDir).filter((name) => name.startsWith(SCHEMA_PREFIX));
+  }
+
+  function supersetDirNames(outputDir: string): string[] {
+    if (!existsSync(outputDir)) return [];
+    return readdirSync(outputDir).filter((name) => name.startsWith("__superset-"));
   }
 
   function extractedFor(result: ExtractionResult, videoId: string): ExtractedFrames {
@@ -963,6 +981,30 @@ describe.skipIf(!HAS_FFMPEG)("extractAllVideoFrames on a VFR source", () => {
     expect(hit.errors).toEqual([]);
     expect(hit.phaseBreakdown.cacheHits).toBe(1);
     expect(statSync(sentinel).mtimeMs).toBeGreaterThan(before);
+
+    rmSync(CACHE_DIR, { recursive: true, force: true });
+  }, 60_000);
+
+  it("skips cache GC on all-hit renders", async () => {
+    const CACHE_DIR = mkdtempSync(join(tmpdir(), "hf-extract-cache-gc-skip-test-"));
+    const SRC = await synthCfrClip("cache-gc-skip-src.mp4", 1);
+    const video = cfrClipElement("gc-skip", SRC, 1);
+
+    const miss = await extractWithCache(video, "out-cache-gc-skip-miss", CACHE_DIR);
+    expect(miss.errors).toEqual([]);
+    expect(miss.phaseBreakdown.cacheMisses).toBe(1);
+
+    const agedPartial = join(CACHE_DIR, `${SCHEMA_PREFIX}aged.partial-1234-deadbeef`);
+    mkdirSync(agedPartial, { recursive: true });
+    writeFileSync(join(agedPartial, "frame_00001.jpg"), "stale", "utf-8");
+    const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    utimesSync(agedPartial, old, old);
+
+    const hit = await extractWithCache(video, "out-cache-gc-skip-hit", CACHE_DIR);
+    expect(hit.errors).toEqual([]);
+    expect(hit.phaseBreakdown.cacheHits).toBe(1);
+    expect(hit.phaseBreakdown.cacheMisses).toBe(0);
+    expect(existsSync(agedPartial)).toBe(true);
 
     rmSync(CACHE_DIR, { recursive: true, force: true });
   }, 60_000);
@@ -1108,6 +1150,197 @@ describe.skipIf(!HAS_FFMPEG)("extractAllVideoFrames on a VFR source", () => {
     } finally {
       rmSync(CACHE_DIR, { recursive: true, force: true });
     }
+  }, 60_000);
+
+  it("clusters overlap components so a disjoint outlier does not break the group", async () => {
+    const SRC = await synthCfrClip("superset-cluster-src.mp4", 12);
+    const outputDir = join(FIXTURE_DIR, "out-superset-cluster");
+    mkdirSync(outputDir, { recursive: true });
+
+    // Three overlapping trims [0..4], [2..6], [4..8] plus one disjoint trim
+    // [10..12] of the same source. Pre-clustering, the outlier failed the
+    // union<=sum check for the whole bucket and ALL FOUR fell back to direct
+    // extraction; the overlapping three must still share one superset.
+    const result = await extractAllVideoFrames(
+      [
+        cfrClipElement("cl-a", SRC, 4, 0),
+        cfrClipElement("cl-b", SRC, 4, 2),
+        cfrClipElement("cl-c", SRC, 4, 4),
+        cfrClipElement("cl-out", SRC, 2, 10),
+      ],
+      FIXTURE_DIR,
+      { fps: 30, outputDir },
+    );
+
+    expect(result.errors).toEqual([]);
+    // Overlap region t=2..4 of the source: cl-a frame 60 and cl-b frame 0
+    // must be the SAME inode (shared superset extraction).
+    expect(statSync(framePath(result, "cl-a", 60)).ino).toBe(
+      statSync(framePath(result, "cl-b", 0)).ino,
+    );
+    expect(statSync(framePath(result, "cl-b", 60)).ino).toBe(
+      statSync(framePath(result, "cl-c", 0)).ino,
+    );
+    // The outlier extracted directly: its frames share no inode with the
+    // cluster (frame at source t=10 exists only in its own extraction).
+    expect(extractedFor(result, "cl-out").totalFrames).toBe(60);
+    expect(supersetDirNames(outputDir)).toEqual([]);
+  }, 60_000);
+
+  it("runs the GC staleness fallback sweep on all-hit renders with a stale marker", async () => {
+    const CACHE_DIR = mkdtempSync(join(tmpdir(), "hf-extract-cache-gc-stale-test-"));
+    const SRC = await synthCfrClip("cache-gc-stale-src.mp4", 1);
+    const video = cfrClipElement("gc-stale", SRC, 1);
+
+    const miss = await extractWithCache(video, "out-cache-gc-stale-miss", CACHE_DIR);
+    expect(miss.phaseBreakdown.cacheMisses).toBe(1);
+
+    const agedPartial = join(CACHE_DIR, `${SCHEMA_PREFIX}aged.partial-1234-cafef00d`);
+    mkdirSync(agedPartial, { recursive: true });
+    writeFileSync(join(agedPartial, "frame_00001.jpg"), "stale", "utf-8");
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    utimesSync(agedPartial, twoHoursAgo, twoHoursAgo);
+
+    // Age the sweep marker past the 24h staleness window: the next all-hit
+    // render must sweep anyway and clear the aged partial.
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    utimesSync(join(CACHE_DIR, GC_MARKER), twoDaysAgo, twoDaysAgo);
+
+    const hit = await extractWithCache(video, "out-cache-gc-stale-hit", CACHE_DIR);
+    expect(hit.phaseBreakdown.cacheHits).toBe(1);
+    expect(hit.phaseBreakdown.cacheMisses).toBe(0);
+    expect(existsSync(agedPartial)).toBe(false);
+    expect(hit.phaseBreakdown.cacheAgedPartialsCleared).toBe(1);
+
+    rmSync(CACHE_DIR, { recursive: true, force: true });
+  }, 60_000);
+
+  it("hardlinks overlapping aligned trims from one superset extraction", async () => {
+    const SRC = await synthCfrClip("superset-overlap-src.mp4", 10);
+    const outputDir = join(FIXTURE_DIR, "out-superset-overlap");
+    const directOutputDir = join(FIXTURE_DIR, "out-superset-direct");
+    mkdirSync(outputDir, { recursive: true });
+    mkdirSync(directOutputDir, { recursive: true });
+
+    const result = await extractAllVideoFrames(
+      [cfrClipElement("trim-a", SRC, 4, 0), cfrClipElement("trim-b", SRC, 4, 2)],
+      FIXTURE_DIR,
+      { fps: 30, outputDir },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(extractedFor(result, "trim-a").totalFrames).toBe(120);
+    expect(extractedFor(result, "trim-b").totalFrames).toBe(120);
+    expect(statSync(framePath(result, "trim-a", 60)).ino).toBe(
+      statSync(framePath(result, "trim-b", 0)).ino,
+    );
+
+    const direct = await extractVideoFramesRange(SRC, "direct-trim-b", 2, 4, {
+      fps: 30,
+      outputDir: directOutputDir,
+      format: "jpg",
+    });
+    expect(
+      readFileSync(framePath(result, "trim-b", 0)).equals(readFileSync(direct.framePaths.get(0)!)),
+    ).toBe(true);
+    expect(supersetDirNames(outputDir)).toEqual([]);
+  }, 60_000);
+
+  it("does not superset disjoint trims", async () => {
+    const SRC = await synthCfrClip("superset-disjoint-src.mp4", 10);
+    const outputDir = join(FIXTURE_DIR, "out-superset-disjoint");
+    mkdirSync(outputDir, { recursive: true });
+
+    const result = await extractAllVideoFrames(
+      [cfrClipElement("trim-a", SRC, 2, 0), cfrClipElement("trim-b", SRC, 2, 8)],
+      FIXTURE_DIR,
+      { fps: 30, outputDir },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(statSync(framePath(result, "trim-a", 0)).ino).not.toBe(
+      statSync(framePath(result, "trim-b", 0)).ino,
+    );
+    expect(supersetDirNames(outputDir)).toEqual([]);
+  }, 60_000);
+
+  it("does not superset trims whose offsets are not frame-aligned", async () => {
+    const SRC = await synthCfrClip("superset-misaligned-src.mp4", 2);
+    const outputDir = join(FIXTURE_DIR, "out-superset-misaligned");
+    mkdirSync(outputDir, { recursive: true });
+
+    const result = await extractAllVideoFrames(
+      [cfrClipElement("trim-a", SRC, 1, 0), cfrClipElement("trim-b", SRC, 1, 0.017)],
+      FIXTURE_DIR,
+      { fps: 30, outputDir },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(statSync(framePath(result, "trim-a", 0)).ino).not.toBe(
+      statSync(framePath(result, "trim-b", 0)).ino,
+    );
+    expect(supersetDirNames(outputDir)).toEqual([]);
+  }, 60_000);
+
+  it("publishes overlapping superset slices to cache entries and hits them on the next render", async () => {
+    const CACHE_DIR = mkdtempSync(join(tmpdir(), "hf-extract-superset-cache-test-"));
+    const SRC = await synthCfrClip("superset-cache-src.mp4", 10);
+    try {
+      const firstOutputDir = join(FIXTURE_DIR, "out-superset-cache-first");
+      const secondOutputDir = join(FIXTURE_DIR, "out-superset-cache-second");
+      mkdirSync(firstOutputDir, { recursive: true });
+      mkdirSync(secondOutputDir, { recursive: true });
+      const videos = [cfrClipElement("trim-a", SRC, 4, 0), cfrClipElement("trim-b", SRC, 4, 2)];
+
+      const first = await extractAllVideoFrames(
+        videos,
+        FIXTURE_DIR,
+        { fps: 30, outputDir: firstOutputDir },
+        undefined,
+        { extractCacheDir: CACHE_DIR },
+      );
+      expect(first.errors).toEqual([]);
+      expect(first.phaseBreakdown.cacheHits).toBe(0);
+      expect(first.phaseBreakdown.cacheMisses).toBe(2);
+      expect(cacheEntryNames(CACHE_DIR)).toHaveLength(2);
+      expect(statSync(framePath(first, "trim-a", 60)).ino).toBe(
+        statSync(framePath(first, "trim-b", 0)).ino,
+      );
+
+      const second = await extractAllVideoFrames(
+        videos,
+        FIXTURE_DIR,
+        { fps: 30, outputDir: secondOutputDir },
+        undefined,
+        { extractCacheDir: CACHE_DIR },
+      );
+      expect(second.errors).toEqual([]);
+      expect(second.phaseBreakdown.cacheHits).toBe(2);
+      expect(second.phaseBreakdown.cacheMisses).toBe(0);
+      expect(supersetDirNames(secondOutputDir)).toEqual([]);
+    } finally {
+      rmSync(CACHE_DIR, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it("clamps loop-past-EOF superset slices to available source frames", async () => {
+    const SRC = await synthCfrClip("superset-eof-src.mp4", 10);
+    const outputDir = join(FIXTURE_DIR, "out-superset-eof");
+    mkdirSync(outputDir, { recursive: true });
+
+    const result = await extractAllVideoFrames(
+      [cfrClipElement("covered", SRC, 4, 6), cfrClipElement("past-eof", SRC, 6, 8)],
+      FIXTURE_DIR,
+      { fps: 30, outputDir },
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(extractedFor(result, "covered").totalFrames).toBe(120);
+    expect(extractedFor(result, "past-eof").totalFrames).toBe(60);
+    expect(statSync(framePath(result, "covered", 60)).ino).toBe(
+      statSync(framePath(result, "past-eof", 0)).ino,
+    );
+    expect(supersetDirNames(outputDir)).toEqual([]);
   }, 60_000);
 
   // Asserts frame-count correctness for a full VFR file. One-pass CFR image
