@@ -30,6 +30,8 @@ import {
   generateTicks,
   getTimelineCanvasHeight,
   shouldShowTimelineShortcutHint,
+  computeTimelineBasisDuration,
+  computeTimelineEffectiveDuration,
 } from "./timelineLayout";
 import { useResolvedTimelineEditCallbacks } from "./useResolvedTimelineEditCallbacks";
 import type { TimelineProps } from "./TimelineTypes";
@@ -228,20 +230,25 @@ export const Timeline = memo(function Timeline({
     setRangeSelectionRef,
   });
 
-  const effectiveDuration = useMemo(() => {
-    const safeDur = Number.isFinite(duration) ? duration : 0;
-    let maxEnd = safeDur;
-    if (rawElements.length > 0) {
-      maxEnd = Math.max(maxEnd, ...rawElements.map((el) => el.start + el.duration));
-    }
-    if (draggedClip?.started) {
-      maxEnd = Math.max(maxEnd, draggedClip.previewStart + draggedClip.element.duration);
-    }
-    if (resizingClip?.started) {
-      maxEnd = Math.max(maxEnd, resizingClip.previewStart + resizingClip.previewDuration);
-    }
-    return Number.isFinite(maxEnd) ? maxEnd : safeDur;
-  }, [rawElements, duration, draggedClip, resizingClip]);
+  // basisDuration drives the zoom (committed, no live preview); effectiveDuration
+  // adds the active drag/resize preview so the ruler/width follow a past-end drag.
+  // See timelineLayout for why the split prevents jump-during-extend.
+  const basisDuration = useMemo(
+    () =>
+      computeTimelineBasisDuration(
+        duration,
+        rawElements.map((el) => el.start + el.duration),
+      ),
+    [rawElements, duration],
+  );
+  const effectiveDuration = useMemo(
+    () =>
+      computeTimelineEffectiveDuration(basisDuration, [
+        draggedClip?.started ? draggedClip.previewStart + draggedClip.element.duration : null,
+        resizingClip?.started ? resizingClip.previewStart + resizingClip.previewDuration : null,
+      ]),
+    [basisDuration, draggedClip, resizingClip],
+  );
   durationRef.current = effectiveDuration;
 
   const displayTrackOrder = useMemo(() => {
@@ -273,9 +280,10 @@ export const Timeline = memo(function Timeline({
   const selectedElementRef = useRef<TimelineElement | null>(selectedElement);
   selectedElementRef.current = selectedElement;
 
+  // Fit to basisDuration, not effectiveDuration, so a live drag can't rezoom.
   const fitPps =
-    viewportWidth > GUTTER && effectiveDuration > 0
-      ? (viewportWidth - GUTTER - 2) / effectiveDuration
+    viewportWidth > GUTTER && basisDuration > 0
+      ? (viewportWidth - GUTTER - 2) / basisDuration
       : 100;
   const pps = getTimelinePixelsPerSecond(fitPps, zoomMode, manualZoomPercent);
   ppsRef.current = pps;
