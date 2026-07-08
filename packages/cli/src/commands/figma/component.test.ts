@@ -153,4 +153,17 @@ describe("runComponentImport", () => {
       }),
     ).rejects.toThrow(/rate limit/);
   });
+
+  it("honors a name override so variant frames don't slug-collide", async () => {
+    const out = await runComponentImport("FILE:1-1", {
+      projectDir: dir,
+      client: client(),
+      download: () => Promise.resolve(SVG),
+      name: "Hero Actions",
+    });
+    expect(out.name).toBe("hero-actions");
+    expect(out.htmlPath).toContain("hero-actions");
+    const html = readFileSync(join(dir, out.htmlPath), "utf8");
+    expect(html).toMatch(/^<div id="hero-actions"/);
+  });
 });
