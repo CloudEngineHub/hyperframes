@@ -249,16 +249,32 @@ describe("usePlayerStore", () => {
       expect(state.selectedElementId).toBe("el-3");
     });
 
-    it("re-selecting a current member keeps the multi-selection and moves the anchor", () => {
+    it("setSelectedElementId collapses to a single element even for a current member", () => {
       const store = usePlayerStore.getState();
       store.setSelection(["el-1", "el-2", "el-3"], "el-1");
-      // A DOM->selection sync echo during a group drag re-selects the grabbed
-      // member; this must NOT collapse the set to that single element.
+      // A genuine single selection (click) collapses the set, even if the id was a member.
       store.setSelectedElementId("el-2");
 
       const state = usePlayerStore.getState();
+      expect([...state.selectedElementIds]).toEqual(["el-2"]);
+      expect(state.selectedElementId).toBe("el-2");
+    });
+
+    it("setSelectionAnchor moves the anchor within a group without collapsing it", () => {
+      const store = usePlayerStore.getState();
+      store.setSelection(["el-1", "el-2", "el-3"], "el-1");
+      // A DOM->store echo during a group gesture only moves the anchor.
+      store.setSelectionAnchor("el-2");
+
+      let state = usePlayerStore.getState();
       expect([...state.selectedElementIds]).toEqual(["el-1", "el-2", "el-3"]);
       expect(state.selectedElementId).toBe("el-2");
+
+      // A non-member anchor is a genuine new single selection.
+      store.setSelectionAnchor("outside");
+      state = usePlayerStore.getState();
+      expect([...state.selectedElementIds]).toEqual(["outside"]);
+      expect(state.selectedElementId).toBe("outside");
     });
 
     it("clearing single selection empties the set", () => {

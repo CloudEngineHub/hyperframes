@@ -161,6 +161,8 @@ interface PlayerState {
   setBeatDragging: (dragging: boolean) => void;
   setElements: (elements: TimelineElement[]) => void;
   setSelectedElementId: (id: string | null) => void;
+  /** Move the selection anchor within an active multi-selection without collapsing it. */
+  setSelectionAnchor: (id: string | null) => void;
   updateElement: (
     elementId: string,
     updates: Partial<
@@ -409,18 +411,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setTimelineReady: (ready) => set({ timelineReady: ready }),
   setBeatDragging: (dragging) => set({ beatDragging: dragging }),
   setElements: (elements) => set({ elements }),
+  // A genuine single selection: always collapse the set to just this element. User
+  // intent (timeline click, preview click via applyDomSelection) flows here; DOM sync
+  // echoes that must preserve a group go through setSelectionAnchor instead.
   setSelectedElementId: (id) =>
     set((s) => {
-      // Re-selecting an element that is already part of an active multi-selection
-      // (e.g. a DOM->selection sync echo while a group drag re-patches the preview)
-      // updates the anchor WITHOUT collapsing the set. A genuinely new element
-      // (not currently in the set) replaces the whole selection with itself.
-      const keepSet = id != null && s.selectedElementIds.size > 1 && s.selectedElementIds.has(id);
-      const selectedElementIds = keepSet
-        ? s.selectedElementIds
-        : id
-          ? new Set([id])
-          : new Set<string>();
+      const selectedElementIds = id ? new Set([id]) : new Set<string>();
       // Selecting a different element drops any active keyframe selection — otherwise
       // a stale activeKeyframePct from a prior diamond click would force the next drag
       // to "modify" a keyframe on the new element. A diamond click sets the pct AFTER
@@ -433,6 +429,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
             motionPathArmed: false,
           }
         : { selectedElementId: id, selectedElementIds };
+    }),
+  // Move the anchor within an active multi-selection WITHOUT collapsing it — used by
+  // DOM->store sync echoes while a group gesture re-patches the preview. A non-member
+  // id is treated as a genuine new single selection.
+  setSelectionAnchor: (id) =>
+    set((s) => {
+      if (id != null && s.selectedElementIds.size > 1 && s.selectedElementIds.has(id)) {
+        return { selectedElementId: id };
+      }
+      return { selectedElementId: id, selectedElementIds: id ? new Set([id]) : new Set<string>() };
     }),
   updateElement: (elementId, updates) =>
     set((state) => ({

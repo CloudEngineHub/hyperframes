@@ -203,12 +203,24 @@ export function useDomSelection({
           setRightCollapsed(false);
           setRightPanelTab("design");
         }
-        const nextSelectedTimelineId = resolveTimelineIdForSelection(
+        // Mirror the whole DOM group to the store so it stays the single source of
+        // truth: a single selection collapses to one id; a preserved group (echo
+        // during a gesture) keeps every member instead of shrinking to the anchor.
+        const anchorId = resolveTimelineIdForSelection(
           nextSelection,
           timelineElements,
           activeCompPath,
         );
-        setSelectedTimelineElementId(nextSelectedTimelineId);
+        const groupIds = nextGroup
+          .map((selection) =>
+            resolveTimelineIdForSelection(selection, timelineElements, activeCompPath),
+          )
+          .filter((id): id is string => Boolean(id));
+        if (groupIds.length > 0) {
+          usePlayerStore.getState().setSelection(groupIds, anchorId);
+        } else {
+          setSelectedTimelineElementId(anchorId);
+        }
         return;
       }
 
