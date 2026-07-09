@@ -196,4 +196,41 @@ window.__timelines = { t: tl };</script>
     ) as HTMLElement;
     expect(liveTitle.style.getPropertyValue("color")).not.toBe("#f00");
   });
+
+  it("mirrors setVariableValue onto the live root's CSS custom property", async () => {
+    const html = `<!DOCTYPE html>
+<html data-composition-variables='[{"id":"accent","default":"#fff"}]'>
+<body>
+  <div data-hf-id="hf-stage" data-hf-root style="--accent: #fff; width: 1280px; height: 720px" data-duration="5">
+    <h1 data-hf-id="hf-title" style="color: var(--accent)">Hello World</h1>
+  </div>
+</body>
+</html>`;
+    const iframe = mountIframe(html);
+    const comp = await openComposition(html);
+    const adapter = createIframePreviewAdapter(iframe);
+    adapter.attachSync(comp);
+
+    comp.setVariableValue("accent", "#0f0");
+
+    const liveRoot = iframe.contentDocument!.querySelector(
+      '[data-hf-id="hf-stage"]',
+    ) as HTMLElement;
+    expect(liveRoot.style.getPropertyValue("--accent")).toBe("#0f0");
+  });
+
+  it("mirrors setTiming onto the live element's data-start/data-end attributes", async () => {
+    const iframe = mountIframe(BASE_HTML);
+    const comp = await openComposition(BASE_HTML);
+    const adapter = createIframePreviewAdapter(iframe);
+    adapter.attachSync(comp);
+
+    comp.setTiming("hf-title", { start: 1, duration: 2 });
+
+    const liveTitle = iframe.contentDocument!.querySelector(
+      '[data-hf-id="hf-title"]',
+    ) as HTMLElement;
+    expect(liveTitle.getAttribute("data-start")).toBe("1");
+    expect(liveTitle.getAttribute("data-end")).toBe("3");
+  });
 });
