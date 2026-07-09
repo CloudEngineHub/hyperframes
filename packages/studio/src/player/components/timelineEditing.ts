@@ -4,7 +4,15 @@ import type { StackingTimelineLayer, TimelineLayerId } from "./timelineTrackOrde
 import { resolveTimelineLayerStackingMove } from "./timelineLayerDrag";
 import type { TimelineStackingElement, TimelineStackingReorderIntent } from "./timelineStacking";
 
-export { resolveTimelineGroupMove, type TimelineGroupTimingMember } from "./timelineGroupEditing";
+import { resolveTimelineMinDuration } from "./timelineGroupEditing";
+
+export {
+  clampTimelineGroupResizeDelta,
+  resolveTimelineGroupMove,
+  resolveTimelineGroupResize,
+  type TimelineGroupResizeEdge,
+  type TimelineGroupTimingMember,
+} from "./timelineGroupEditing";
 
 export {
   type TimelineStackingElement,
@@ -196,7 +204,7 @@ export function resolveTimelineResize(
   edge: "start" | "end",
   clientX: number,
 ): { start: number; duration: number; playbackStart?: number } {
-  const minDuration = Math.max(0.05, input.minDuration ?? 0.1);
+  const minDuration = resolveTimelineMinDuration(input.minDuration);
   const deltaTime = (clientX - input.originClientX) / Math.max(input.pixelsPerSecond, 1);
 
   if (edge === "end") {

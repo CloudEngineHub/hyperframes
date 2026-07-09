@@ -26,7 +26,10 @@ import type { BlockPreviewInfo } from "./sidebar/BlocksTab";
 import { readStudioUiPreferences } from "../utils/studioUiPreferences";
 import type { GestureRecordingState } from "./editor/GestureRecordControl";
 import { useTimelineSelectionPreviewSync } from "../hooks/useTimelineSelectionPreviewSync";
-import type { TimelineGroupMoveChange } from "../hooks/useTimelineGroupEditing";
+import type {
+  TimelineGroupMoveChange,
+  TimelineGroupResizeChange,
+} from "../hooks/useTimelineGroupEditing";
 import {
   formatTimelineAttributeNumber,
   patchIframeDomTiming,
@@ -65,6 +68,7 @@ export interface StudioPreviewAreaProps {
     updates: Pick<TimelineElement, "start" | "duration" | "playbackStart">,
   ) => Promise<void> | void;
   handleTimelineGroupMove: (changes: TimelineGroupMoveChange[]) => Promise<void> | void;
+  handleTimelineGroupResize: (changes: TimelineGroupResizeChange[]) => Promise<void> | void;
   handleToggleTrackHidden: (track: number, hidden: boolean) => Promise<void> | void;
   handleToggleElementHidden: (elementKey: string, hidden: boolean) => Promise<void> | void;
   handleBlockedTimelineEdit: (element: TimelineElement, intent: BlockedTimelineEditIntent) => void;
@@ -93,6 +97,7 @@ export function StudioPreviewArea({
   handleTimelineElementMove,
   handleTimelineElementResize,
   handleTimelineGroupMove,
+  handleTimelineGroupResize,
   handleToggleTrackHidden,
   handleToggleElementHidden,
   handleBlockedTimelineEdit,
@@ -212,13 +217,36 @@ export function StudioPreviewArea({
     [previewIframeRef],
   );
 
+  const handleTimelineGroupResizePreview = useCallback(
+    (changes: TimelineGroupResizeChange[]) => {
+      for (const change of changes) {
+        const attrs: Array<[string, string]> = [
+          ["data-start", formatTimelineAttributeNumber(change.start)],
+          ["data-duration", formatTimelineAttributeNumber(change.duration)],
+        ];
+        if (change.playbackStart != null) {
+          attrs.push([
+            change.element.playbackStartAttr === "playback-start"
+              ? "data-playback-start"
+              : "data-media-start",
+            formatTimelineAttributeNumber(change.playbackStart),
+          ]);
+        }
+        patchIframeDomTiming(previewIframeRef.current, change.element, attrs);
+      }
+    },
+    [previewIframeRef],
+  );
+
   // fallow-ignore-next-line complexity
   const timelineEditCallbacks = useMemo(
     () => ({
       onMoveElement: handleTimelineElementMove,
       onResizeElement: handleTimelineElementResize,
       onMoveElements: handleTimelineGroupMove,
+      onResizeElements: handleTimelineGroupResize,
       onPreviewMoveElements: handleTimelineGroupMovePreview,
+      onPreviewResizeElements: handleTimelineGroupResizePreview,
       onToggleTrackHidden: handleToggleTrackHidden,
       onToggleElementHidden: handleToggleElementHidden,
       onBlockedEditAttempt: handleBlockedTimelineEdit,
@@ -322,6 +350,8 @@ export function StudioPreviewArea({
       handleTimelineElementResize,
       handleTimelineGroupMove,
       handleTimelineGroupMovePreview,
+      handleTimelineGroupResize,
+      handleTimelineGroupResizePreview,
       handleToggleTrackHidden,
       handleToggleElementHidden,
       handleBlockedTimelineEdit,

@@ -72,7 +72,9 @@ export const Timeline = memo(function Timeline({
     onMoveElement,
     onResizeElement,
     onMoveElements,
+    onResizeElements,
     onPreviewMoveElements,
+    onPreviewResizeElements,
     onBlockedEditAttempt,
     onSplitElement,
     onRazorSplitAll,
@@ -112,7 +114,6 @@ export const Timeline = memo(function Timeline({
   const isDragging = useRef(false);
   const [shiftHeld, setShiftHeld] = useState(false);
   const [razorGuideX, setRazorGuideX] = useState<number | null>(null);
-
   useMountEffect(() => {
     const down = (e: KeyboardEvent) => e.key === "Shift" && setShiftHeld(true);
     const up = (e: KeyboardEvent) => e.key === "Shift" && setShiftHeld(false);
@@ -138,7 +139,6 @@ export const Timeline = memo(function Timeline({
   const [viewportWidth, setViewportWidth] = useState(0);
   const roRef = useRef<ResizeObserver | null>(null);
   const shortcutHintRafRef = useRef(0);
-
   const syncShortcutHintVisibility = useCallback(() => {
     const scroll = scrollRef.current;
     setShowShortcutHint(
@@ -223,7 +223,9 @@ export const Timeline = memo(function Timeline({
     onMoveElement,
     onResizeElement,
     onMoveElements,
+    onResizeElements,
     onPreviewMoveElements,
+    onPreviewResizeElements,
     onBlockedEditAttempt,
     setShowPopover,
     setRangeSelectionRef,

@@ -55,7 +55,9 @@ function renderDragHarness(elements: TimelineElement[]) {
   const onMoveElement = vi.fn();
   const onResizeElement = vi.fn();
   const onMoveElements = vi.fn();
+  const onResizeElements = vi.fn();
   const onPreviewMoveElements = vi.fn();
+  const onPreviewResizeElements = vi.fn();
   let setDraggedClip: ((state: DraggedClipState | null) => void) | null = null;
   let setResizingClip: ((state: ResizingClipState | null) => void) | null = null;
 
@@ -69,7 +71,9 @@ function renderDragHarness(elements: TimelineElement[]) {
       onMoveElement,
       onResizeElement,
       onMoveElements,
+      onResizeElements,
       onPreviewMoveElements,
+      onPreviewResizeElements,
       onBlockedEditAttempt: vi.fn(),
       setShowPopover: vi.fn(),
       setRangeSelectionRef: { current: vi.fn() },
@@ -95,7 +99,9 @@ function renderDragHarness(elements: TimelineElement[]) {
     onMoveElement,
     onResizeElement,
     onMoveElements,
+    onResizeElements,
     onPreviewMoveElements,
+    onPreviewResizeElements,
     storeElements() {
       return usePlayerStore.getState().elements;
     },
@@ -271,6 +277,120 @@ describe("useTimelineClipDrag", () => {
       clip,
       expect.objectContaining({ start: 6, duration: 6 }),
     );
+
+    harness.unmount();
+  });
+
+  it("resizes every selected start edge by the same delta", async () => {
+    const first = timelineElement({ id: "first", track: 0, zIndex: 1, start: 1, duration: 4 });
+    const second = timelineElement({ id: "second", track: 1, zIndex: 1, start: 5, duration: 3 });
+    const harness = renderDragHarness([first, second]);
+    act(() => {
+      usePlayerStore.getState().setSelection(["first", "second"], "first");
+    });
+
+    harness.startResize(first, "start");
+    harness.movePointer(100, 0);
+
+    expect(
+      harness.storeElements().map((element) => [element.id, element.start, element.duration]),
+    ).toEqual([
+      ["first", 2, 3],
+      ["second", 6, 2],
+    ]);
+    expect(harness.onPreviewResizeElements).toHaveBeenLastCalledWith([
+      { element: first, start: 2, duration: 3, playbackStart: undefined },
+      { element: second, start: 6, duration: 2, playbackStart: undefined },
+    ]);
+
+    await harness.dropPointer();
+
+    expect(harness.onResizeElement).not.toHaveBeenCalled();
+    expect(harness.onResizeElements).toHaveBeenCalledTimes(1);
+    expect(harness.onResizeElements).toHaveBeenCalledWith([
+      { element: first, start: 2, duration: 3, playbackStart: undefined },
+      { element: second, start: 6, duration: 2, playbackStart: undefined },
+    ]);
+
+    harness.unmount();
+  });
+
+  it("resizes every selected end edge by the same delta", async () => {
+    const first = timelineElement({ id: "first", track: 0, zIndex: 1, start: 1, duration: 4 });
+    const second = timelineElement({ id: "second", track: 1, zIndex: 1, start: 5, duration: 3 });
+    const harness = renderDragHarness([first, second]);
+    act(() => {
+      usePlayerStore.getState().setSelection(["first", "second"], "first");
+    });
+
+    harness.startResize(first, "end");
+    harness.movePointer(100, 0);
+    await harness.dropPointer();
+
+    expect(harness.onResizeElement).not.toHaveBeenCalled();
+    expect(harness.onResizeElements).toHaveBeenCalledWith([
+      { element: first, start: 1, duration: 5, playbackStart: undefined },
+      { element: second, start: 5, duration: 4, playbackStart: undefined },
+    ]);
+
+    harness.unmount();
+  });
+
+  it("clamps selected start-edge resize at the most constrained duration", async () => {
+    const short = timelineElement({ id: "short", track: 0, zIndex: 1, start: 1, duration: 0.5 });
+    const long = timelineElement({ id: "long", track: 1, zIndex: 1, start: 4, duration: 2 });
+    const harness = renderDragHarness([short, long]);
+    act(() => {
+      usePlayerStore.getState().setSelection(["short", "long"], "short");
+    });
+
+    harness.startResize(short, "start");
+    harness.movePointer(100, 0);
+    await harness.dropPointer();
+
+    expect(harness.onResizeElements).toHaveBeenCalledWith([
+      { element: short, start: 1.4, duration: 0.1, playbackStart: undefined },
+      { element: long, start: 4.4, duration: 1.6, playbackStart: undefined },
+    ]);
+    expect(harness.onResizeElement).not.toHaveBeenCalled();
+
+    harness.unmount();
+  });
+
+  it("adjusts every selected media playback start during start-edge resize", async () => {
+    const audio = timelineElement({
+      id: "audio",
+      tag: "audio",
+      track: 0,
+      zIndex: 1,
+      start: 2,
+      duration: 3,
+      playbackStart: 1,
+      playbackRate: 1,
+    });
+    const video = timelineElement({
+      id: "video",
+      tag: "video",
+      track: 1,
+      zIndex: 1,
+      start: 5,
+      duration: 4,
+      playbackStart: 2,
+      playbackRate: 2,
+    });
+    const harness = renderDragHarness([audio, video]);
+    act(() => {
+      usePlayerStore.getState().setSelection(["audio", "video"], "audio");
+    });
+
+    harness.startResize(audio, "start");
+    harness.movePointer(50, 0);
+    await harness.dropPointer();
+
+    expect(harness.onResizeElements).toHaveBeenCalledWith([
+      { element: audio, start: 2.5, duration: 2.5, playbackStart: 1.5 },
+      { element: video, start: 5.5, duration: 3.5, playbackStart: 3 },
+    ]);
 
     harness.unmount();
   });

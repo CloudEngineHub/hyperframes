@@ -4,6 +4,7 @@ import {
   buildPromptCopyText,
   buildTimelineElementAgentPrompt,
   buildTimelineAgentPrompt,
+  clampTimelineGroupResizeDelta,
   getTimelineEditCapabilities,
   hasPatchableTimelineTarget,
   resolveBlockedTimelineEditIntent,
@@ -11,6 +12,7 @@ import {
   resolveTimelineMove,
   resolveTimelineResize,
   resolveTimelineGroupMove,
+  resolveTimelineGroupResize,
   snapKeyframePctToBeat,
   type TimelinePromptElement,
 } from "./timelineEditing";
@@ -257,6 +259,120 @@ describe("resolveTimelineGroupMove", () => {
       ],
     });
     expect(result.members[1]!.start - result.members[0]!.start).toBe(4);
+  });
+});
+
+describe("resolveTimelineGroupResize", () => {
+  it("returns the shared clamped delta without applying per-member starts", () => {
+    expect(
+      clampTimelineGroupResizeDelta(
+        1,
+        [
+          { start: 1, duration: 0.5 },
+          { start: 4, duration: 2 },
+        ],
+        "start",
+      ),
+    ).toBe(0.4);
+  });
+
+  it("applies an unclamped start-edge delta uniformly", () => {
+    const result = resolveTimelineGroupResize(
+      [
+        { start: 1, duration: 3 },
+        { start: 5, duration: 4 },
+      ],
+      "start",
+      1,
+    );
+
+    expect(result).toEqual({
+      delta: 1,
+      members: [
+        { start: 2, duration: 2, playbackStart: undefined },
+        { start: 6, duration: 3, playbackStart: undefined },
+      ],
+    });
+    expect(result.members[1]!.start - result.members[0]!.start).toBe(4);
+  });
+
+  it("clamps a start-edge delta when the earliest member reaches zero", () => {
+    const result = resolveTimelineGroupResize(
+      [
+        { start: 0.5, duration: 3 },
+        { start: 4, duration: 4 },
+      ],
+      "start",
+      -2,
+    );
+
+    expect(result).toEqual({
+      delta: -0.5,
+      members: [
+        { start: 0, duration: 3.5, playbackStart: undefined },
+        { start: 3.5, duration: 4.5, playbackStart: undefined },
+      ],
+    });
+    expect(result.members[1]!.start - result.members[0]!.start).toBe(3.5);
+  });
+
+  it("clamps a start-edge delta when any member reaches minimum duration", () => {
+    const result = resolveTimelineGroupResize(
+      [
+        { start: 1, duration: 0.5 },
+        { start: 4, duration: 2 },
+      ],
+      "start",
+      1,
+    );
+
+    expect(result).toEqual({
+      delta: 0.4,
+      members: [
+        { start: 1.4, duration: 0.1, playbackStart: undefined },
+        { start: 4.4, duration: 1.6, playbackStart: undefined },
+      ],
+    });
+    expect(result.members[1]!.start - result.members[0]!.start).toBeCloseTo(3);
+  });
+
+  it("clamps an end-edge delta when any member reaches minimum duration", () => {
+    const result = resolveTimelineGroupResize(
+      [
+        { start: 1, duration: 0.5 },
+        { start: 4, duration: 2 },
+      ],
+      "end",
+      -1,
+    );
+
+    expect(result).toEqual({
+      delta: -0.4,
+      members: [
+        { start: 1, duration: 0.1, playbackStart: undefined },
+        { start: 4, duration: 1.6, playbackStart: undefined },
+      ],
+    });
+    expect(result.members[1]!.start - result.members[0]!.start).toBe(3);
+  });
+
+  it("adjusts each start-edge playback start using the shared delta", () => {
+    const result = resolveTimelineGroupResize(
+      [
+        { start: 2, duration: 3, playbackStart: 1, playbackRate: 1 },
+        { start: 5, duration: 4, playbackStart: 2, playbackRate: 2 },
+      ],
+      "start",
+      0.5,
+    );
+
+    expect(result).toEqual({
+      delta: 0.5,
+      members: [
+        { start: 2.5, duration: 2.5, playbackStart: 1.5 },
+        { start: 5.5, duration: 3.5, playbackStart: 3 },
+      ],
+    });
   });
 });
 
