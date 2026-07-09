@@ -6,6 +6,7 @@ import {
   applyPositionEditToElement,
   applyPositionEdits,
   composeTranslate,
+  installPositionEditsSeekReapply,
 } from "./positionEdits";
 
 function makeElement(attrs: Record<string, string>, style = ""): HTMLElement {
@@ -172,5 +173,47 @@ describe("applyPositionEdits", () => {
     applyPositionEditToElement(el, { force: true });
     expect(el.style.getPropertyValue("translate")).toBe("30px 20px");
     el.remove();
+  });
+});
+
+describe("installPositionEditsSeekReapply", () => {
+  it("wraps __player.renderSeek so each call reapplies position edits", () => {
+    const el = makeElement({ "data-x": "10", "data-y": "0", "data-hf-edit-base-x": "0" });
+    const calls: number[] = [];
+    // @ts-expect-error test global
+    window.__player = { renderSeek: (time: number) => calls.push(time) };
+
+    installPositionEditsSeekReapply(window as Window & typeof globalThis);
+    // @ts-expect-error test global
+    window.__player.renderSeek(1.5);
+
+    expect(calls).toEqual([1.5]);
+    expect(el.style.getPropertyValue("translate")).toBe("10px 0px");
+    // @ts-expect-error test global
+    delete window.__player;
+    el.remove();
+  });
+
+  it("is idempotent when installed twice", () => {
+    const el = makeElement({ "data-x": "5", "data-y": "0", "data-hf-edit-base-x": "0" });
+    const calls: number[] = [];
+    // @ts-expect-error test global
+    window.__player = { renderSeek: (time: number) => calls.push(time) };
+
+    installPositionEditsSeekReapply(window as Window & typeof globalThis);
+    installPositionEditsSeekReapply(window as Window & typeof globalThis);
+    // @ts-expect-error test global
+    window.__player.renderSeek(2);
+
+    expect(calls).toEqual([2]);
+    // @ts-expect-error test global
+    delete window.__player;
+    el.remove();
+  });
+
+  it("does not throw when neither seek global exists", () => {
+    expect(() =>
+      installPositionEditsSeekReapply(window as Window & typeof globalThis),
+    ).not.toThrow();
   });
 });

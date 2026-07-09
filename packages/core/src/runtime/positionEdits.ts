@@ -154,7 +154,7 @@ export function applyPositionEditToElement(el: HTMLElement, opts?: { force?: boo
  * Apply all pending position edits in the document. Returns the number of
  * elements updated.
  */
-export function applyPositionEdits(doc: Document): number {
+export function applyPositionEdits(doc: Document, opts?: { force?: boolean }): number {
   const marked = doc.querySelectorAll(`[${EDIT_BASE_X_ATTR}], [${EDIT_BASE_Y_ATTR}]`);
   // Not `instanceof HTMLElement`: `doc` is frequently an iframe's document (the
   // SDK's edit preview, a host embedding a composition), and its elements are
@@ -170,8 +170,80 @@ export function applyPositionEdits(doc: Document): number {
       ? el instanceof RealmHTMLElement
       : typeof (el as HTMLElement).style?.setProperty === "function";
     if (!isStylable) continue;
-    applyPositionEditToElement(el as HTMLElement);
+    applyPositionEditToElement(el as HTMLElement, opts);
     applied += 1;
   }
   return applied;
+}
+
+const SEEK_REAPPLY_WRAPPED = "__hfPositionEditsSeekReapplyWrapped";
+
+type SeekWindow = Window &
+  typeof globalThis & {
+    __hf?: { seek?: (...args: unknown[]) => unknown };
+    __player?: { renderSeek?: (...args: unknown[]) => unknown };
+  };
+
+/** Reapply SDK position edits after every render seek, including late-bound seeks. */
+export function installPositionEditsSeekReapply(win: Window & typeof globalThis): void {
+  const target = win as SeekWindow;
+  const reapply = (): void => {
+    try {
+      applyPositionEdits(target.document, { force: true });
+    } catch {
+      // A position edit must never break the render seek path.
+    }
+  };
+
+  const isWrapped = (fn: unknown): fn is (...args: unknown[]) => unknown =>
+    typeof fn === "function" &&
+    Boolean((fn as { [SEEK_REAPPLY_WRAPPED]?: boolean })[SEEK_REAPPLY_WRAPPED]);
+
+  const markWrapped = (fn: (...args: unknown[]) => unknown): void => {
+    try {
+      Object.defineProperty(fn, SEEK_REAPPLY_WRAPPED, { value: true });
+    } catch {
+      // Frozen functions cannot be marked; the wrapper itself is still valid.
+    }
+  };
+
+  const wrapOne = (
+    get: () => unknown,
+    set: (fn: (...args: unknown[]) => unknown) => void,
+  ): void => {
+    const fn = get();
+    if (typeof fn !== "function") return;
+    if (isWrapped(fn)) return;
+    const wrapped = function (this: unknown, ...args: unknown[]): unknown {
+      const result = fn.apply(this, args);
+      reapply();
+      return result;
+    };
+    markWrapped(wrapped);
+    set(wrapped);
+    reapply();
+  };
+
+  const wrapAll = (): void => {
+    wrapOne(
+      () => target.__hf?.seek,
+      (fn) => {
+        if (target.__hf) target.__hf.seek = fn;
+      },
+    );
+    wrapOne(
+      () => target.__player?.renderSeek,
+      (fn) => {
+        if (target.__player) target.__player.renderSeek = fn;
+      },
+    );
+  };
+
+  wrapAll();
+  let remaining = 120;
+  const interval = target.setInterval(() => {
+    wrapAll();
+    remaining -= 1;
+    if (remaining <= 0) target.clearInterval(interval);
+  }, 50);
 }
