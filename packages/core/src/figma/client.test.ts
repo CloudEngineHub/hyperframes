@@ -153,6 +153,47 @@ describe("error mapping", () => {
     expect(waits).toEqual([1000, 2000]); // exponential backoff
   });
 
+  it("caps an oversized Retry-After at 60s so the CLI can't block for an hour", async () => {
+    let n = 0;
+    const waits: number[] = [];
+    const client = createFigmaClient({
+      token: "t",
+      fetch: (() => {
+        n += 1;
+        return Promise.resolve(
+          n === 1
+            ? new Response("{}", { status: 429, headers: { "retry-after": "3600" } })
+            : jsonResponse(200, { meta: { styles: [] } }),
+        );
+      }) as FigmaFetch,
+      sleep: (ms) => {
+        waits.push(ms);
+        return Promise.resolve();
+      },
+    });
+    await client.styles("F");
+    expect(waits).toEqual([60_000]); // 3600s clamped, not 3_600_000
+  });
+
+  it("retries 429 on non-styles endpoints too (retry lives in the shared get)", async () => {
+    let n = 0;
+    const client = createFigmaClient({
+      token: "t",
+      fetch: (() => {
+        n += 1;
+        return Promise.resolve(
+          n < 2
+            ? jsonResponse(429, {})
+            : jsonResponse(200, { images: { "1:2": "https://cdn/a.png" } }),
+        );
+      }) as FigmaFetch,
+      sleep: () => Promise.resolve(),
+    });
+    const out = await client.renderNodes("F", ["1:2"], { format: "png" });
+    expect(out[0]?.url).toBe("https://cdn/a.png");
+    expect(n).toBe(2); // one 429 then success
+  });
+
   it("honors Retry-After (seconds) over the backoff default", async () => {
     let n = 0;
     const waits: number[] = [];

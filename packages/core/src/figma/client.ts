@@ -122,15 +122,23 @@ const SCOPE_HINTS = {
   libraryContent: "Library content: Read-only (library_content:read)",
 } as const;
 
+/** Longest we'll auto-wait on a single Retry-After before giving up — past a
+ *  minute the user is better off cancelling and reducing batch size (the
+ *  RATE_LIMITED message says so) than watching the CLI block silently. */
+const MAX_RETRY_WAIT_MS = 60_000;
+
 /** Parse a Retry-After header (figma sends integer seconds; the HTTP spec
- *  also allows a date) into ms, or null when absent/unparseable. */
+ *  also allows a date) into ms, capped at MAX_RETRY_WAIT_MS, or null when
+ *  absent/unparseable. The cap keeps a spec-legal `Retry-After: 3600` (tier
+ *  quota exhaustion) from silently blocking the CLI for an hour. */
 function retryAfterMs(res: Response): number | null {
   const raw = res.headers.get("retry-after");
   if (raw === null) return null;
   const secs = Number(raw);
-  if (Number.isFinite(secs)) return Math.max(0, secs * 1000);
+  if (Number.isFinite(secs)) return Math.min(MAX_RETRY_WAIT_MS, Math.max(0, secs * 1000));
   const date = Date.parse(raw);
-  return Number.isNaN(date) ? null : Math.max(0, date - Date.now());
+  if (Number.isNaN(date)) return null;
+  return Math.min(MAX_RETRY_WAIT_MS, Math.max(0, date - Date.now()));
 }
 
 /** Figma's error bodies are precise — "Invalid token", or "Invalid scope(s):
@@ -217,8 +225,11 @@ export function createFigmaClient(options: FigmaClientOptions): FigmaClient {
    *  surfaced verbatim. Falls back to the endpoint's scopeHint when the body
    *  is silent. */
   function forbiddenError(body: string | null, opts: GetOptions): FigmaClientError {
+    // Every branch RETURNS the error (the caller throws once) — no mixed
+    // throw/return, so a future caller that wraps the result gets consistent
+    // behavior across all three cases.
     if (body && /invalid token/i.test(body))
-      throw new FigmaClientError(
+      return new FigmaClientError(
         "BAD_TOKEN",
         "figma rejected the token (403 Invalid token) — it is invalid, expired, or revoked. Re-mint at figma.com/settings → Security, then update FIGMA_TOKEN.",
         403,

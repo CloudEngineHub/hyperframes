@@ -3,7 +3,12 @@ import { describe, expect, it, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runAssetImport, runAssetImportMany, type AssetImportDeps } from "./asset.js";
+import {
+  gatherAssetRefs,
+  runAssetImport,
+  runAssetImportMany,
+  type AssetImportDeps,
+} from "./asset.js";
 import type { FigmaClient } from "@hyperframes/core/figma";
 
 const dirs: string[] = [];
@@ -172,6 +177,18 @@ describe("runAssetImport", () => {
     expect(batchSize).toBe(3);
     // distinct frozen files, all recorded
     expect(new Set(results.map((r) => r.record.id)).size).toBe(3);
+  });
+
+  it("gatherAssetRefs splits bare comma-joined ids but keeps URLs whole", () => {
+    // bare tokens comma-split
+    expect(gatherAssetRefs(["KEY:1-2,KEY:3-4"])).toEqual(["KEY:1-2", "KEY:3-4"]);
+    // space-separated positionals preserved
+    expect(gatherAssetRefs(["KEY:1-2", "KEY:3-4"])).toEqual(["KEY:1-2", "KEY:3-4"]);
+    // a URL with a comma in its query is NOT torn apart
+    const url = "https://www.figma.com/design/KEY/F?node-id=1:2,3:4";
+    expect(gatherAssetRefs([url])).toEqual([url]);
+    // mixed: URL stays whole, bare token splits
+    expect(gatherAssetRefs([url, "KEY:5-6,KEY:7-8"])).toEqual([url, "KEY:5-6", "KEY:7-8"]);
   });
 
   it("splits comma-joined refs and rejects a cross-file batch", async () => {

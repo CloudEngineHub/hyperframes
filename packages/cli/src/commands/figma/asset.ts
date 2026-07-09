@@ -50,6 +50,20 @@ export interface AssetImportResult {
   reused: boolean;
 }
 
+/**
+ * Flatten CLI positionals into asset refs. Comma-splits bare
+ * `fileKey:nodeId` tokens (so `asset A,B` batches) but leaves URL tokens
+ * whole — a figma URL can carry commas in its query (multi-select
+ * `node-id=1:2,3:4`), and splitting those would tear the URL apart. To batch
+ * URLs, pass them as separate positional args.
+ */
+export function gatherAssetRefs(positionals: string[]): string[] {
+  return positionals
+    .flatMap((r) => (/^https?:/i.test(r.trim()) ? [r] : r.split(",")))
+    .map((r) => r.trim())
+    .filter((r) => r.length > 0);
+}
+
 function requireNodeRef(refInput: string): { fileKey: string; nodeId: string } {
   const ref = parseFigmaRef(refInput);
   if (!ref.nodeId)
@@ -271,12 +285,10 @@ export default defineCommand({
       // named `ref`), so use `_` as the source of truth — reading both would
       // double-count the first. Split any comma-joined ids, so `asset A B`,
       // `asset A,B`, and `asset URL1 URL2` all batch into ONE /v1/images call.
-      const positionals =
-        Array.isArray(args._) && args._.length > 0 ? (args._ as string[]) : [args.ref];
-      const refs = positionals
-        .flatMap((r) => String(r).split(","))
-        .map((r) => r.trim())
-        .filter((r) => r.length > 0);
+      const positionals = (
+        Array.isArray(args._) && args._.length > 0 ? (args._ as string[]) : [args.ref]
+      ).map(String);
+      const refs = gatherAssetRefs(positionals);
       const results = await runAssetImportMany(
         refs,
         {
