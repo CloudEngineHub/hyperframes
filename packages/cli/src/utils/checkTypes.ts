@@ -235,3 +235,12 @@ export interface CheckDependencies {
     requests: CheckFindingCropRequest[],
   ): Promise<string[]>;
 }
+
+export function rectToBbox(rect: {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}): CheckBbox {
+  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+}

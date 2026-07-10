@@ -147,15 +147,12 @@ export function createCheckCommand(
 }
 
 function parseCheckOptions(args: Record<string, unknown>): CheckOptions {
-  const maxTransitionSamplesRaw = parseInt(String(args["max-transition-samples"] ?? ""), 10);
+  const maxTransitionSamples = positiveInteger(args["max-transition-samples"], 0);
   return {
     samples: positiveInteger(args.samples, DEFAULT_CHECK_OPTIONS.samples),
     at: parseAt(args.at),
     atTransitions: args["at-transitions"] === true,
-    maxTransitionSamples:
-      Number.isFinite(maxTransitionSamplesRaw) && maxTransitionSamplesRaw > 0
-        ? maxTransitionSamplesRaw
-        : undefined,
+    maxTransitionSamples: maxTransitionSamples > 0 ? maxTransitionSamples : undefined,
     maxIssues: positiveInteger(args["max-issues"], DEFAULT_CHECK_OPTIONS.maxIssues),
     collapseStatic: args["collapse-static"] !== false,
     tolerance: nonNegativeNumber(args.tolerance, DEFAULT_CHECK_OPTIONS.tolerance),

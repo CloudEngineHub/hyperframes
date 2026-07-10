@@ -7,6 +7,15 @@ const SHADER_TRANSITIONS_TIMEOUT_MS = 90_000;
 const CAPTURE_SETTLE_MS = 1500;
 const PREFERRED_SEEK_TARGET_WAIT_MS = 500;
 
+// The audit-grade seek tuning shared by check and the deprecated inspect/layout:
+// bridge+timeline fallback, ordered double-rAF settle, bounded font wait, sleep.
+export const AUDIT_SEEK_OPTIONS = {
+  fallbackToBridgeAndTimelines: true,
+  animationFrameSettle: "double",
+  waitForFontsMs: 500,
+  settleMs: 120,
+} as const;
+
 export interface SeekCompositionTimelineOptions {
   fallbackToBridgeAndTimelines?: boolean;
   waitForPreferredSeekTargetMs?: number;
@@ -305,7 +314,10 @@ export type ZoomTarget =
 // Four bare comma-separated numbers is unambiguous — no valid CSS selector
 // parses as that shape — so it always means "exact pixel region".
 const ZOOM_REGION_PATTERN = /^-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?){3}$/;
-const DEFAULT_ZOOM_PADDING_PX = 24;
+export const DEFAULT_ZOOM_PADDING_PX = 24;
+// One knob for every zoom/crop consumer (snapshot --zoom-scale default, check's
+// finding crops): density of the captured pixels relative to CSS pixels.
+export const DEFAULT_ZOOM_SCALE = 3;
 
 /** Parse `snapshot --zoom` into either a CSS selector or an exact pixel region "x,y,w,h". */
 export function parseZoomTarget(value: string): ZoomTarget {

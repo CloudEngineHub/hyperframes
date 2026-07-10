@@ -2,6 +2,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Page } from "puppeteer-core";
 import {
+  AUDIT_SEEK_OPTIONS,
+  DEFAULT_ZOOM_PADDING_PX,
+  DEFAULT_ZOOM_SCALE,
   captureRegionCrop,
   openSettledCompositionPage,
   padCropRegion,
@@ -15,6 +18,7 @@ import { normalizeErrorMessage } from "./errorMessage.js";
 import { ambiguousIssue, type MotionFrame } from "./motionAudit.js";
 import type { LayoutIssue, LayoutIssueCode, LayoutRect } from "./layoutAudit.js";
 import { serveStaticProjectHtml } from "./staticProjectServer.js";
+import { rectToBbox } from "./checkTypes.js";
 import type {
   AnchoredLayoutIssue,
   CheckAnchor,
@@ -34,18 +38,6 @@ import type {
   RunAuditGrid,
 } from "./checkTypes.js";
 import type { ProjectDir } from "./project.js";
-
-const SEEK_OPTIONS = {
-  fallbackToBridgeAndTimelines: true,
-  animationFrameSettle: "double" as const,
-  waitForFontsMs: 500,
-  settleMs: 120,
-};
-
-// --zoom's default padding/scale, reused here so finding crops carry the same
-// bit of surrounding context an agent gets from `snapshot --zoom`.
-const FINDING_CROP_PADDING_PX = 24;
-const FINDING_CROP_SCALE = 3;
 
 interface RuntimeDraft {
   code: string;
@@ -113,7 +105,7 @@ export async function runBrowserCheck(
     });
     chromeBrowser = session.browser;
     const page = session.page;
-    await waitForPreferredSeekTarget(page, 500);
+    await waitForPreferredSeekTarget(page);
 
     const rootAnchor = await resolveRootAnchor(page);
     const launchSettleMs = Date.now() - launchSettleStart;
@@ -157,18 +149,18 @@ export async function captureFindingCrops(
     });
     chromeBrowser = session.browser;
     const page = session.page;
-    await waitForPreferredSeekTarget(page, 500);
+    await waitForPreferredSeekTarget(page);
 
     const snapshotDir = join(project.dir, "snapshots");
     mkdirSync(snapshotDir, { recursive: true });
     for (const request of requests) {
-      await seekCompositionTimeline(page, request.time, SEEK_OPTIONS);
+      await seekCompositionTimeline(page, request.time, AUDIT_SEEK_OPTIONS);
       const canvas = await page.evaluate(() => ({
         width: window.innerWidth,
         height: window.innerHeight,
       }));
-      const region = padCropRegion(request.bbox, canvas, FINDING_CROP_PADDING_PX);
-      const buffer = await captureRegionCrop(page, region, FINDING_CROP_SCALE);
+      const region = padCropRegion(request.bbox, canvas, DEFAULT_ZOOM_PADDING_PX);
+      const buffer = await captureRegionCrop(page, region, DEFAULT_ZOOM_SCALE);
       writeFileSync(join(snapshotDir, request.filename), buffer);
       written.push(join("snapshots", request.filename));
     }
@@ -253,7 +245,7 @@ function createPageDriver(page: Page, setTime: (time: number) => void): CheckAud
     findAmbiguousSelectors: (selectors) => findAmbiguousSelectors(page, selectors),
     seek: async (time) => {
       setTime(time);
-      await seekCompositionTimeline(page, time, SEEK_OPTIONS);
+      await seekCompositionTimeline(page, time, AUDIT_SEEK_OPTIONS);
     },
     collectLayout: (time, tolerance) => collectLayout(page, time, tolerance),
     collectLayoutGeometry: () => collectLayoutGeometry(page),
@@ -897,10 +889,6 @@ function fallbackAnchor(request: AnchorRequest | undefined): CheckAnchor {
     bbox: request?.bbox ?? { x: 0, y: 0, width: 0, height: 0 },
     time: request?.time ?? 0,
   };
-}
-
-function rectToBbox(rect: LayoutRect): CheckBbox {
-  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
 
 function parseBbox(value: unknown): CheckBbox | null {

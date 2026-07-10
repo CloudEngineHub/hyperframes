@@ -28,6 +28,7 @@ import {
   suggestCompliantForegroundColor,
   type Rgb,
 } from "../commands/contrast-bg.js";
+import { rectToBbox } from "./checkTypes.js";
 import type {
   AnchoredLayoutIssue,
   CheckAnnotationBox,
@@ -875,10 +876,6 @@ function failureReport(options: CheckOptions, finding: CheckFinding): CheckRepor
   const browser = emptyBrowserResult();
   browser.runtimeFindings.push(finding);
   return buildReport(options, lint, browser, { kind: "none" }, [], []);
-}
-
-function rectToBbox(rect: LayoutRect): CheckBbox {
-  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
 }
 
 function isBbox(value: unknown): value is CheckBbox {

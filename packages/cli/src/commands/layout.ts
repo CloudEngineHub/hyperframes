@@ -27,6 +27,7 @@ import {
 } from "../utils/motionAudit.js";
 import { findMotionSpec, readMotionSpec, type MotionSpec } from "../utils/motionSpec.js";
 import {
+  AUDIT_SEEK_OPTIONS,
   seekCompositionTimeline,
   waitForCompositionFonts,
   type SeekCompositionTimelineOptions,
@@ -34,13 +35,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const SEEK_SETTLE_MS = 120;
-const LAYOUT_SEEK_OPTIONS: SeekCompositionTimelineOptions = {
-  fallbackToBridgeAndTimelines: true,
-  animationFrameSettle: "double",
-  waitForFontsMs: 500,
-  settleMs: SEEK_SETTLE_MS,
-};
+const LAYOUT_SEEK_OPTIONS: SeekCompositionTimelineOptions = AUDIT_SEEK_OPTIONS;
 // All new envelope fields are optional (?); additive changes don't bump this.
 const INSPECT_SCHEMA_VERSION = 1;
 // Motion verification (#1437): dense sampling grid for the seeked-timeline checks.

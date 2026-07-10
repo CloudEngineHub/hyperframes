@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, mkdirSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { resolve, join, relative, isAbsolute, basename } from "node:path";
 import {
+  DEFAULT_ZOOM_SCALE,
   captureRegionCrop,
   openSettledCompositionPage,
   parseZoomTarget,
@@ -119,7 +120,7 @@ export const examples: Example[] = [
  * falls back to the default for anything that doesn't parse as a positive number. */
 export function parseZoomScale(value: unknown): number {
   const parsed = parseFloat(String(value ?? ""));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ZOOM_SCALE;
 }
 
 /**
@@ -457,7 +458,11 @@ async function captureSnapshots(
             );
             continue;
           }
-          const buffer = await captureRegionCrop(page, region, opts.zoomScale ?? 3);
+          const buffer = await captureRegionCrop(
+            page,
+            region,
+            opts.zoomScale ?? DEFAULT_ZOOM_SCALE,
+          );
           writeFileSync(framePath, buffer);
         } else {
           await page.screenshot({ path: framePath, type: "png" });

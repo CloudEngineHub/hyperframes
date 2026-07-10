@@ -19,8 +19,6 @@ import {
   seekCompositionTimeline,
 } from "../capture/captureCompositionFrame.js";
 
-export { waitForPreferredSeekTarget } from "../capture/captureCompositionFrame.js";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

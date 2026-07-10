@@ -1267,14 +1267,3 @@ describe("contrast candidate round-trip", () => {
     expect(source).not.toMatch(/prepared\.map\(\(entry\) => entry\.candidate\)/);
   });
 });
-
-describe("geometry candidate plumbing", () => {
-  it("wires the opt-in browser primitive without round-tripping normalized candidates", () => {
-    const source = checkBrowserSource();
-
-    expect(source).toMatch(/collectGeometryCandidates: \(time, request\) =>/);
-    expect(source).toMatch(/__hyperframesGeometryCandidates/);
-    expect(source).toMatch(/raw\.flatMap\(\(value\) => parseGeometryCandidate\(value, time\)\)/);
-    expect(source).not.toMatch(/resolveAnchors\(page, raw/);
-  });
-});

@@ -16,8 +16,8 @@ import {
   raceMediaReady,
   resolveNavigationTimeoutMs,
   shouldIgnoreRequestFailure,
-  waitForPreferredSeekTarget,
 } from "./validate.js";
+import { waitForPreferredSeekTarget } from "../capture/captureCompositionFrame.js";
 import type { ProjectLintResult } from "../utils/lintProject.js";
 
 // validateInBrowser lazy-loads the producer localize helpers via loadProducer;

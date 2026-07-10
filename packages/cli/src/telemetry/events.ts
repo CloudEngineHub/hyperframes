@@ -3,6 +3,12 @@ import type { SubTimelineWaitOutcome } from "@hyperframes/engine";
 import { trackEvent } from "./client.js";
 import { readConfig } from "./config.js";
 
+// run_id is attached only when the orchestrator set HYPERFRAMES_RUN_ID — an
+// absent property, never null/"" (PostHog treats those as real values).
+function runIdField(runId: string | undefined): { run_id?: string } {
+  return runId !== undefined ? { run_id: runId } : {};
+}
+
 export interface RenderObservabilityTelemetryPayload {
   /** Worst sub-composition timeline wait outcome across sessions. */
   subTimelineWait?: SubTimelineWaitOutcome;
@@ -101,7 +107,7 @@ function redactTelemetryMessage(value: string): string {
 export function trackCommand(command: string, runId?: string): void {
   trackEvent("cli_command", {
     command,
-    ...(runId !== undefined ? { run_id: runId } : {}),
+    ...runIdField(runId),
   });
 }
 
@@ -554,7 +560,7 @@ export function trackCommandResult(props: {
     success: props.success,
     exit_code: props.exitCode,
     duration_ms: props.durationMs,
-    ...(props.runId !== undefined ? { run_id: props.runId } : {}),
+    ...runIdField(props.runId),
   });
 }
 
@@ -606,6 +612,6 @@ export function trackCheckReport(props: {
     contrast_points: props.contrastPoints,
     ok: props.ok,
     exit_code: props.exitCode,
-    ...(props.runId !== undefined ? { run_id: props.runId } : {}),
+    ...runIdField(props.runId),
   });
 }

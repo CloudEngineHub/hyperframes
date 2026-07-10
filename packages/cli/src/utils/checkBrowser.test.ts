@@ -16,7 +16,10 @@ vi.mock("@hyperframes/core/compiler", () => ({
   bundleToSingleHtml: vi.fn(async () => "<html></html>"),
 }));
 
-vi.mock("../capture/captureCompositionFrame.js", () => ({
+vi.mock("../capture/captureCompositionFrame.js", async (importOriginal) => ({
+  // Partial mock: constants (AUDIT_SEEK_OPTIONS, DEFAULT_ZOOM_*) stay real so
+  // they remain single-sourced; only the browser-touching functions are faked.
+  ...(await importOriginal<typeof import("../capture/captureCompositionFrame.js")>()),
   openSettledCompositionPage: vi.fn(),
   resolveCliChromeGpuMode: vi.fn(() => "hardware"),
   seekCompositionTimeline: vi.fn(async () => undefined),
@@ -38,9 +41,14 @@ const PROJECT: ProjectDir = {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   document.body.innerHTML = "";
   Reflect.deleteProperty(window, "__hyperframesGeometryCandidates");
   Reflect.deleteProperty(window, "__hyperframesLayoutAudit");
+  Reflect.deleteProperty(window, "__contrastAuditPrepare");
+  Reflect.deleteProperty(window, "__contrastAuditFinish");
+  Reflect.deleteProperty(window, "__contrastAuditRestores");
+  Reflect.deleteProperty(window, "__contrastAuditRestoreIfPending");
 });
 
 it("carries raw browser geometry through the page driver and pipeline", async () => {
@@ -92,6 +100,114 @@ it("carries raw browser geometry through the page driver and pipeline", async ()
   ]);
   expect(result.timings).toEqual({ launchSettleMs: 60, seekLoopMs: 40, contrastMs: 0 });
   expect(mocks.serverClose).toHaveBeenCalledOnce();
+});
+
+it("round-trips the browser script's raw contrast candidates back into finish", async () => {
+  // The U2 regression class: Node parses prepare's candidates for reporting,
+  // but must hand the UNTOUCHED objects back to __contrastAuditFinish — the
+  // page script samples pixels via its own bbox shape (w/h). A normalized
+  // candidate (width/height) makes every sample rect NaN and the audit
+  // silently reports zero checked elements as green.
+  vi.spyOn(Date, "now").mockReturnValue(100);
+  document.body.innerHTML = `
+    <div data-composition-id="main" data-duration="10" data-width="640" data-height="360">
+      <div id="headline">Readable copy</div>
+    </div>
+  `;
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: 640 });
+  Object.defineProperty(window, "innerHeight", { configurable: true, value: 360 });
+  const root = document.querySelector("[data-composition-id]");
+  const headline = document.querySelector("#headline");
+  if (!root || !headline) throw new Error("Contrast fixture failed to mount");
+  vi.spyOn(root, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 640, 360));
+  vi.spyOn(headline, "getBoundingClientRect").mockReturnValue(new DOMRect(50, 50, 300, 40));
+  vi.spyOn(window, "getComputedStyle").mockImplementation(
+    () =>
+      ({
+        display: "block",
+        visibility: "visible",
+        opacity: "1",
+        color: "rgb(255,255,255)",
+        fill: "",
+        backgroundColor: "rgba(0,0,0,0)",
+        backgroundImage: "none",
+        fontSize: "32px",
+        fontWeight: "700",
+      }) as unknown as CSSStyleDeclaration,
+  );
+
+  // happy-dom can't decode PNGs: stub Image (sync onload) and the canvas 2D
+  // context the way layout-audit.browser.test.ts's contrast harness does, so
+  // the REAL __contrastAuditFinish runs its sampling path end to end.
+  class MockImage {
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    naturalWidth = 640;
+    naturalHeight = 360;
+
+    set src(_value: string) {
+      this.onload?.();
+    }
+  }
+  vi.stubGlobal("Image", MockImage);
+  const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, "getContext") as unknown as {
+    mockReturnValue(value: CanvasRenderingContext2D): void;
+  };
+  getContextSpy.mockReturnValue({
+    drawImage() {},
+    getImageData() {
+      return { data: new Uint8ClampedArray(640 * 360 * 4).fill(255) };
+    },
+  } as unknown as CanvasRenderingContext2D);
+
+  const received: Array<Record<string, unknown>> = [];
+  const page = fakePage();
+  const injectScript = page.addScriptTag;
+  page.addScriptTag = vi.fn(async (arg: { content: string }) => {
+    await injectScript(arg);
+    const w = window as unknown as {
+      __contrastAuditFinish?: ((...args: unknown[]) => Promise<unknown>) & { wrapped?: boolean };
+    };
+    const finish = w.__contrastAuditFinish;
+    if (finish && !finish.wrapped) {
+      const wrapper = Object.assign(
+        async (...args: unknown[]) => {
+          const candidates = args[2];
+          if (Array.isArray(candidates)) {
+            received.push(...(candidates as Array<Record<string, unknown>>));
+          }
+          return finish(...args);
+        },
+        { wrapped: true },
+      );
+      w.__contrastAuditFinish = wrapper;
+    }
+  });
+  page.screenshot = vi.fn(async () => "c3R1Yg==");
+  const browser = Object.assign(Object.create(null), {
+    close: vi.fn(async () => undefined),
+  });
+  vi.mocked(openSettledCompositionPage).mockImplementation(
+    async (_html: string, _url: string, options: OpenSettledCompositionPageOptions) => {
+      await options.beforeNavigate?.(page);
+      return { page, browser, renderReadyTimedOut: false };
+    },
+  );
+
+  await runBrowserCheck(
+    PROJECT,
+    { ...DEFAULT_CHECK_OPTIONS, samples: 1, contrast: true },
+    { kind: "none" },
+    runAuditGrid,
+  );
+
+  expect(received.length).toBeGreaterThan(0);
+  for (const candidate of received) {
+    const bbox = candidate.bbox as Record<string, unknown>;
+    // The page script's own shape (w/h), not Node's envelope shape (width/height):
+    expect(typeof bbox.w).toBe("number");
+    expect(typeof bbox.h).toBe("number");
+  }
 });
 
 describe("captureOverviewShot", () => {

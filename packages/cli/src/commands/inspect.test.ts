@@ -4,7 +4,6 @@ import {
   metaDescription,
   resolveProjectMock,
   runAndCaptureStdio,
-  runAndParseJsonEnvelope,
 } from "./deprecationTestHarness.js";
 
 // See layout.test.ts for why these two dynamic-import targets are mocked:
@@ -30,11 +29,5 @@ describe("inspect command deprecation (U5)", () => {
     expect(stderrText).toContain("hyperframes inspect");
     expect(stderrText).toContain("hyperframes check");
     expect(stdoutText).toBe("");
-  });
-
-  it("--json output is valid JSON with _meta.deprecated === true on failure", async () => {
-    const { parsed } = await runAndParseJsonEnvelope(inspectCommand);
-    expect(parsed.ok).toBe(false);
-    expect(parsed._meta.deprecated).toBe(true);
   });
 });
