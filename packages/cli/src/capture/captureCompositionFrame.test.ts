@@ -343,12 +343,12 @@ describe("runFfmpegOnce", () => {
 
 describe("installPageFunctionGuard", () => {
   it("defines the keepNames __name shim in the page before any script runs", async () => {
-    const evaluateOnNewDocument = vi.fn(async () => undefined);
+    const evaluateOnNewDocument = vi.fn(async (_source: string) => undefined);
 
     await installPageFunctionGuard({ evaluateOnNewDocument });
 
     expect(evaluateOnNewDocument).toHaveBeenCalledOnce();
-    const source = evaluateOnNewDocument.mock.calls[0]?.[0] as string;
+    const source = evaluateOnNewDocument.mock.calls[0]?.[0] ?? "";
     expect(source).toContain("self.__name");
     // The shim must be a no-op passthrough so wrapped functions stay callable.
     const shim = new Function(`const self = {}; ${source}; return self.__name;`)() as (
