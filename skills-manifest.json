@@ -14,11 +14,11 @@
       "files": 2
     },
     "general-video": {
-      "hash": "e26710c3537b3a07",
+      "hash": "67f3dae100541eed",
       "files": 1
     },
     "hyperframes": {
-      "hash": "7ddbb928a3674e5e",
+      "hash": "132596767485f923",
       "files": 1
     },
     "hyperframes-animation": {
@@ -50,7 +50,7 @@
       "files": 113
     },
     "motion-graphics": {
-      "hash": "96ed2f7d8051b009",
+      "hash": "0f1ac928e387a74c",
       "files": 23
     },
     "music-to-video": {
@@ -62,7 +62,7 @@
       "files": 22
     },
     "product-launch-video": {
-      "hash": "4f858cc4d59324da",
+      "hash": "937dcd6c581fb054",
       "files": 20
     },
     "remotion-to-hyperframes": {
@@ -70,7 +70,7 @@
       "files": 70
     },
     "slideshow": {
-      "hash": "19a0332616bc397b",
+      "hash": "114b57cf22b39068",
       "files": 2
     },
     "talking-head-recut": {
@@ -78,7 +78,7 @@
       "files": 27
     },
     "website-to-video": {
-      "hash": "32bdb559f4d18f99",
+      "hash": "79af52a847abaa43",
       "files": 32
     }
   }
