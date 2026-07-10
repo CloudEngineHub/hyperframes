@@ -89,7 +89,8 @@ export function injectSdkPositionEditsRenderScript(html: string): string {
   if (!html.includes("data-hf-edit-base-x") && !html.includes("data-hf-edit-base-y")) {
     return html;
   }
-  const script = `<script>${getPositionEditsRenderScript()}</script>`;
+  const scriptBody = getPositionEditsRenderScript().replace(/<\/script/gi, "<\\/script");
+  const script = `<script>${scriptBody}</script>`;
   const bodyClose = html.search(/<\/body\s*>/i);
   if (bodyClose < 0) return `${html}${script}`;
   return `${html.slice(0, bodyClose)}${script}${html.slice(bodyClose)}`;
