@@ -233,3 +233,145 @@ export function PinnedZoneDivider() {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  FlatSlider — full-width label/track/value row                      */
+/* ------------------------------------------------------------------ */
+
+export function FlatSlider({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  tier,
+  displayValue,
+  disabled,
+  onCommit,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  tier: "default" | "explicitCustom";
+  displayValue: string;
+  disabled?: boolean;
+  onCommit: (nextValue: number) => void;
+}) {
+  const clampedPct = Math.max(0, Math.min(100, ((value - min) / Math.max(max - min, 1e-6)) * 100));
+
+  const commitFromClientX = (clientX: number, rect: DOMRect) => {
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(rect.width, 1)));
+    const raw = min + ratio * (max - min);
+    const stepped = Math.round(raw / step) * step;
+    onCommit(Math.max(min, Math.min(max, stepped)));
+  };
+
+  return (
+    <div className="flex min-h-[28px] items-center gap-2.5">
+      <span className="w-[86px] flex-shrink-0 text-[11px] text-panel-text-3">{label}</span>
+      <div
+        data-flat-slider-track="true"
+        role="slider"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-disabled={disabled}
+        className={`relative h-0.5 flex-1 rounded-full bg-panel-hover ${
+          disabled ? "cursor-not-allowed" : "cursor-pointer"
+        }`}
+        onPointerDown={(e) => {
+          if (disabled) return;
+          commitFromClientX(e.clientX, e.currentTarget.getBoundingClientRect());
+        }}
+      >
+        {tier === "explicitCustom" && (
+          <div
+            data-flat-slider-fill="true"
+            className="absolute inset-y-0 left-0 rounded-full bg-panel-text-5"
+            style={{ width: `${clampedPct}%` }}
+          />
+        )}
+        <div
+          data-flat-slider-knob="true"
+          className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+            tier === "explicitCustom" ? "h-2 w-2 bg-white" : "h-[7px] w-[7px] bg-panel-text-4"
+          }`}
+          style={{ left: `${clampedPct}%` }}
+        />
+      </div>
+      <span
+        data-flat-slider-value="true"
+        className={`w-11 flex-shrink-0 text-right font-mono text-[10px] ${
+          tier === "explicitCustom" ? "text-panel-text-0" : "text-panel-text-3"
+        }`}
+      >
+        {displayValue}
+      </span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FlatSelectRow — label/value row backed by a native <select>        */
+/* ------------------------------------------------------------------ */
+
+export function FlatSelectRow({
+  label,
+  value,
+  options,
+  tier,
+  disabled,
+  onChange,
+  onReset,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  tier: PropertyValueTier;
+  disabled?: boolean;
+  onChange: (nextValue: string) => void;
+  onReset?: () => void;
+}) {
+  return (
+    <div className="group flex min-h-[30px] items-center justify-between">
+      <span className={`text-[11px] ${VALUE_TIER_LABEL_CLASS[tier]}`}>{label}</span>
+      <span className="flex items-center gap-2">
+        <label className="flex items-center gap-1.5">
+          <select
+            value={value}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+            className={`appearance-none bg-transparent text-right font-mono text-[11px] outline-none disabled:cursor-not-allowed ${VALUE_TIER_VALUE_CLASS[tier]}`}
+          >
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="currentColor"
+            className="flex-shrink-0 text-panel-text-5"
+          >
+            <path d="M2 3l3 4 3-4z" />
+          </svg>
+        </label>
+        {tier === "explicitCustom" && onReset && (
+          <button
+            type="button"
+            data-flat-select-reset="true"
+            title="Remove — fall back to default"
+            onClick={onReset}
+            className="flex-shrink-0 text-panel-text-3 opacity-0 transition-opacity hover:text-panel-text-1 group-hover:opacity-100"
+          >
+            <RotateCcw size={11} />
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}

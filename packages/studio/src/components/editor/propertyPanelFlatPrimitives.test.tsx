@@ -7,6 +7,8 @@ import {
   FlatGroup,
   FlatRow,
   FlatSegmentedRow,
+  FlatSelectRow,
+  FlatSlider,
   PinnedZoneDivider,
 } from "./propertyPanelFlatPrimitives";
 
@@ -154,6 +156,133 @@ describe("PinnedZoneDivider", () => {
   it("renders the 'one open below' label", () => {
     const { host, root } = renderInto(<PinnedZoneDivider />);
     expect(host.textContent).toContain("one open below");
+    act(() => root.unmount());
+  });
+});
+
+describe("FlatSlider", () => {
+  it("renders the default tier with a dim knob at the correct position", () => {
+    const { host, root } = renderInto(
+      <FlatSlider
+        label="Layer blur"
+        value={0}
+        min={0}
+        max={40}
+        tier="default"
+        displayValue="0px"
+        onCommit={vi.fn()}
+      />,
+    );
+    const knob = host.querySelector<HTMLElement>('[data-flat-slider-knob="true"]');
+    expect(knob).not.toBeNull();
+    expect(knob?.className).toContain("bg-panel-text-4");
+    expect(knob?.style.left).toBe("0%");
+    const value = host.querySelector('[data-flat-slider-value="true"]');
+    expect(value?.className).toContain("text-panel-text-3");
+    expect(value?.textContent).toBe("0px");
+    act(() => root.unmount());
+  });
+
+  it("renders the explicitCustom tier with a filled track and bright knob", () => {
+    const { host, root } = renderInto(
+      <FlatSlider
+        label="Opacity"
+        value={100}
+        min={0}
+        max={100}
+        tier="explicitCustom"
+        displayValue="100%"
+        onCommit={vi.fn()}
+      />,
+    );
+    const fill = host.querySelector<HTMLElement>('[data-flat-slider-fill="true"]');
+    expect(fill?.style.width).toBe("100%");
+    const knob = host.querySelector<HTMLElement>('[data-flat-slider-knob="true"]');
+    expect(knob?.className).toContain("bg-white");
+    act(() => root.unmount());
+  });
+
+  it("commits a value on track click, proportional to click position", () => {
+    const onCommit = vi.fn();
+    const { host, root } = renderInto(
+      <FlatSlider
+        label="Opacity"
+        value={50}
+        min={0}
+        max={100}
+        tier="explicitCustom"
+        displayValue="50%"
+        onCommit={onCommit}
+      />,
+    );
+    const track = host.querySelector<HTMLElement>('[data-flat-slider-track="true"]');
+    if (!track) throw new Error("expected a track element");
+    Object.defineProperty(track, "getBoundingClientRect", {
+      value: () => ({ left: 0, width: 200, top: 0, height: 2, right: 200, bottom: 2 }),
+    });
+    act(() => {
+      track.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 100 }));
+    });
+    expect(onCommit).toHaveBeenCalledWith(50);
+    act(() => root.unmount());
+  });
+});
+
+describe("FlatSelectRow", () => {
+  it("renders the default tier with no reset button", () => {
+    const { host, root } = renderInto(
+      <FlatSelectRow
+        label="Blend"
+        value="normal"
+        options={["normal", "multiply", "screen"]}
+        tier="default"
+        onChange={vi.fn()}
+      />,
+    );
+    const select = host.querySelector("select");
+    expect(select?.value).toBe("normal");
+    expect(host.querySelector('[data-flat-select-reset="true"]')).toBeNull();
+    act(() => root.unmount());
+  });
+
+  it("renders the explicitCustom tier with a reset button and fires onReset", () => {
+    const onReset = vi.fn();
+    const { host, root } = renderInto(
+      <FlatSelectRow
+        label="Shadow"
+        value="soft"
+        options={["none", "soft", "lift", "glow"]}
+        tier="explicitCustom"
+        onChange={vi.fn()}
+        onReset={onReset}
+      />,
+    );
+    const select = host.querySelector<HTMLSelectElement>("select");
+    expect(select?.className).toContain("text-panel-accent");
+    const reset = host.querySelector<HTMLButtonElement>('[data-flat-select-reset="true"]');
+    act(() => reset?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    expect(onReset).toHaveBeenCalledTimes(1);
+    act(() => root.unmount());
+  });
+
+  it("fires onChange when the select value changes", () => {
+    const onChange = vi.fn();
+    const { host, root } = renderInto(
+      <FlatSelectRow
+        label="Overflow"
+        value="visible"
+        options={["visible", "hidden", "clip", "auto", "scroll"]}
+        tier="default"
+        onChange={onChange}
+      />,
+    );
+    const select = host.querySelector<HTMLSelectElement>("select");
+    if (!select) throw new Error("expected a select");
+    act(() => {
+      select.value = "hidden";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onChange).toHaveBeenCalledWith("hidden");
     act(() => root.unmount());
   });
 });
