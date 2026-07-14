@@ -189,6 +189,7 @@ export async function sdkTimingPersist(
     hfId,
     "setTiming",
     timingSrc ? () => timingSrc(targetPath) : undefined,
+    { targetPath, compositionPath: deps.compositionPath },
   );
   // Dark-launch gate: without this, timing cutover runs whenever an SDK session
   // exists (it always does, for shadow/selection) — flipping the flag OFF would
@@ -231,6 +232,7 @@ export async function sdkTimingBatchPersist(
       change.hfId,
       "setTiming",
       timingSrc ? () => timingSrc(targetPath) : undefined,
+      { targetPath, compositionPath: deps.compositionPath },
     );
   }
   if (!STUDIO_SDK_CUTOVER_ENABLED) return false;
@@ -283,6 +285,7 @@ export function sdkGsapTweenPersist(
       op.target,
       "addGsapTween",
       gsapSrc ? () => gsapSrc(targetPath) : undefined,
+      { targetPath, compositionPath: deps.compositionPath },
     );
   } else {
     void recordAnimationResolverParity(
@@ -290,6 +293,7 @@ export function sdkGsapTweenPersist(
       op.animationId,
       op.kind === "set" ? "setGsapTween" : "removeGsapTween",
       gsapReadSource(deps, targetPath),
+      { targetPath, compositionPath: deps.compositionPath },
     );
   }
   // Leading dark-launch gate so flag-off does no SDK touch (getElement) at all —
@@ -329,6 +333,7 @@ async function dispatchGsapOpAndPersist(
       resolverTarget.animationId,
       resolverTarget.opLabel,
       gsapReadSource(deps, targetPath),
+      { targetPath, compositionPath: deps.compositionPath },
     );
   }
   // Dark-launch gate (shared chokepoint for every GSAP-op cutover persist):
@@ -553,8 +558,12 @@ export async function sdkDeletePersist(
   deps: CutoverDeps,
 ): Promise<boolean> {
   // Resolver tripwire — runs BEFORE the cutover gate (decoupled).
-  void recordResolverParity(sdkSession, hfId, "removeElement", () =>
-    Promise.resolve(originalContent),
+  void recordResolverParity(
+    sdkSession,
+    hfId,
+    "removeElement",
+    () => Promise.resolve(originalContent),
+    { targetPath, compositionPath: deps.compositionPath },
   );
   // Dark-launch gate: flag OFF → legacy server delete path.
   if (!STUDIO_SDK_CUTOVER_ENABLED) return false;

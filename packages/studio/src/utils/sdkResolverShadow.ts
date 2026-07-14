@@ -300,29 +300,41 @@ function reportEmptySession(session: Composition, opLabel: string): boolean {
   return true;
 }
 
+/** Shape shared by every resolver-shadow entry point's optional path pair. */
+export interface ResolverShadowPaths {
+  targetPath?: string;
+  compositionPath?: string | null;
+}
+
+/**
+ * Cross-file edit: the session models ONLY the active composition, so a
+ * target living in another file is structurally unresolvable — the cutover
+ * gates decline it (wrongCompositionFile) and it can never cut over. Every
+ * tripwire entry point skips entirely (no event, no attempt): the op belongs
+ * in neither the divergence count nor the attempt denominator of the soak
+ * rate. PostHog 0.7.41: one cross-file editing session emitted 479 false
+ * element_not_found events before this rule existed. Callers that pass no
+ * paths (isolated consumers/tests) run as before.
+ */
+function isCrossFileEdit(paths?: ResolverShadowPaths): boolean {
+  return (
+    paths?.targetPath !== undefined &&
+    paths.compositionPath != null &&
+    paths.targetPath !== paths.compositionPath
+  );
+}
+
 export function runResolverShadow(
   session: Composition,
   hfId: string | null | undefined,
   ops: PatchOperation[],
   sourceContent?: string,
-  paths?: { targetPath?: string; compositionPath?: string | null },
+  paths?: ResolverShadowPaths,
 ): void {
   if (!STUDIO_SDK_RESOLVER_SHADOW_ENABLED) return;
   if (!hfId) return;
   try {
-    // Cross-file edit: the session models ONLY the active composition, so a
-    // target living in another file is structurally unresolvable — the cutover
-    // gates decline it (wrongCompositionFile) and it can never cut over. Skip
-    // entirely (no event, no attempt), mirroring the empty-session rule below.
-    // PostHog 0.7.41: one cross-file editing session emitted 479 false
-    // element_not_found events through this path.
-    if (
-      paths?.targetPath !== undefined &&
-      paths.compositionPath != null &&
-      paths.targetPath !== paths.compositionPath
-    ) {
-      return;
-    }
+    if (isCrossFileEdit(paths)) return;
     if (reportEmptySession(session, "dom-edit")) return;
     recordAttempt("dom-edit");
     const mismatches = sdkResolverShadowCheck(session, hfId, ops, sourceContent);
@@ -368,15 +380,41 @@ export function runResolverShadow(
  *
  * No-op when the shadow flag is off; never throws; never mutates the session.
  */
+/**
+ * Source-truth check for a missed hf-id: read the target file and decide
+ * whether the miss is a runtime-generated node (id absent from source —
+ * suppress, the SDK cannot model it by design) or a reportable divergence
+ * (id present → strict attribute count for the event; read failure → fail
+ * open, tagged). Mirrors checkAnimationIdOnDisk's error discipline.
+ */
+async function checkHfIdInSource(
+  hfId: string,
+  readSource?: () => Promise<string | undefined>,
+): Promise<{ suppress: boolean; strictCount?: number; sourceReadFailed: boolean }> {
+  if (!readSource) return { suppress: false, sourceReadFailed: false };
+  let source: string | undefined;
+  try {
+    source = await readSource();
+  } catch {
+    return { suppress: false, sourceReadFailed: true }; // fail-open
+  }
+  if (source === undefined) return { suppress: false, sourceReadFailed: false };
+  // Loose substring match — biased toward keeping signal (see sourceLooseMatchOnly).
+  if (!source.includes(hfId)) return { suppress: true, sourceReadFailed: false };
+  return { suppress: false, strictCount: countHfIdInSource(source, hfId), sourceReadFailed: false };
+}
+
 export async function recordResolverParity(
   session: Composition | null | undefined,
   hfId: string | null | undefined,
   opLabel: string,
   readSource?: () => Promise<string | undefined>,
+  paths?: ResolverShadowPaths,
 ): Promise<void> {
   if (!STUDIO_SDK_RESOLVER_SHADOW_ENABLED) return;
   if (!session || !hfId) return;
   try {
+    if (isCrossFileEdit(paths)) return;
     if (reportEmptySession(session, opLabel)) return;
     recordAttempt(opLabel);
     if (resolveSnapshot(session, hfId)) return; // resolves — parity, nothing to record
@@ -387,19 +425,10 @@ export async function recordResolverParity(
     // state this field exists to diagnose.
     const sessionElementCount = session.getElements().length;
     // Cheap check passed above, so the source read only runs on a real divergence.
-    let source: string | undefined;
-    let sourceReadFailed = false;
-    if (readSource) {
-      try {
-        source = await readSource();
-      } catch {
-        source = undefined; // fail-open: a read error must not drop a real divergence
-        sourceReadFailed = true;
-      }
-    }
-    // Runtime-generated node the static parse can't model — suppress (mirrors the dom-edit path).
-    if (source !== undefined && !source.includes(hfId)) return;
-    const strictCount = source !== undefined ? countHfIdInSource(source, hfId) : undefined;
+    // Runtime-generated node the static parse can't model → suppressed inside.
+    const verdict = await checkHfIdInSource(hfId, readSource);
+    if (verdict.suppress) return;
+    const { strictCount, sourceReadFailed } = verdict;
     trackStudioEvent("sdk_resolver_shadow", {
       hfId,
       opLabel,
@@ -452,18 +481,27 @@ export async function recordResolverParity(
  */
 async function checkAnimationIdOnDisk(
   animationId: string,
-  readSource: () => Promise<string | undefined>,
+  sourcePromise: Promise<string | undefined>,
 ): Promise<{ staleSession: boolean; diskChecked: boolean; sourceReadFailed: boolean }> {
   let source: string | undefined;
   try {
-    source = await readSource();
+    source = await sourcePromise;
   } catch {
     return { staleSession: false, diskChecked: false, sourceReadFailed: true };
   }
   if (source === undefined) {
     return { staleSession: false, diskChecked: false, sourceReadFailed: false };
   }
-  const disk = await openComposition(source, { history: false });
+  // A parse failure (malformed script the user just introduced) means the
+  // source can't serve as ground truth — treat it exactly like a read failure
+  // (fail open, tagged) instead of letting the outer never-propagate catch
+  // swallow the whole divergence event.
+  let disk: Composition;
+  try {
+    disk = await openComposition(source, { history: false });
+  } catch {
+    return { staleSession: false, diskChecked: false, sourceReadFailed: true };
+  }
   try {
     return {
       staleSession: disk.getAllAnimationIds().has(animationId),
@@ -480,10 +518,12 @@ export async function recordAnimationResolverParity(
   animationId: string,
   opLabel: string,
   readSource?: () => Promise<string | undefined>,
+  paths?: ResolverShadowPaths,
 ): Promise<void> {
   if (!STUDIO_SDK_RESOLVER_SHADOW_ENABLED) return;
   if (!session || !animationId) return;
   try {
+    if (isCrossFileEdit(paths)) return;
     recordAttempt(opLabel);
     const elements = session.getElements();
     const resolves =
@@ -495,7 +535,14 @@ export async function recordAnimationResolverParity(
     let diskChecked = false;
     let sourceReadFailed = false;
     if (readSource) {
-      const verdict = await checkAnimationIdOnDisk(animationId, readSource);
+      // Start the read SYNCHRONOUSLY, before returning control to the caller:
+      // the caller's cutover persist writes the new content to this same file
+      // moments later, and a read dispatched after that write would check the
+      // POST-edit disk (e.g. a remove op's target legitimately gone → false
+      // "genuine divergence"). Dispatching the request here, in the same sync
+      // prologue as the miss check, orders it ahead of the caller's write.
+      const sourcePromise = (async () => readSource())();
+      const verdict = await checkAnimationIdOnDisk(animationId, sourcePromise);
       if (verdict.staleSession) return; // sync gap, not a resolver bug — suppress
       diskChecked = verdict.diskChecked;
       sourceReadFailed = verdict.sourceReadFailed;

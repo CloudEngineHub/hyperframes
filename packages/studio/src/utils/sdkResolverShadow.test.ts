@@ -432,6 +432,18 @@ describe("F. recordResolverParity", () => {
     expect(trackedEvents.filter((e) => e.event === "sdk_resolver_shadow")).toHaveLength(0);
   });
 
+  it("skips entirely (no event, no attempt) for a cross-file op", async () => {
+    mockFlags.STUDIO_SDK_RESOLVER_SHADOW_ENABLED = true;
+    flushAttemptCounts();
+    const session = await openComposition(BASE_HTML);
+    await recordResolverParity(session, "hf-cross", "setTiming", undefined, {
+      targetPath: "compositions/other.html",
+      compositionPath: "index.html",
+    });
+    expect(trackedEvents.filter((e) => e.event === "sdk_resolver_shadow")).toHaveLength(0);
+    expect(flushAttemptCounts()).toBeNull();
+  });
+
   it("emits with sourceHfIdCount=1 when the hfId IS in source but missing from the session", async () => {
     mockFlags.STUDIO_SDK_RESOLVER_SHADOW_ENABLED = true;
     const session = await openComposition(BASE_HTML);
@@ -615,6 +627,48 @@ describe("G. recordAnimationResolverParity", () => {
     expect(ev?.mismatchCount).toBe(1);
     expect(ev?.sourceReadFailed).toBe(true);
     expect(ev?.diskChecked).toBeUndefined();
+  });
+
+  it("fails open with sourceReadFailed when the reader throws SYNCHRONOUSLY", async () => {
+    mockFlags.STUDIO_SDK_RESOLVER_SHADOW_ENABLED = true;
+    const session = await openComposition(GSAP_HTML);
+    await recordAnimationResolverParity(session, "no-such-anim", "removeGsapKeyframe", () => {
+      throw new Error("sync read failed");
+    });
+    const ev = lastShadow();
+    expect(ev?.mismatchCount).toBe(1);
+    expect(ev?.sourceReadFailed).toBe(true);
+  });
+
+  it("dispatches the disk read synchronously on a miss — before the caller's write can land", async () => {
+    // The tripwire is fire-and-forget and the caller's cutover persist writes
+    // this same file moments after it returns. The read request must be
+    // dispatched in the same sync prologue as the miss check, so it observes
+    // the PRE-write file (a post-write read would see a remove op's target
+    // legitimately gone and misclassify it as a genuine divergence).
+    mockFlags.STUDIO_SDK_RESOLVER_SHADOW_ENABLED = true;
+    const session = await openComposition(GSAP_HTML);
+    const read = vi.fn(() => Promise.resolve(GSAP_DISK_MOVED_HTML));
+    const pending = recordAnimationResolverParity(
+      session,
+      "no-such-anim",
+      "removeGsapKeyframe",
+      read,
+    );
+    expect(read).toHaveBeenCalledTimes(1); // already dispatched, no await yet
+    await pending;
+  });
+
+  it("skips entirely (no event, no attempt) for a cross-file op", async () => {
+    mockFlags.STUDIO_SDK_RESOLVER_SHADOW_ENABLED = true;
+    flushAttemptCounts();
+    const session = await openComposition(GSAP_HTML);
+    await recordAnimationResolverParity(session, "no-such-anim", "removeGsapKeyframe", undefined, {
+      targetPath: "compositions/other.html",
+      compositionPath: "index.html",
+    });
+    expect(trackedEvents.filter((e) => e.event === "sdk_resolver_shadow")).toHaveLength(0);
+    expect(flushAttemptCounts()).toBeNull();
   });
 });
 
