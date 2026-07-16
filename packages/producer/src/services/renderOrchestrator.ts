@@ -344,6 +344,21 @@ export interface RenderConfig {
    * HDR constraints.
    */
   outputResolution?: CanvasResolution;
+  /**
+   * True when `outputResolution` was normalized from an aspect-agnostic alias
+   * (`1080p`, `hd`, `4k`, `uhd`) rather than a preset that names its own
+   * orientation (`landscape`, `portrait`, `1080p-portrait`, …). Set by the
+   * CLI + server layers via `isAspectAgnosticResolutionAlias(rawInput)` at
+   * flag/body parse time.
+   *
+   * When true, the compile stage adapts the preset to the composition's
+   * orientation before calling `resolveDeviceScaleFactor` — a portrait
+   * 1080×1920 composition with `--resolution 1080p` (normalized to
+   * `landscape`) is re-mapped to `portrait`, honoring the user's intent
+   * ("render at 1080p") without forcing them to know the aspect-suffixed
+   * alias (`1080p-portrait`). Explicit orientation presets stay strict.
+   */
+  outputResolutionAspectAgnostic?: boolean;
 }
 
 export interface RenderPerfSummary {
