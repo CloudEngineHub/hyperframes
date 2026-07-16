@@ -10,6 +10,7 @@ export interface CommandResult {
 const SUCCESS_RESULT: CommandResult = { exitCode: 0, kind: "success" };
 let pendingResult: CommandResult = SUCCESS_RESULT;
 let rootExitRequester: ((exitCode: number) => void) | undefined;
+let rootExitCodeSanitizer: (() => void) | undefined;
 
 export class CliUsageError extends Error {
   readonly result: CommandResult;
@@ -95,6 +96,16 @@ export function consumeCommandResult(): CommandResult {
 /** Called only by cli.ts to retain ownership of forced process termination. */
 export function registerRootExitRequester(requester: (exitCode: number) => void): void {
   rootExitRequester = requester;
+}
+
+/** Called only by cli.ts to retain ownership of process exit-code mutation. */
+export function registerRootExitCodeSanitizer(sanitizer: () => void): void {
+  rootExitCodeSanitizer = sanitizer;
+}
+
+/** Ask cli.ts to clear stray process exit state after a successful render. */
+export function sanitizeSuccessfulExitCode(): void {
+  rootExitCodeSanitizer?.();
 }
 
 /** Ask cli.ts to finalize telemetry/output and then terminate the process. */

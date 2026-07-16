@@ -110,6 +110,7 @@ import {
   CliRuntimeError,
   CliUsageError,
   consumeCommandResult,
+  registerRootExitCodeSanitizer,
   registerRootExitRequester,
   type CommandResult,
 } from "./utils/commandResult.js";
@@ -301,6 +302,12 @@ registerRootExitRequester((exitCode) => {
     kind: exitCode === 0 ? "success" : "runtime_error",
     presented: true,
   }).finally(() => process.exit(exitCode));
+});
+
+registerRootExitCodeSanitizer(() => {
+  if (process.exitCode !== undefined && process.exitCode !== 0) {
+    process.exitCode = 0;
+  }
 });
 
 // Sync-only: exit handlers cannot await promises or drain microtasks.
