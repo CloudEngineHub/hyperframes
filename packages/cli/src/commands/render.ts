@@ -35,6 +35,10 @@ export const examples: Example[] = [
   ["Deterministic render via Docker", "hyperframes render --docker --output deterministic.mp4"],
   ["Parallel rendering with 6 workers", "hyperframes render --workers 6 --output fast.mp4"],
   ["Opt out of browser GPU render", "hyperframes render --no-browser-gpu --output cpu.mp4"],
+  [
+    "Relocate frame cache off C: (Windows) or another small partition",
+    "hyperframes render --frames-cache-dir D:/hf-cache --output out.mp4",
+  ],
   ["HDR output (auto-detected)", "hyperframes render --output hdr-output.mp4"],
   [
     "Override composition variables (parametrized render)",
@@ -396,6 +400,18 @@ export default defineCommand({
       // guard below leaves PRODUCER_EXPERIMENTAL_FAST_CAPTURE untouched and the
       // env fallback survives (matches the --low-memory-mode idiom).
     },
+    "frames-cache-dir": {
+      type: "string",
+      description:
+        "Directory for the content-addressed extracted-frame cache. " +
+        "Use to relocate the cache off the system drive when the OS temp " +
+        "directory lives on a small partition (e.g. Windows C: exhaustion " +
+        'during long renders). Pass "off" / "none" / "false" / "0" to ' +
+        "disable caching entirely (frames extract into the render's workDir " +
+        "and are cleaned up when the render ends). Default: " +
+        "<tmpdir>/hyperframes-extract-cache-<uid>. " +
+        "Env: HYPERFRAMES_EXTRACT_CACHE_DIR.",
+    },
   },
   // `run` is the citty handler for `hyperframes render` — sequential flag
   // validation + render dispatch. Inherited CRITICAL on main (CRAP 1290);
@@ -577,6 +593,19 @@ export default defineCommand({
       process.env.PRODUCER_EXPERIMENTAL_FAST_CAPTURE = args["experimental-fast-capture"]
         ? "true"
         : "false";
+    }
+
+    // ── Override: extracted-frame cache directory ────────────────────────
+    // Sugar for HYPERFRAMES_EXTRACT_CACHE_DIR. Set BEFORE resolveConfig() so
+    // the env resolver picks up the CLI-supplied value. Disabling aliases
+    // (off/none/false/0) pass through verbatim — the engine helper canonicalizes.
+    // Positive paths are resolved to absolute so CWD changes downstream can't
+    // stale them.
+    if (typeof args["frames-cache-dir"] === "string" && args["frames-cache-dir"].trim() !== "") {
+      const raw = args["frames-cache-dir"].trim();
+      const normalized = raw.toLowerCase();
+      const isDisableAlias = ["off", "none", "false", "0"].includes(normalized);
+      process.env.HYPERFRAMES_EXTRACT_CACHE_DIR = isDisableAlias ? raw : resolve(raw);
     }
 
     // ── Validate max-concurrent-renders ─────────────────────────────────
