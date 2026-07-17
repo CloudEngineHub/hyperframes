@@ -12,7 +12,7 @@ import { buildIssueUrl, HYPERFRAMES_REPO_URL } from "../utils/feedbackIssue.js";
 import { VERSION } from "../version.js";
 import { c } from "../ui/colors.js";
 import { parseFeedbackRating } from "../utils/feedbackRating.js";
-import { lintFeedbackComment } from "../utils/feedbackLint.js";
+import { lintFeedbackComment, type FeedbackLintInput } from "../utils/feedbackLint.js";
 
 export const examples: Example[] = [
   ["Submit render feedback", 'hyperframes feedback --rating 8 --comment "fast but font missing"'],
@@ -76,6 +76,18 @@ async function publishRepro(dir: string): Promise<string | undefined> {
     console.error(`  ${(err as Error).message}`);
     console.log(`  ${c.dim("Filing the issue without a repro link.")}`);
     return undefined;
+  }
+}
+
+/**
+ * Print soft-warn feedback-lint messages to stdout. Extracted so the
+ * command's `run` stays a flat control-flow driver — the warning loop is
+ * incidental to the command logic and its complexity would otherwise push
+ * `run` over the Fallow CRAP threshold.
+ */
+function printFeedbackLintWarnings(input: FeedbackLintInput): void {
+  for (const warning of lintFeedbackComment(input)) {
+    console.log(c.warn(`⚠ ${warning.message}`));
   }
 }
 
@@ -160,9 +172,7 @@ export default defineCommand({
     // Soft-warn (never blocks) when the comment for a non-clean report is
     // missing the mandated reproduction-packet markers. Prints before the
     // submission ack so the reporter sees the nudge while their run is fresh.
-    for (const warning of lintFeedbackComment({ rating, comment })) {
-      console.log(c.warn(`⚠ ${warning.message}`));
-    }
+    printFeedbackLintWarnings({ rating, comment });
 
     // The standalone command runs separately from `render`, so it has no real
     // elapsed time to report. Omit it rather than recording a fake duration.
