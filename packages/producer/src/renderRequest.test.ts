@@ -174,6 +174,35 @@ describe("RenderRequest", () => {
     ).toThrow("distributed.width");
   });
 
+  it("requires complete and valid engine config snapshots on both wire paths", () => {
+    const value = request();
+    for (const engineConfig of [
+      {},
+      { ...value.options.engineConfig, protocolTimeout: "forever" },
+      { ...value.options.engineConfig, browserGpuMode: "turbo" },
+    ]) {
+      expect(() =>
+        parseRenderRequest({ ...value, options: { ...value.options, engineConfig } }),
+      ).toThrow("Engine config");
+    }
+
+    for (const engineConfig of [
+      {},
+      { ...value.options.engineConfig, protocolTimeout: "forever" },
+      { ...value.options.engineConfig, browserGpuMode: "turbo" },
+    ]) {
+      const distributed = distributedConfigFromRequest(value);
+      (distributed as { engineConfig: unknown }).engineConfig = engineConfig;
+      expect(() =>
+        renderRequestFromDistributedConfig({
+          projectDir: value.projectDir,
+          outputPath: value.outputPath,
+          config: distributed,
+        }),
+      ).toThrow("Engine config");
+    }
+  });
+
   it("validates the reverse distributed adapter at the wire boundary", () => {
     const distributed = distributedConfigFromRequest(request());
     distributed.width = 1921;

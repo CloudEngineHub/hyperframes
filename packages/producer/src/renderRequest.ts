@@ -1,6 +1,7 @@
 import {
   isVideoFrameFormat,
   resolveConfig,
+  validateEngineConfigSnapshot,
   type EngineConfig,
   type VideoFrameFormat,
 } from "@hyperframes/engine";
@@ -176,9 +177,7 @@ function assertRequestOptionScalars(options: Record<string, unknown>): void {
 }
 
 function assertRequestOptionObjects(options: Record<string, unknown>): void {
-  if (!isPlainObject(options.engineConfig)) {
-    throw new Error("Render request must contain a resolved engineConfig snapshot");
-  }
+  validateEngineConfigSnapshot(options.engineConfig);
   if (options.variables !== undefined && !isPlainObject(options.variables)) {
     throw new Error("Render request variables must be a JSON object");
   }

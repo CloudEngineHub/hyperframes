@@ -17,7 +17,11 @@
  * needs the actual planner.
  */
 
-import { VIDEO_FRAME_FORMATS, isVideoFrameFormat } from "@hyperframes/engine";
+import {
+  VIDEO_FRAME_FORMATS,
+  isVideoFrameFormat,
+  validateEngineConfigSnapshot,
+} from "@hyperframes/engine";
 import { type DistributedFormat } from "./shared.js";
 import { type DistributedRenderConfig } from "./plan.js";
 
@@ -204,7 +208,7 @@ export function validateDistributedRenderConfig(
     validateVariablesPayload(config.variables);
   }
   if (config.engineConfig !== undefined) {
-    walkVariables(config.engineConfig, "config.engineConfig", new WeakSet());
+    validateEngineConfigSnapshot(config.engineConfig);
   }
 
   return config;
