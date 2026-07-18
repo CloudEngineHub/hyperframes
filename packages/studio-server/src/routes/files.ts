@@ -1973,6 +1973,7 @@ async function foldAtomicCutFile(
   file: AtomicCutFileRequest,
   absPath: string,
   before: string,
+  writer: "recast" | "acorn",
 ): Promise<FoldedAtomicCutFile | Response> {
   let after = before;
   let splitCount = 0;
@@ -2032,6 +2033,7 @@ async function foldAtomicCutFile(
       },
       block,
       respond,
+      writer,
     );
     if (result instanceof Response) return result;
     let script = typeof result === "string" ? result : result.script;
@@ -2423,6 +2425,12 @@ export function registerFileRoutes(api: Hono, adapter: StudioApiAdapter): void {
     const files = body.files as AtomicCutFileRequest[];
     const project = await adapter.resolveProject(c.req.param("id"));
     if (!project) return c.json({ error: "not found" }, 404);
+    let writer: "recast" | "acorn";
+    try {
+      writer = resolveGsapWriter(process.env);
+    } catch (error) {
+      return c.json({ error: error instanceof Error ? error.message : String(error) }, 400);
+    }
 
     return serializeAtomicCut(async () => {
       const seen = new Set<string>();
@@ -2453,7 +2461,7 @@ export function registerFileRoutes(api: Hono, adapter: StudioApiAdapter): void {
         }
         let folded: FoldedAtomicCutFile | Response;
         try {
-          folded = await foldAtomicCutFile(c, file, absPath, before);
+          folded = await foldAtomicCutFile(c, file, absPath, before, writer);
         } catch (error) {
           const message = error instanceof Error ? error.message : "Cut transform failed";
           return c.json({ error: message }, 400);
