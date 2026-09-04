@@ -584,6 +584,7 @@ function updateReferences(projectDir: string, oldPath: string, newPath: string):
 
   let updatedCount = 0;
   for (const file of textFiles) {
+    if (!isSafePath(projectDir, file)) continue;
     const content = readFileSync(file, "utf-8");
 
     // Only replace full relative paths — never bare filenames, which can
@@ -2218,6 +2219,10 @@ async function processUploadedFiles(
       finalName = `${base} (${n})${ext}`;
       finalPath = resolve(targetDir, finalName);
     }
+
+    // The collision suffix chooses a different path; validate that destination
+    // too, including dangling symlinks that existsSync treats as absent.
+    if (!isSafePath(projectDir, finalPath)) continue;
 
     const buffer = Buffer.from(await value.arrayBuffer());
     const validation = validateUploadedMediaBuffer(finalName, buffer);
