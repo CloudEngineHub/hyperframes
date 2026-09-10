@@ -65,12 +65,8 @@ import type { PlayerAPI } from "../core.types";
 import { swallow } from "./diagnostics";
 import { shouldAttemptPeriodicTimelineBind } from "./timelineRebindPolicy";
 import { installStudioCustomEase } from "./customEase";
-import { parseNumeric } from "./startExpression";
-import { parseStrictFiniteTimingNumber } from "./playbackRate";
-import {
-  MEDIA_START_BASIS_ATTR,
-  resolveAbsoluteMediaStartSeconds as resolveAuthoredMediaStartSeconds,
-} from "../mediaTiming";
+import { parseStrictFiniteTimingNumber, resolveMediaElementDurationSeconds } from "./playbackRate";
+import { MEDIA_START_BASIS_ATTR } from "../mediaTiming";
 import {
   clearRuntimeData,
   setRuntimeData,
@@ -712,24 +708,11 @@ export function initSandboxRuntimeModular(): void {
     return { compositionRoot, inheritedStart, inheritedDuration };
   };
 
-  const resolveAbsoluteMediaStartSeconds = (element: Element): number => {
-    const context = resolveMediaCompositionContext(element);
-    const inheritedStart = context.inheritedStart ?? 0;
-    const authoredStart = parseNumeric(element.getAttribute("data-start"));
-    if (
-      element.hasAttribute("data-hf-auto-start") ||
-      authoredStart == null ||
-      inheritedStart <= 0
-    ) {
-      return resolveStartForElement(element, inheritedStart);
-    }
-
-    return resolveAuthoredMediaStartSeconds({
-      authoredStart,
-      hostStart: inheritedStart,
-      basis: element.getAttribute(MEDIA_START_BASIS_ATTR),
-    });
-  };
+  // Single owner: `createRuntimeStartTimeResolver` (startResolver.ts). The clip
+  // manifest resolves media starts through the same method, so what the studio
+  // draws and what the transport plays cannot drift apart.
+  const resolveAbsoluteMediaStartSeconds = (element: Element): number =>
+    timingResolverFor(true).resolveMediaStartForElement(element);
 
   window.__hfResolveMediaStartSeconds = resolveAbsoluteMediaStartSeconds;
   runtimeCleanupCallbacks.push(() => {
@@ -830,17 +813,6 @@ export function initSandboxRuntimeModular(): void {
       code: string;
       details: Record<string, string | number | boolean | null | string[]>;
     };
-  };
-
-  const resolveMediaElementDurationSeconds = (node: HTMLMediaElement): number | null => {
-    const declaredDuration = parseStrictFiniteTimingNumber(node.getAttribute("data-duration"));
-    if (declaredDuration != null && declaredDuration > 0) {
-      return declaredDuration;
-    }
-    if (Number.isFinite(node.duration)) {
-      return resolveNaturalMediaTimelineDuration(node, node.duration);
-    }
-    return null;
   };
 
   // Scope 3 of 3 (see `withTimingResolver`). Every media element resolves its
@@ -3282,7 +3254,7 @@ export function initSandboxRuntimeModular(): void {
           for (const rawEl of audioEls) {
             if (!(rawEl instanceof HTMLMediaElement) || !rawEl.isConnected) continue;
             if (isSilencedByHidden(rawEl)) continue;
-            const start = Number.parseFloat(rawEl.dataset.start ?? "");
+            const start = resolveAbsoluteMediaStartSeconds(rawEl);
             const durAttr = parseStrictFiniteTimingNumber(rawEl.dataset.duration);
             const end = durAttr != null && durAttr > 0 ? start + durAttr : Infinity;
             const mediaStart = readElementPlaybackStart(rawEl);
@@ -3373,7 +3345,8 @@ export function initSandboxRuntimeModular(): void {
     for (const el of mediaEls) {
       if (!(el instanceof HTMLMediaElement)) continue;
       if (!el.isConnected) continue;
-      const start = Number.parseFloat(el.dataset.start ?? "");
+      if (!el.hasAttribute("data-start")) continue;
+      const start = resolveAbsoluteMediaStartSeconds(el);
       if (!Number.isFinite(start)) continue;
       const durAttr = parseStrictFiniteTimingNumber(el.dataset.duration);
       const end = durAttr != null && durAttr > 0 ? start + durAttr : Infinity;
@@ -3403,7 +3376,7 @@ export function initSandboxRuntimeModular(): void {
     for (const rawEl of audioEls) {
       if (!(rawEl instanceof HTMLMediaElement) || !rawEl.isConnected) continue;
       if (isSilencedByHidden(rawEl)) continue;
-      const compStart = Number.parseFloat(rawEl.dataset.start ?? "");
+      const compStart = resolveAbsoluteMediaStartSeconds(rawEl);
       if (!Number.isFinite(compStart)) continue;
       const mediaStart = readElementPlaybackStart(rawEl);
       const volumeAttr = Number.parseFloat(rawEl.dataset.volume ?? "");
