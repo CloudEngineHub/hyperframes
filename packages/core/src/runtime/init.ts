@@ -645,34 +645,63 @@ export function initSandboxRuntimeModular(): void {
     }
   };
 
+  const createTimingResolver = (includeAuthoredTimingAttrs: boolean) =>
+    createRuntimeStartTimeResolver({
+      timelineRegistry: (window.__timelines ?? {}) as Record<
+        string,
+        RuntimeTimelineLike | undefined
+      >,
+      includeAuthoredTimingAttrs,
+    });
+
+  // `createRuntimeStartTimeResolver` memoizes starts and durations in WeakMaps,
+  // but a resolver built per call throws those caches away before the second
+  // lookup ever happens, so one pass re-walks every ancestor chain once per
+  // element. `withTimingResolver` installs ONE resolver for the duration of a
+  // synchronous callback; every resolve inside shares its caches.
+  //
+  // NEVER widen these into a single scope spanning a whole media pass.
+  // `syncRuntimeMedia` calls `el.load()` on the seek-past-buffered-range retry
+  // (media.ts), which synchronously resets `el.duration` to NaN, and
+  // `resolveDurationForElement` reads `element.duration` (startResolver.ts). A
+  // cache living across `refreshRuntimeMediaCache` -> `syncRuntimeMedia` ->
+  // `syncTimedElementVisibility` would serve the pre-`load()` duration to a
+  // post-`load()` read. Two scopes with the write in between is what makes that
+  // impossible. Do not merge them.
+  let activeTimingResolver: ReturnType<typeof createTimingResolver> | null = null;
+
+  const withTimingResolver = <T>(fn: () => T): T => {
+    const previous = activeTimingResolver;
+    activeTimingResolver = createTimingResolver(true);
+    try {
+      return fn();
+    } finally {
+      activeTimingResolver = previous;
+    }
+  };
+
+  // The installed resolver carries authored timing attrs; a caller that opts
+  // out gets its own, exactly as before.
+  const timingResolverFor = (includeAuthoredTimingAttrs: boolean) =>
+    includeAuthoredTimingAttrs && activeTimingResolver
+      ? activeTimingResolver
+      : createTimingResolver(includeAuthoredTimingAttrs);
+
   const resolveStartForElement = (
     element: Element,
     fallback = 0,
     opts?: { includeAuthoredTimingAttrs?: boolean },
-  ): number => {
-    const resolver = createRuntimeStartTimeResolver({
-      timelineRegistry: (window.__timelines ?? {}) as Record<
-        string,
-        RuntimeTimelineLike | undefined
-      >,
-      includeAuthoredTimingAttrs: opts?.includeAuthoredTimingAttrs ?? true,
-    });
-    return resolver.resolveStartForElement(element, fallback);
-  };
+  ): number =>
+    timingResolverFor(opts?.includeAuthoredTimingAttrs ?? true).resolveStartForElement(
+      element,
+      fallback,
+    );
 
   const resolveDurationForElement = (
     element: Element,
     opts?: { includeAuthoredTimingAttrs?: boolean },
-  ): number | null => {
-    const resolver = createRuntimeStartTimeResolver({
-      timelineRegistry: (window.__timelines ?? {}) as Record<
-        string,
-        RuntimeTimelineLike | undefined
-      >,
-      includeAuthoredTimingAttrs: opts?.includeAuthoredTimingAttrs ?? true,
-    });
-    return resolver.resolveDurationForElement(element);
-  };
+  ): number | null =>
+    timingResolverFor(opts?.includeAuthoredTimingAttrs ?? true).resolveDurationForElement(element);
 
   const resolveMediaCompositionContext = (element: Element) => {
     const compositionRoot = element.closest("[data-composition-id]");
@@ -814,20 +843,35 @@ export function initSandboxRuntimeModular(): void {
     return null;
   };
 
+  // Scope 3 of 3 (see `withTimingResolver`). Every media element resolves its
+  // composition ancestry here, and this runs on every transport tick via
+  // `getSafeTimelineDurationSeconds`, so it is the heaviest consumer of the
+  // per-call resolvers.
+  //
+  // The scope sits HERE and not on `getSafeTimelineDurationSeconds`, which
+  // would look like the tidier boundary: that function also calls
+  // `timeline.duration()` (author-supplied GSAP) and every adapter's
+  // `getInferredDurationSeconds()` (third-party runtimes). Foreign code inside
+  // a cache scope can touch the DOM between two resolves. This loop is DOM
+  // reads only, so nothing can change under it.
   const resolveMediaWindowDurationSeconds = (): number | null => {
     const mediaNodes = Array.from(
       document.querySelectorAll("video[data-start], audio[data-start]"),
     ) as HTMLMediaElement[];
+    // Checked before the scope opens: a composition with no timed media runs
+    // this every tick, and it should not pay for a resolver it never uses.
     if (mediaNodes.length === 0) return null;
-    let maxWindowEndSeconds = 0;
-    for (const node of mediaNodes) {
-      const start = resolveAbsoluteMediaStartSeconds(node);
-      if (!Number.isFinite(start)) continue;
-      const duration = resolveMediaElementDurationSeconds(node);
-      if (duration == null || duration <= MIN_VALID_TIMELINE_DURATION_SECONDS) continue;
-      maxWindowEndSeconds = Math.max(maxWindowEndSeconds, Math.max(0, start) + duration);
-    }
-    return maxWindowEndSeconds > MIN_VALID_TIMELINE_DURATION_SECONDS ? maxWindowEndSeconds : null;
+    return withTimingResolver(() => {
+      let maxWindowEndSeconds = 0;
+      for (const node of mediaNodes) {
+        const start = resolveAbsoluteMediaStartSeconds(node);
+        if (!Number.isFinite(start)) continue;
+        const duration = resolveMediaElementDurationSeconds(node);
+        if (duration == null || duration <= MIN_VALID_TIMELINE_DURATION_SECONDS) continue;
+        maxWindowEndSeconds = Math.max(maxWindowEndSeconds, Math.max(0, start) + duration);
+      }
+      return maxWindowEndSeconds > MIN_VALID_TIMELINE_DURATION_SECONDS ? maxWindowEndSeconds : null;
+    });
   };
 
   const resolveAuthoredCompositionDurationFloorSeconds = (): number | null => {
@@ -911,13 +955,140 @@ export function initSandboxRuntimeModular(): void {
     return maxSeconds > MIN_VALID_TIMELINE_DURATION_SECONDS ? maxSeconds : null;
   };
 
+  // Flips true on the first renderSeek call — the render/producer capture
+  // protocol's signal that it has started deterministically driving frames.
+  // One-way for this page lifetime; every producer render gets a fresh runtime.
+  // See scheduleMetadataDurationHydration for why this gates the async
+  // metadata rebind off once set, and resolveDurationFloors for why the
+  // derived-duration cache is bypassed entirely once it is set.
+  let renderCaptureSeekStarted = false;
+
+  // The media and authored-composition duration floors are derived from the
+  // DOM and the timeline registry — never from the playhead — so they change
+  // only when the composition changes. transportTick asks for them on EVERY
+  // animation frame, and deriving them scans every media element and walks
+  // each one's composition ancestry, which is the largest single cost of a
+  // paused, untouched editor. Derive once and reuse until an input changes.
+  //
+  // Every input that can change the answer, and the signal that catches it:
+  //   - timing attributes edited (Studio live editing, variables re-applied,
+  //     the runtime's own autostamping)      -> MutationObserver, attribute filter below
+  //   - media or timed elements added/removed (nested compositions mount
+  //     asynchronously, well after init)     -> MutationObserver, childList + subtree
+  //   - media metadata arriving or being reset (`el.load()` puts `duration`
+  //     back to NaN) — no DOM mutation at all -> capture-phase media events below
+  //   - a timeline registered, or an existing one's duration changing, in
+  //     `window.__timelines` (a plain object, not observable) -> registry
+  //     signature compared on read
+  // The bias is deliberate: a redundant derivation is a missed optimisation,
+  // a missed one is a wrong duration.
+  type DurationFloors = { media: number | null; authoredComposition: number | null };
+  const DURATION_FLOOR_INPUT_ATTRIBUTES = [
+    "data-start",
+    "data-duration",
+    "data-end",
+    "data-composition-id",
+    "data-composition-src",
+    "data-composition-file",
+    "data-root",
+    "data-hf-authored-duration",
+    "data-hf-authored-end",
+    "data-hf-auto-start",
+    MEDIA_START_BASIS_ATTR,
+    "data-playback-rate",
+    "data-playback-start",
+    "data-media-start",
+    // `data-start` may be an expression referencing another element by id, and
+    // a media element's `duration` follows its source.
+    "id",
+    "src",
+  ];
+  const DURATION_FLOOR_MEDIA_EVENTS = ["loadedmetadata", "durationchange", "emptied"] as const;
+  let durationFloorsCache: DurationFloors | null = null;
+  let durationFloorsRegistrySignature: string | null = null;
+  let durationFloorsObserver: MutationObserver | null = null;
+
+  const invalidateDurationFloors = () => {
+    durationFloorsCache = null;
+  };
+
+  const deriveDurationFloors = (): DurationFloors => ({
+    media: resolveMediaDurationFloorSeconds(),
+    authoredComposition: resolveAuthoredCompositionDurationFloorSeconds(),
+  });
+
+  const readTimelineRegistrySignature = (): string => {
+    const timelines = (window.__timelines ?? {}) as Record<string, RuntimeTimelineLike | undefined>;
+    let signature = "";
+    for (const timelineId of Object.keys(timelines)) {
+      const timeline = timelines[timelineId];
+      if (!timeline) continue;
+      signature += `${timelineId}=${getTimelineDurationSeconds(timeline) ?? "?"};`;
+    }
+    return signature;
+  };
+
+  const watchDurationFloorInputs = () => {
+    if (durationFloorsObserver || typeof MutationObserver === "undefined") return;
+    durationFloorsObserver = new MutationObserver(invalidateDurationFloors);
+    durationFloorsObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: DURATION_FLOOR_INPUT_ATTRIBUTES,
+    });
+    // Media duration changes are published as events, not DOM mutations, and
+    // they do not bubble — so listen in the capture phase, which reaches every
+    // media element including ones added long after this binds.
+    for (const eventType of DURATION_FLOOR_MEDIA_EVENTS) {
+      document.addEventListener(eventType, invalidateDurationFloors, true);
+    }
+    runtimeCleanupCallbacks.push(() => {
+      durationFloorsObserver?.disconnect();
+      durationFloorsObserver = null;
+      invalidateDurationFloors();
+      for (const eventType of DURATION_FLOOR_MEDIA_EVENTS) {
+        document.removeEventListener(eventType, invalidateDurationFloors, true);
+      }
+    });
+  };
+
+  const resolveDurationFloors = (): DurationFloors => {
+    // The render path never reads a cached floor. Capture depends on the exact
+    // duration and a frame that rendered against a wrong one cannot be
+    // recovered, so it pays the full derivation on every frame exactly as
+    // before — a correct slow render beats a fast wrong one.
+    if (renderCaptureSeekStarted) return deriveDurationFloors();
+    watchDurationFloorInputs();
+    // MutationObserver records are delivered in a microtask, so a caller that
+    // edits a timing attribute and reads the duration back in the SAME
+    // synchronous block would otherwise be served the pre-edit value. Draining
+    // the queue here makes the cache correct within a task, not just across
+    // tasks. Taking the records suppresses the callback for them, which is
+    // exactly equivalent since the callback only marks the cache stale.
+    if (durationFloorsObserver && durationFloorsObserver.takeRecords().length > 0) {
+      invalidateDurationFloors();
+    }
+    const registrySignature = readTimelineRegistrySignature();
+    if (durationFloorsCache && registrySignature === durationFloorsRegistrySignature) {
+      return durationFloorsCache;
+    }
+    durationFloorsRegistrySignature = registrySignature;
+    durationFloorsCache = deriveDurationFloors();
+    return durationFloorsCache;
+  };
+
   const getSafeTimelineDurationSeconds = (
     timeline: RuntimeTimelineLike | null,
     fallback = 0,
   ): number => {
     const timelineDuration = getTimelineDurationSeconds(timeline);
-    const mediaFloor = resolveMediaDurationFloorSeconds();
-    const authoredCompositionFloor = resolveAuthoredCompositionDurationFloorSeconds();
+    const { media: mediaFloor, authoredComposition: authoredCompositionFloor } =
+      resolveDurationFloors();
+    // Deliberately NOT cached: adapters infer their duration from live
+    // animation objects (CSS/WAAPI/Lottie), which can change without any DOM
+    // mutation or media event to observe. It is also a short loop over the
+    // registered adapters, not a document scan.
     const adapterFloor = resolveAdapterDurationFloorSeconds();
     const durationFloor = Math.max(
       mediaFloor ?? 0,
@@ -969,9 +1140,10 @@ export function initSandboxRuntimeModular(): void {
       timelineRegistry: timelines,
       includeAuthoredTimingAttrs: true,
     });
-    const mediaDurationFloorSeconds = resolveMediaDurationFloorSeconds();
-    const authoredCompositionDurationFloorSeconds =
-      resolveAuthoredCompositionDurationFloorSeconds();
+    const {
+      media: mediaDurationFloorSeconds,
+      authoredComposition: authoredCompositionDurationFloorSeconds,
+    } = resolveDurationFloors();
     const durationFloorSeconds =
       Math.max(mediaDurationFloorSeconds ?? 0, authoredCompositionDurationFloorSeconds ?? 0) ||
       null;
@@ -1810,12 +1982,6 @@ export function initSandboxRuntimeModular(): void {
 
   let metadataRebindDebounceTimerId: number | null = null;
   let metadataRebindApplied = false;
-  // Flips true on the first renderSeek call — the render/producer capture
-  // protocol's signal that it has started deterministically driving frames.
-  // One-way for this page lifetime; every producer render gets a fresh runtime.
-  // See scheduleMetadataDurationHydration for why this gates the async
-  // metadata rebind off once set.
-  let renderCaptureSeekStarted = false;
   const metadataBoundMedia = new Set<HTMLMediaElement>();
   const volumeKeyframeCache = new WeakMap<HTMLMediaElement, VolumeKeyframe[]>();
 
@@ -2086,10 +2252,7 @@ export function initSandboxRuntimeModular(): void {
     }
   };
 
-  const syncTimedElementVisibility = (
-    currentTime: number,
-    visibilityNodes: Element[] = Array.from(document.querySelectorAll("[data-start]")),
-  ) => {
+  const applyTimedElementVisibility = (currentTime: number, visibilityNodes: Element[]) => {
     const rootComp = resolveRootCompositionElement();
     for (const rawNode of visibilityNodes) {
       if (!(rawNode instanceof HTMLElement)) continue;
@@ -2160,41 +2323,54 @@ export function initSandboxRuntimeModular(): void {
     syncAudioGroupMute();
   };
 
+  // Scope 2 of 3 (see `withTimingResolver`). One resolver for the whole
+  // visibility pass: every node costs 2 x (1 + ancestor depth) resolves, and
+  // ancestor chains are shared between siblings. Nothing in this body calls
+  // `el.load()` or awaits, so no duration can change under the cache.
+  const syncTimedElementVisibility = (
+    currentTime: number,
+    visibilityNodes: Element[] = Array.from(document.querySelectorAll("[data-start]")),
+  ) => withTimingResolver(() => applyTimedElementVisibility(currentTime, visibilityNodes));
+
   const syncMediaForCurrentState = () => {
-    const cache = refreshRuntimeMediaCache({
-      shouldIncludeElement: (element) =>
-        element.hasAttribute("data-start") ||
-        Boolean(resolveMediaCompositionContext(element).compositionRoot),
-      resolveStartSeconds: (element) => {
-        return resolveAbsoluteMediaStartSeconds(element);
-      },
-      resolveDurationSeconds: (element) => {
-        const context = resolveMediaCompositionContext(element);
-        const start = resolveAbsoluteMediaStartSeconds(element);
-        const hostRemaining =
-          context.inheritedStart != null &&
-          context.inheritedDuration != null &&
-          context.inheritedDuration > 0
-            ? Math.max(0, context.inheritedStart + context.inheritedDuration - start)
+    // Scope 1 of 3 (see `withTimingResolver`). Closes before `syncRuntimeMedia`,
+    // which may call `el.load()` and invalidate every cached duration.
+    const cache = withTimingResolver(() =>
+      refreshRuntimeMediaCache({
+        shouldIncludeElement: (element) =>
+          element.hasAttribute("data-start") ||
+          Boolean(resolveMediaCompositionContext(element).compositionRoot),
+        resolveStartSeconds: (element) => {
+          return resolveAbsoluteMediaStartSeconds(element);
+        },
+        resolveDurationSeconds: (element) => {
+          const context = resolveMediaCompositionContext(element);
+          const start = resolveAbsoluteMediaStartSeconds(element);
+          const hostRemaining =
+            context.inheritedStart != null &&
+            context.inheritedDuration != null &&
+            context.inheritedDuration > 0
+              ? Math.max(0, context.inheritedStart + context.inheritedDuration - start)
+              : null;
+          const sourceDuration = Number.isFinite(element.duration)
+            ? resolveNaturalMediaTimelineDuration(element, element.duration)
             : null;
-        const sourceDuration = Number.isFinite(element.duration)
-          ? resolveNaturalMediaTimelineDuration(element, element.duration)
-          : null;
-        // The element's own data-duration is an explicit clip-length trim
-        // (the studio writes it when you drag the clip edge). It must bound
-        // playback so a trimmed track stops at its edge instead of running on
-        // to the source-file or host-composition end. Absent → no cap (an
-        // untrimmed clip plays its natural source length).
-        const ownDuration = parseStrictFiniteTimingNumber(element.dataset.duration);
-        const explicitDuration = ownDuration != null && ownDuration > 0 ? ownDuration : null;
-        return resolveRuntimeMediaClipDuration({
-          isVideo: element.tagName === "VIDEO",
-          sourceDuration,
-          hostRemaining,
-          explicitDuration,
-        });
-      },
-    });
+          // The element's own data-duration is an explicit clip-length trim
+          // (the studio writes it when you drag the clip edge). It must bound
+          // playback so a trimmed track stops at its edge instead of running on
+          // to the source-file or host-composition end. Absent → no cap (an
+          // untrimmed clip plays its natural source length).
+          const ownDuration = parseStrictFiniteTimingNumber(element.dataset.duration);
+          const explicitDuration = ownDuration != null && ownDuration > 0 ? ownDuration : null;
+          return resolveRuntimeMediaClipDuration({
+            isVideo: element.tagName === "VIDEO",
+            sourceDuration,
+            hostRemaining,
+            explicitDuration,
+          });
+        },
+      }),
+    );
     // Attach probed volume keyframes to clips so syncRuntimeMedia can use the
     // same envelope the renderer uses instead of tracking GSAP-change diffs.
     for (const clip of cache.mediaClips) {
