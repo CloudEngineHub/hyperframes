@@ -3893,17 +3893,16 @@ export async function captureFrameToBufferPipelined(
 
     return { encodeResult, captureTimeMs };
   } catch (captureError) {
-    // The viewport can contain the last injected bitmap, not the sought frame.
-    if (isRecoverableDrawElementError(captureError)) {
-      session.deNcprFallbacks = (session.deNcprFallbacks ?? 0) + 1;
-      const reason = isCanvasNotInitializedError(captureError)
-        ? "drawElement canvas not initialized"
-        : "No cached paint record";
-      throw new DrawElementCaptureError(frameIndex, reason, captureError);
-    }
     // Mirror captureFrameCore: capture per-frame diagnostics (frame-error
     // PNG/HTML/JSON + console tail) before rethrowing so pipelined-path
-    // failures are debuggable like the serial path.
+    // failures are debuggable like the serial path. Runs BEFORE the
+    // recoverable-error wrapper below because the serial path's diagnostics
+    // sit in an outer catch that its own DrawElementCaptureError throw
+    // propagates through — ordering it after the wrapper would silently skip
+    // the bundle for exactly the NCPR/canvas failures worth debugging.
+    // Bounded: a recoverable error aborts the whole attempt, so this fires at
+    // most once per attempt. captureFrameErrorDiagnostics self-catches, so a
+    // dead page cannot mask the structural error the producer retries on.
     if (session.isInitialized) {
       await captureFrameErrorDiagnostics(
         session,
@@ -3911,6 +3910,14 @@ export async function captureFrameToBufferPipelined(
         time,
         captureError instanceof Error ? captureError : new Error(String(captureError)),
       );
+    }
+    // The viewport can contain the last injected bitmap, not the sought frame.
+    if (isRecoverableDrawElementError(captureError)) {
+      session.deNcprFallbacks = (session.deNcprFallbacks ?? 0) + 1;
+      const reason = isCanvasNotInitializedError(captureError)
+        ? "drawElement canvas not initialized"
+        : "No cached paint record";
+      throw new DrawElementCaptureError(frameIndex, reason, captureError);
     }
     throw captureError;
   }
