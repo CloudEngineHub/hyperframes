@@ -27,12 +27,12 @@ import {
 } from "./domEditingDom";
 import {
   findElementForSelection,
-  getDomLayerPatchTarget,
-  getDirectLayerChildren,
   getSelectionCandidate,
+  isDomLayerElement,
 } from "./domEditingElement";
 import { isCompositionRootLayer } from "./domEditingRootLayer";
 import { withSelectorIndexPass } from "../../utils/sourceScopedSelectorIndex";
+import { type DomEditLayerWalkCache, readDomEditLayerWalkEntry } from "./domEditLayerWalkCache";
 
 export function isEditableTextLeaf(el: HTMLElement): boolean {
   return isTextBearingTag(el.tagName.toLowerCase()) && el.children.length === 0;
@@ -422,7 +422,7 @@ export function countDomEditChildLayers(
   const visit = (el: HTMLElement) => {
     for (const child of Array.from(el.children)) {
       if (!isHtmlElement(child)) continue;
-      if (getDomLayerPatchTarget(child, options.activeCompositionPath)) {
+      if (isDomLayerElement(child)) {
         count += 1;
         if (count >= maxCount) return;
       }
@@ -443,23 +443,26 @@ export function collectDomEditLayerItems(
   root: HTMLElement | null | undefined,
   options: DomEditContextOptions,
   maxItems = Number.POSITIVE_INFINITY,
+  cache?: DomEditLayerWalkCache,
 ): DomEditLayerItem[] {
   if (!root) return [];
+  cache?.beginWalk(options.activeCompositionPath);
 
   const items: DomEditLayerItem[] = [];
   // fallow-ignore-next-line complexity
   const visit = (el: HTMLElement, depth: number) => {
     if (items.length >= maxItems) return;
 
-    const target = getDomLayerPatchTarget(el, options.activeCompositionPath);
-    if (target) {
+    const entry = readDomEditLayerWalkEntry(el, options.activeCompositionPath, cache);
+    if (entry) {
+      const { target } = entry;
       items.push({
         key: getDomEditLayerKey(target),
         element: el,
-        label: buildElementLabel(el),
+        label: entry.label,
         tagName: el.tagName.toLowerCase(),
         depth,
-        childCount: getDirectLayerChildren(el, options).length,
+        childCount: entry.childCount,
         id: target.id ?? undefined,
         hfId: target.hfId ?? undefined,
         selector: target.selector ?? undefined,
@@ -468,7 +471,7 @@ export function collectDomEditLayerItems(
       });
     }
 
-    const nextDepth = target ? depth + 1 : depth;
+    const nextDepth = entry ? depth + 1 : depth;
     for (const child of Array.from(el.children)) {
       if (!isHtmlElement(child)) continue;
       visit(child, nextDepth);
