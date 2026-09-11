@@ -218,6 +218,16 @@ where it can actually act as a ceiling.
 
 ## Voiceover carve
 
+**Required whenever music plays under a voice.** If a composition places a
+music bed (BGM) under any voice track — narration, avatar speech, interview,
+voiceover — carving the bed is part of finishing the mix, not an optional polish.
+Run `node <SKILL_DIR>/scripts/carve.mjs --comp <file.html>` (add `--bed` /
+`--voice` when detection picks wrong), confirm the written `data-fx-carve`,
+`data-fx-chain` and `data-automation` with `npx hyperframes check`, and only then
+render. A volume duck on its own is not a finished mix: it leaves the voice and
+the bed fighting in the 1–3 kHz band and costs the bed all of its presence for the
+whole voiceover.
+
 **The problem it solves.** A music bed under a voice makes the voice hard to
 follow. The reflex is to duck the whole bed, which works and costs the bed all of
 its presence — the music goes limp for the entire voiceover. But the voice does
