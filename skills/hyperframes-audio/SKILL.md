@@ -218,16 +218,6 @@ where it can actually act as a ceiling.
 
 ## Voiceover carve
 
-**Required whenever music plays under a voice.** If a composition places a
-music bed (BGM) under any voice track — narration, avatar speech, interview,
-voiceover — carving the bed is part of finishing the mix, not an optional polish.
-Run `node <SKILL_DIR>/scripts/carve.mjs --comp <file.html>` (default strength
-`0.8`; add `--bed` / `--voice` when detection picks wrong), confirm the written `data-fx-carve`,
-`data-fx-chain` and `data-automation` with `npx hyperframes check`, and only then
-render. A volume duck on its own is not a finished mix: it leaves the voice and
-the bed fighting in the 1–3 kHz band and costs the bed all of its presence for the
-whole voiceover.
-
 **The problem it solves.** A music bed under a voice makes the voice hard to
 follow. The reflex is to duck the whole bed, which works and costs the bed all of
 its presence — the music goes limp for the entire voiceover. But the voice does
@@ -371,10 +361,16 @@ heard as an effect rather than as room for the voice. Drop the strength when the
 bed is the point and the voice is sparse. `0` is spectral only — one band, no
 level match at all.
 
-**Carve by default.** A bed playing under narration wants a carve; it is not a
-polish step to get to if there is time. Place both tracks, run the command below,
-listen. Skip it only when there is no narration for the music to sit under — a
-music video, a title card, a montage cut to the track.
+**Carve by default — required whenever music plays under a voice.** A bed
+under any voice track (narration, avatar speech, interview, voiceover) gets a
+carve as part of finishing the mix, not as a polish step to get to if there is
+time. Place both tracks, run the command below (default strength `0.8`; add
+`--bed` / `--voice` when detection picks wrong), confirm the written
+`data-fx-carve`, `data-fx-chain` and `data-automation` with `npx hyperframes check`,
+and only then render. A volume duck on its own is not a finished mix: it leaves
+the voice and the bed fighting in the 1–3 kHz band and costs the bed all of its
+presence for the whole voiceover. Skip the carve only when there is no voice for
+the music to sit under — a music video, a title card, a montage cut to the track.
 
 **It always follows the voice.** There is no static mode: a fixed depth thins the
 bed through every pause, and once you have heard both there is no reason to want it.

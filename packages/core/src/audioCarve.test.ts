@@ -384,6 +384,10 @@ describe("analyseCarveDuck", () => {
 
     // Still most of the way down a third of a second after the last word...
     expect(at(duck, 6.3)).toBeLessThan(atSpeech * 0.6);
+    // Three seconds past the last word the bed is still audibly down — at a 1.6s
+    // release it is all but back (−1.5 dB), which is the sentence-break flip this
+    // constant exists to stop. This is the point that reds on the old value.
+    expect(at(duck, 9)).toBeLessThan(-2);
     // ...noticeably recovered two and a half seconds on...
     expect(at(duck, 8.5)).toBeGreaterThan(atSpeech * 0.5);
     // ...and within a hair of flat several seconds later, rather than held down.
