@@ -5,7 +5,13 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_STRENGTH, carveSources, groupSourceRefusal, loadCore, parseArgs } from "./carve.mjs";
+import {
+  DEFAULT_STRENGTH,
+  carveSources,
+  groupSourceRefusal,
+  loadCore,
+  parseArgs,
+} from "./carve.mjs";
 
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 
