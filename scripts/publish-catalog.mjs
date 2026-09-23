@@ -191,6 +191,12 @@ function checkAlreadyScheduled(run) {
   return run.status !== "completed" || run.conclusion === "success";
 }
 
+function publishCheckRequest(workflow) {
+  if (workflow === "ci.yml" || workflow === "regression.yml")
+    return { ref: BRANCH, inputs: { catalog_publish: true } };
+  return { ref: BRANCH };
+}
+
 function dispatchPublishChecks(repository) {
   const head = commitOid(
     api(`repos/${repository}/git/ref/heads/${BRANCH}`, "GET", undefined, ".object.sha"),
@@ -203,11 +209,15 @@ function dispatchPublishChecks(repository) {
     "codeql.yml",
   ]) {
     const endpoint = `repos/${repository}/actions/workflows/${workflow}`;
+    const request = publishCheckRequest(workflow);
     const runs = JSON.parse(
-      api(`${endpoint}/runs?event=workflow_dispatch&head_sha=${head}&per_page=1`),
+      api(`${endpoint}/runs?event=workflow_dispatch&head_sha=${head}&per_page=100`),
     );
-    if (checkAlreadyScheduled(runs.workflow_runs[0])) continue;
-    api(`${endpoint}/dispatches`, "POST", { ref: BRANCH });
+    const latest = runs.workflow_runs.find(
+      (run) => !request.inputs || run.display_title === "Checks (catalog_publish=true)",
+    );
+    if (checkAlreadyScheduled(latest)) continue;
+    api(`${endpoint}/dispatches`, "POST", request);
   }
 }
 
