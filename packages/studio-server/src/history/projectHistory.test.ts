@@ -10,10 +10,12 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fileContentVersion } from "../helpers/fileVersion";
+import { HistoryBusyError } from "./ownerLock";
 import { openProjectHistory, type ProjectHistory } from "./projectHistory";
 import { START, type HistoryWho } from "./historyLog";
 
@@ -189,6 +191,66 @@ describe("openProjectHistory", () => {
     const copied = await open(copy, historyRoot);
     expect(copied.projectId).not.toBe(history.projectId);
     expect(copied.list()).toEqual([]);
+  });
+
+  it("lets one process at a time hold a project's history, so a second opener cannot fork its log", async () => {
+    const { history, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    await expect(openProjectHistory({ projectDir, historyRoot, ownerWaitMs: 0 })).rejects.toThrow(
+      `pid ${process.pid}`,
+    );
+    const waiting = open(projectDir, historyRoot, { ownerWaitMs: 5000 });
+    await history.close();
+    expect((await waiting).projectId).toBe(history.projectId);
+  });
+
+  it("takes over the lock of an owner that died without closing", async () => {
+    const { history, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    await history.close();
+    const dead = spawnSync(process.execPath, ["-e", "process.stdout.write(String(process.pid))"]);
+    writeFileSync(join(historyRoot, history.projectId, "owner.pid"), dead.stdout);
+    expect((await open(projectDir, historyRoot, { ownerWaitMs: 0 })).projectId).toBe(
+      history.projectId,
+    );
+  });
+
+  it("never removes a lock another process holds: not on close, not while another evicts a dead owner", async () => {
+    const { history, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    const lock = join(historyRoot, history.projectId, "owner.pid");
+    const other = String(process.ppid); // a live process that is not this one
+    writeFileSync(lock, other);
+    await history.close();
+    expect(readFileSync(lock, "utf-8"), "a close leaves a later owner's lock").toBe(other);
+
+    const dead = spawnSync(process.execPath, ["-e", "process.stdout.write(String(process.pid))"]);
+    writeFileSync(lock, dead.stdout);
+    writeFileSync(`${lock}.evict`, other);
+    await expect(
+      openProjectHistory({ projectDir, historyRoot, ownerWaitMs: 200 }),
+      "only the evictor that holds the evict lock removes a dead owner",
+    ).rejects.toThrow(HistoryBusyError);
+
+    writeFileSync(`${lock}.evict`, dead.stdout);
+    expect((await open(projectDir, historyRoot, { ownerWaitMs: 200 })).projectId).toBe(
+      history.projectId,
+    );
+  });
+
+  it("fails an open whose lock cannot be read, instead of retrying it forever", async () => {
+    const { history, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    await history.close();
+    mkdirSync(join(historyRoot, history.projectId, "owner.pid"));
+    await expect(openProjectHistory({ projectDir, historyRoot, ownerWaitMs: 0 })).rejects.toThrow(
+      /EISDIR/,
+    );
+  });
+
+  it("takes over a lock file that holds no pid", async () => {
+    const { history, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    await history.close();
+    writeFileSync(join(historyRoot, history.projectId, "owner.pid"), "");
+    expect((await open(projectDir, historyRoot, { ownerWaitMs: 0 })).projectId).toBe(
+      history.projectId,
+    );
   });
 
   it("rewrites a history folder removed while open, so a reopen still has the change", async () => {
