@@ -1,12 +1,14 @@
 import type { Context, Hono } from "hono";
 import type { StudioApiAdapter } from "../types.js";
 import { createWriteToken } from "../helpers/fileVersion.js";
-import type { HistoryWindow, ProjectHistory } from "../history/projectHistory.js";
+import {
+  MAX_WINDOW_IDLE_MS,
+  type HistoryWindow,
+  type ProjectHistory,
+} from "../history/projectHistory.js";
 import type { HistoryWho } from "../history/historyLog.js";
 
 const YOU: HistoryWho = { kind: "person", name: "You" };
-/** No edit waits this long between writes. */
-const MAX_WINDOW_IDLE_MS = 10 * 60_000;
 
 async function historyOf(adapter: StudioApiAdapter, c: Context): Promise<ProjectHistory | null> {
   const project = await adapter.resolveProject(c.req.param("id") ?? "");
@@ -24,6 +26,13 @@ const text = (value: unknown) => (typeof value === "string" && value ? value : n
 function writing(c: Context): { writeToken?: string } {
   const header = c.req.header("X-Hyperframes-Write-Token");
   return header ? { writeToken: createWriteToken(header) } : {};
+}
+
+/** An agent names itself (`who: {kind: "agent", name}`); anyone else is the person at Studio. */
+function whoOf(body: Record<string, unknown>): HistoryWho {
+  const who = body.who as { kind?: unknown; name?: unknown } | undefined;
+  const name = text(who?.name);
+  return who?.kind === "agent" && name ? { kind: "agent", name } : YOU;
 }
 
 /** How long a window or a coalescing claim may wait for its next write; past the cap a timer overflows. */
@@ -87,12 +96,12 @@ export function registerHistoryRoutes(api: Hono, adapter: StudioApiAdapter): voi
     withHistory(adapter, c, (history, body) => {
       const mode =
         body.mode === "just-this" || body.mode === "back-to-before" ? body.mode : undefined;
-      return history.undo(text(body.entryId) ?? "", { who: YOU, mode, ...writing(c) });
+      return history.undo(text(body.entryId) ?? "", { who: whoOf(body), mode, ...writing(c) });
     }),
   );
   api.post(`${base}/restore`, (c) =>
     withHistory(adapter, c, (history, body) =>
-      history.restore(text(body.point) ?? "", YOU, writing(c)),
+      history.restore(text(body.point) ?? "", whoOf(body), writing(c)),
     ),
   );
   api.get(`${base}/peek/:point`, (c) =>
@@ -104,6 +113,15 @@ export function registerHistoryRoutes(api: Hono, adapter: StudioApiAdapter): voi
       return { ok: true };
     }),
   );
+  api.get(`${base}/blob/:hash`, async (c) => {
+    const history = await historyOf(adapter, c);
+    const hash = c.req.param("hash") ?? "";
+    const missing = () =>
+      c.json({ error: "That file is not kept in this project's history." }, 404);
+    if (!history || !/^[0-9a-f]{64}$/.test(hash)) return missing();
+    const bytes = await history.readBlob(hash).catch(() => null);
+    return bytes ? c.body(new Uint8Array(bytes)) : missing();
+  });
   // Studio records after it writes: its edit claims the paths it just wrote, under the edit's label.
   api.post(`${base}/claim`, (c) =>
     withHistory(adapter, c, async (history, body) => {
@@ -123,13 +141,13 @@ export function registerHistoryRoutes(api: Hono, adapter: StudioApiAdapter): voi
     withHistory(adapter, c, async (history, body) => {
       const idleMs = idleOf(body);
       const window = await history.beginWindow(
-        YOU,
+        whoOf(body),
         text(body.label) ?? "Edited in Studio",
         idleMs ? { idleMs } : undefined,
       );
       windows.set(window.id, { history, window });
       // The window's id is the id of the entry it becomes (its last one, when a claim cut it).
-      return { windowId: window.id };
+      return { windowId: window.id, startedAt: window.startedAt };
     }),
   );
   api.post(`${base}/window/:windowId/close`, (c) =>

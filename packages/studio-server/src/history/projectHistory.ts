@@ -49,6 +49,8 @@ export interface ProjectHistoryOptions {
   onError?: (error: unknown) => void;
   /** How long an open waits for another process to close the same history (default 5 s). */
   ownerWaitMs?: number;
+  /** A CLI turn's window from an earlier open: writes since, within its idle limit, become the entry with its id. */
+  closedWindow?: ClosedWindow;
 }
 
 interface ClaimOptions {
@@ -62,6 +64,17 @@ interface Writing {
   writeToken?: string;
 }
 
+export interface ClosedWindow {
+  id: string;
+  who: HistoryWho;
+  label: string;
+  startedAt: number;
+  lastWriteAt: number;
+  idleMs: number;
+}
+
+export const MAX_WINDOW_IDLE_MS = 10 * 60_000;
+
 export interface HistoryListItem extends HistoryEntry {
   pinned: boolean;
   undone: boolean;
@@ -73,6 +86,7 @@ export type HistoryResult =
 
 export interface HistoryWindow {
   readonly id: string;
+  readonly startedAt: number;
   /** Records everything written since the window opened as one entry (null when nothing changed); after the window
    * ended by itself or by flush, returns the entry it became. */
   close(): Promise<HistoryEntry | null>;
@@ -136,8 +150,9 @@ interface Group {
   label: string;
   startedAt: number;
   changes: Map<string, HistoryFileChange>;
-  /** Windows only: the idle lifetime, its timer, and the entry it became once ended. */
+  /** Windows only: the idle lifetime, its timer, the last write's time, and the entry it became once ended. */
   idleMs?: number;
+  lastWriteAt?: number;
   idleTimer?: NodeJS.Timeout;
   entry?: HistoryEntry | null;
 }
@@ -167,6 +182,10 @@ function splitAt(
     { ...change, before: at },
   ];
 }
+
+/** A window takes a write within idleMs of its last one; past that it has ended, even before its timer commits it. */
+const takesWrite = (window: Group, at: number) =>
+  window.idleMs === undefined || at - (window.lastWriteAt ?? at) <= window.idleMs;
 
 /** Files one change to a group; a later change to the same path keeps the group's first "before". */
 function addChange(group: Group, path: string, before: string | null, after: string | null): void {
@@ -230,9 +249,18 @@ class Engine {
       const cached = cache.get(path);
       this.tracked.set(path, { hash, stat: cached?.hash === hash ? cached.stat : "" });
     }
-    // What changed while the project was closed is one outside entry.
+    // What changed while the project was closed is one outside entry, or the closed window's.
+    this.reopenClosedWindow();
     await this.sweep();
+    for (const window of [...this.windows]) await this.endWindow(window);
     await this.commitOutside();
+  }
+
+  reopenClosedWindow(): void {
+    const closed = this.options.closedWindow;
+    if (!closed || this.log.entries.some((entry) => entry.id === closed.id)) return;
+    const { id, who, label, startedAt, lastWriteAt, idleMs } = closed;
+    this.windows.push({ id, who, label, startedAt, lastWriteAt, idleMs, changes: new Map() });
   }
 
   async firstOpen(): Promise<void> {
@@ -274,15 +302,18 @@ class Engine {
     // A missing project folder was moved or removed, not emptied: that is no change to its files.
     if (!existsSync(this.dir)) return;
     const sweptAt = Date.now();
-    const seen = listProjectFiles(this.dir);
+    const changedAt = (file: { mtimeMs: number; ctimeMs: number }) =>
+      Math.min(sweptAt, Math.max(file.mtimeMs, file.ctimeMs));
+    const seen = listProjectFiles(this.dir).sort((a, b) => changedAt(a) - changedAt(b));
     let changed = false;
     for (const file of seen)
-      changed = (await this.observe(file.path, statKey(file, sweptAt))) || changed;
+      changed = (await this.observe(file.path, statKey(file, sweptAt), changedAt(file))) || changed;
     const present = new Set(seen.map((file) => file.path));
     for (const [path, known] of this.tracked) {
       if (present.has(path)) continue;
       this.tracked.delete(path);
-      this.record(path, known.hash, null);
+      const removedAt = sweptAt;
+      await this.record(path, known.hash, null, removedAt);
       changed = true;
     }
     if (changed) this.saveStatCache();
@@ -298,19 +329,27 @@ class Engine {
     }
   }
 
-  async observe(path: string, stat: string): Promise<boolean> {
+  async observe(path: string, stat: string, at: number): Promise<boolean> {
     const known = this.tracked.get(path) ?? { hash: null, stat: null };
     if (stat && known.stat === stat) return false;
     const hash = await this.storeIfPresent(path);
     if (hash === null) return false;
     this.tracked.set(path, { hash, stat });
-    if (known.hash !== hash) this.record(path, known.hash, hash);
+    if (known.hash !== hash) await this.record(path, known.hash, hash, at);
     return known.hash !== hash || known.stat !== stat;
   }
 
-  record(path: string, before: string | null, after: string | null): void {
+  async record(
+    path: string,
+    before: string | null,
+    after: string | null,
+    at: number,
+  ): Promise<void> {
+    const endedBeforeThisWrite = this.windows.filter((open) => !takesWrite(open, at));
+    if (endedBeforeThisWrite.length) await this.commitOutside();
+    for (const window of endedBeforeThisWrite) await this.endWindow(window);
     const window = this.windows.at(-1);
-    if (window) this.touch(window);
+    if (window) this.touch(window, at);
     addChange(window ?? this.outsideGroup(), path, before, after);
   }
 
@@ -461,9 +500,11 @@ class Engine {
 
   async commit(group: Group, extra: Partial<HistoryEntry> = {}): Promise<HistoryEntry | null> {
     if (!group.changes.size) return null;
-    const { id, who, label, startedAt, changes } = group;
+    const { id, who, label, startedAt, lastWriteAt, changes } = group;
     const files = [...changes.values()].sort((a, b) => a.path.localeCompare(b.path));
-    const entry: HistoryEntry = { id, who, label, startedAt, endedAt: this.now(), files, ...extra };
+    const previousEnd = this.log.entries.at(-1)?.endedAt ?? 0;
+    const endedAt = Math.max(lastWriteAt ?? this.now(), previousEnd);
+    const entry: HistoryEntry = { id, who, label, startedAt, endedAt, files, ...extra };
     this.log.entries.push(entry);
     try {
       saveRecord(this.logFile, this.log, { type: "entry", entry });
@@ -521,13 +562,15 @@ class Engine {
       await this.sweep();
       const window = { ...this.newGroup(who, label), idleMs };
       this.windows.push(window);
-      this.touch(window);
-      return { id: window.id, close: () => this.queue(() => this.sweepAndEnd(window)) };
+      this.touch(window, Date.now());
+      const close = () => this.queue(() => this.sweepAndEnd(window));
+      return { id: window.id, startedAt: window.startedAt, close };
     });
   }
 
   /** A window with no write for its idleMs ends, so a close that never comes cannot hold every later write. */
-  touch(window: Group): void {
+  touch(window: Group, at: number): void {
+    window.lastWriteAt = Math.max(window.lastWriteAt ?? at, at);
     clearTimeout(window.idleTimer);
     if (window.idleMs === undefined || !Number.isFinite(window.idleMs)) return;
     window.idleTimer = setTimeout(

@@ -8,6 +8,8 @@ import {
   readFileSync,
   renameSync,
   rmSync,
+  statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -20,6 +22,7 @@ import { openProjectHistory, type ProjectHistory } from "./projectHistory";
 import { START, type HistoryWho } from "./historyLog";
 
 const you: HistoryWho = { kind: "person", name: "You" };
+const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms));
 const agent: HistoryWho = { kind: "agent", name: "Agent" };
 const cleanup: Array<() => unknown> = [];
 
@@ -201,6 +204,153 @@ describe("openProjectHistory", () => {
     const waiting = open(projectDir, historyRoot, { ownerWaitMs: 5000 });
     await history.close();
     expect((await waiting).projectId).toBe(history.projectId);
+  });
+
+  it("files what changed while closed to a window begun on an earlier open, under its id", async () => {
+    const { history, write, projectDir, historyRoot } = await project({ "index.html": "v1" });
+    await history.close();
+    write("index.html", "v2");
+    const closedWindow = {
+      id: "turn-1",
+      who: agent,
+      label: "Bigger title",
+      startedAt: 1,
+      lastWriteAt: Date.now(),
+      idleMs: 60_000,
+    };
+
+    const reopened = await open(projectDir, historyRoot, { closedWindow });
+    expect(reopened.list()).toMatchObject([{ id: "turn-1", who: agent, label: "Bigger title" }]);
+    await reopened.close();
+
+    write("index.html", "v3");
+    const again = await open(projectDir, historyRoot, { closedWindow });
+    expect(
+      again.list().map((entry) => entry.who),
+      "an id already kept is not reused",
+    ).toEqual([agent, { kind: "outside", name: "Outside" }]);
+  });
+
+  it("files to a closed window only the writes before its idle limit ran out, counting from each write", async () => {
+    const { history, write, projectDir, historyRoot } = await project({
+      "a.html": "a1",
+      "b.html": "b1",
+      "c.html": "c1",
+    });
+    await history.close();
+    // A file's change time is its ctime, which only the clock sets: the writes are spaced in real time.
+    const lastWriteAt = Date.now();
+    await pause(300);
+    write("a.html", "2");
+    await pause(300);
+    write("b.html", "2"); // 600 ms after the window's last write, but 300 ms after a.html: still the window's
+    await pause(700);
+    write("c.html", "2"); // 700 ms without a write: the window had ended
+    const closedWindow = { id: "turn-1", who: agent, label: "Turn", startedAt: 1, lastWriteAt };
+
+    const reopened = await open(projectDir, historyRoot, {
+      closedWindow: { ...closedWindow, idleMs: 400 },
+    });
+    const [turn, outside] = reopened.list();
+    expect([turn, outside].map((entry) => entry?.files.map((file) => file.path))).toEqual([
+      ["a.html", "b.html"],
+      ["c.html"],
+    ]);
+    expect(outside?.who.kind).toBe("outside");
+    const onDisk = readFileSync(join(historyRoot, reopened.projectId, "log.jsonl"), "utf-8");
+    expect(Object.keys(JSON.parse(onDisk.trim().split("\n")[1]!).entry).sort()).toEqual([
+      "endedAt",
+      "files",
+      "id",
+      "label",
+      "startedAt",
+      "who",
+    ]);
+  });
+
+  it("times each write by its file: oldest first, a copy that keeps an old mtime as now, a removal as now", async () => {
+    const { history, write, projectDir, historyRoot } = await project({
+      "a.html": "a1",
+      "b.html": "b1",
+      "c.html": "c1",
+    });
+    await history.close();
+    const writeAt = (path: string, text: string, at: number) => {
+      write(path, text);
+      utimesSync(join(projectDir, path), at / 1000, at / 1000);
+    };
+    const turn = (id: string, lastWriteAt: number) => ({
+      closedWindow: { id, who: agent, label: "Turn", startedAt: 1, lastWriteAt, idleMs: 400 },
+    });
+
+    // b.html comes first in time though not by name: taken in order, both are the window's.
+    const first = Date.now();
+    await pause(300);
+    write("b.html", "b2");
+    await pause(300);
+    write("a.html", "a2"); // past the limit from the window's last write, so it counts only after b.html
+    const lastWrite = statSync(join(projectDir, "a.html")).ctimeMs;
+    const reopened = await open(projectDir, historyRoot, turn("turn-1", first));
+    const [kept] = reopened.list();
+    expect(kept?.files.map((file) => file.path)).toEqual(["a.html", "b.html"]);
+    expect(Math.abs(kept!.endedAt - lastWrite), "ends at its last write").toBeLessThan(2);
+    await reopened.close();
+
+    // Long after the window's last write: an old mtime does not hide a write made now, nor does a removal.
+    const stale = Date.now() - 5000;
+    writeAt("a.html", "a3", stale + 100);
+    rmSync(join(projectDir, "c.html"));
+    const again = await open(projectDir, historyRoot, turn("turn-2", stale));
+    expect(again.list().at(-1)).toMatchObject({
+      who: { kind: "outside" },
+      files: [{ path: "a.html" }, { path: "c.html" }],
+    });
+  });
+
+  it("logs an agent window past its idle limit before a later Studio edit that claims its file", async () => {
+    const { history, write } = await project({ "index.html": "A" });
+    // The idle timer stays asleep (a laptop lid closed) while real time passes the limit.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const window = await history.beginWindow(agent, "Retitle", { idleMs: 50 });
+      write("index.html", "A2");
+      await history.claim(you, "Nothing", []); // a claim scans first: the agent's write is seen
+      for (const until = Date.now() + 150; Date.now() < until; );
+      write("index.html", "A3");
+      await history.claim(you, "Dragged Title", ["index.html"], {
+        overwrote: { "index.html": fileContentVersion("A2") },
+      });
+      await window.close();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(history.list().map((entry) => entry.label)).toEqual(["Retitle", "Dragged Title"]);
+  });
+
+  it("counts a file time ahead of the scan as the scan's time, so it does not end an open turn", async () => {
+    const { projectDir, history, write } = await project({ "a.js": "1", "b.js": "1" });
+    const window = await history.beginWindow(agent, "Build", { idleMs: 2000 });
+    write("a.js", "2");
+    const ahead = Date.now() + 60_000;
+    utimesSync(join(projectDir, "a.js"), ahead / 1000, ahead / 1000);
+    await history.claim(you, "Nothing", []);
+    write("b.js", "2");
+
+    expect((await window.close())?.files.map((file) => file.path)).toEqual(["a.js", "b.js"]);
+  });
+
+  it("ends every entry at or after the one logged before it, though a window ends at its last write", async () => {
+    const { history, write } = await project({ "index.html": "A", "notes.html": "N" });
+    const window = await history.beginWindow(agent, "Retitle");
+    write("index.html", "A2");
+    write("notes.html", "N2");
+    await new Promise((settle) => setTimeout(settle, 20));
+    await history.claim(you, "Edited notes", ["notes.html"]);
+    await window.close();
+
+    const ends = history.list().map((entry) => entry.endedAt);
+    expect(ends).toEqual([...ends].sort((a, b) => a - b));
   });
 
   it("takes over the lock of an owner that died without closing", async () => {
