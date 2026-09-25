@@ -2,9 +2,10 @@
 
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DomEditOverlay } from "./DomEditOverlay";
 import { RECOMPUTE_INTERVAL_MS } from "./offCanvasIndicatorRefresh";
+import { usePlayerStore } from "../../player/store/playerStore";
 
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true);
 
@@ -158,6 +159,10 @@ function mountOverlayWithHeadline(initialLeft: number, observerDelayMs = 0): Ove
     },
   };
 }
+
+beforeEach(() => {
+  usePlayerStore.setState({ previewBooted: true });
+});
 
 describe("off-canvas indicator refresh", () => {
   for (const [label, delayMs] of [
