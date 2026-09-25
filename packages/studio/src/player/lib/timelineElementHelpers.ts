@@ -458,6 +458,39 @@ function findInClipScope(
   return lone;
 }
 
+export type PreviewTarget = Pick<TimelineElement, "hfId" | "domId" | "id" | "sourceFile">;
+
+/** Finds a row's preview element by `data-hf-id`, then id, preferring one in the row's own file: both repeat across
+ * files. Indexes the document once, so a pass over every row costs one scan. */
+export function previewElementFinder(
+  doc: Document,
+  selector = "[data-hf-id], [id]",
+): (target: PreviewTarget) => Element | null {
+  const byKey = new Map<string, Element[]>();
+  const add = (key: string, node: Element) => {
+    const nodes = byKey.get(key);
+    if (nodes) nodes.push(node);
+    else byKey.set(key, [node]);
+  };
+  for (const node of doc.querySelectorAll(selector)) {
+    const hfId = node.getAttribute("data-hf-id");
+    const id = node.getAttribute("id");
+    if (hfId) add(`hf:${hfId}`, node);
+    if (id) add(`id:${id}`, node);
+  }
+  return (target) => {
+    const matches = [
+      ...((target.hfId && byKey.get(`hf:${target.hfId}`)) || []),
+      ...(byKey.get(`id:${target.domId ?? target.id}`) ?? []),
+    ];
+    return (
+      matches.find((node) => getTimelineElementSourceFile(node) === target.sourceFile) ??
+      matches[0] ??
+      null
+    );
+  };
+}
+
 export function findClipElementById(doc: Document, clip: ClipManifestClip): Element | null {
   if (!clip.id) return null;
   const first = doc.getElementById(clip.id);
