@@ -91,6 +91,7 @@ import {
 } from "../helpers/compositionInsertion.js";
 import { resolveGsapWriter } from "./gsapMutationCapabilities.js";
 import { requestSubPath } from "../helpers/requestSubPath.js";
+import { insertBeforeCloseTag } from "@hyperframes/core/compiler/html-document";
 
 // ── Server cutover flag ─────────────────────────────────────────────────────
 
@@ -1276,9 +1277,7 @@ async function prepareGsapMutationScript(
       `window.__timelines["${compId}"] = tl;`,
       "</script>",
     ].join("\n");
-    html = html.includes("</body>")
-      ? html.replace("</body>", `${bootstrap}\n</body>`)
-      : `${html}\n${bootstrap}`;
+    html = insertBeforeCloseTag(html, "body", `${bootstrap}\n`) ?? `${html}\n${bootstrap}`;
     block = extractGsapScriptBlock(html);
   }
   if (
