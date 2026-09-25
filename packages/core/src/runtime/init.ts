@@ -38,6 +38,11 @@ import { createPickerModule } from "./picker";
 import { createRuntimePlayer, type RuntimePlayerTransport } from "./player";
 import { createRuntimeState } from "./state";
 import { collectRuntimeTimelinePayload, isRuntimeElementVisibleAt } from "./timeline";
+import {
+  findRootCompositionElement,
+  parseCompositionDimension,
+  parseLayoutDimension,
+} from "./compositionDimension";
 import { resolveCompositionDuration } from "@hyperframes/parsers/composition-duration";
 import { createRuntimeStartTimeResolver } from "./startResolver";
 import { createClipTree } from "./clipTree";
@@ -374,28 +379,12 @@ export function initSandboxRuntimeModular(): void {
 
   window.__timelines = window.__timelines || {};
 
-  // Resolve the root composition element with the same priority the rest of
-  // the runtime uses (explicit `data-root` marker first, then the topmost
-  // non-nested composition, then first in DOM order). Defined here so the
-  // array-normalization + data-start defaults below pick the same root the
-  // closure-based `resolveRootCompositionElement` does on multi-comp pages.
-  const findRootCompositionEl = (): HTMLElement | null => {
-    const explicitRoot = document.querySelector('[data-composition-id][data-root="true"]');
-    if (isHtmlElement(explicitRoot)) return explicitRoot;
-    const nodes = Array.from(document.querySelectorAll("[data-composition-id]")) as HTMLElement[];
-    return (
-      nodes.find((node) => !node.parentElement?.closest("[data-composition-id]")) ??
-      nodes[0] ??
-      null
-    );
-  };
-
   // Agents often write `window.__timelines = [tl]` (array) instead of the
   // keyed-by-composition-id object the runtime expects. Normalize at init so
   // the rest of the pipeline can assume a Record<string, timeline>.
   if (Array.isArray(window.__timelines)) {
     const arr = window.__timelines as unknown[];
-    const rootId = findRootCompositionEl()?.getAttribute("data-composition-id") ?? "root";
+    const rootId = findRootCompositionElement()?.getAttribute("data-composition-id") ?? "root";
     const normalized: Record<string, unknown> = {};
     if (arr.length === 1) {
       normalized[rootId] = arr[0];
@@ -408,7 +397,7 @@ export function initSandboxRuntimeModular(): void {
   // Agents sometimes omit data-start on the root composition element. The
   // runtime skips timed-visibility for elements without it, making clips
   // invisible and timelines non-seekable. Default to 0 for the root.
-  const rootComp = findRootCompositionEl();
+  const rootComp = findRootCompositionElement();
   if (rootComp && !rootComp.hasAttribute("data-start")) {
     rootComp.setAttribute("data-start", "0");
   }
@@ -552,13 +541,11 @@ export function initSandboxRuntimeModular(): void {
   };
 
   const parseDimensionPx = (value: string | null): string | null => {
-    if (value == null || value.trim() === "") return null;
-    const parsed = Number.parseFloat(value);
-    if (!Number.isFinite(parsed) || parsed <= 0) return null;
-    return `${parsed}px`;
+    const parsed = parseLayoutDimension(value);
+    return parsed === null ? null : `${parsed}px`;
   };
 
-  const resolveRootCompositionElement = (): HTMLElement | null => findRootCompositionEl();
+  const resolveRootCompositionElement = (): HTMLElement | null => findRootCompositionElement();
 
   const applyCompositionSizing = () => {
     const rootEl = resolveRootCompositionElement();
@@ -579,7 +566,7 @@ export function initSandboxRuntimeModular(): void {
     // Mirror the SAME forced values onto documentElement/body (not a second
     // read of the root's own dimensions): once body's own size agrees with
     // the root it contains, `overflow: hidden` clips nothing that matters and
-    // the white-bar guard stays intact. `findRootCompositionEl` above returns
+    // the white-bar guard stays intact. `findRootCompositionElement` returns
     // the outermost `[data-root="true"]` composition by convention, not by a
     // structural guarantee — this only ever affects a document whose author
     // marked a NESTED composition `data-root="true"` too, which nothing in
@@ -1954,14 +1941,10 @@ export function initSandboxRuntimeModular(): void {
       return;
     }
     const rect = rootNode.getBoundingClientRect();
-    const declaredWidth = Number(rootNode.getAttribute("data-width"));
-    const declaredHeight = Number(rootNode.getAttribute("data-height"));
+    const declaredWidth = parseLayoutDimension(rootNode.getAttribute("data-width"));
+    const declaredHeight = parseLayoutDimension(rootNode.getAttribute("data-height"));
     const computedStyle = window.getComputedStyle(rootNode);
-    const hasDeclaredDimensions =
-      Number.isFinite(declaredWidth) &&
-      declaredWidth > 0 &&
-      Number.isFinite(declaredHeight) &&
-      declaredHeight > 0;
+    const hasDeclaredDimensions = declaredWidth !== null && declaredHeight !== null;
     const looksCollapsed =
       rect.width <= 0 ||
       rect.height <= 0 ||
@@ -2864,11 +2847,9 @@ export function initSandboxRuntimeModular(): void {
     // Post resolved stage size so the parent can scale the iframe container
     const stageSizeRootEl = resolveRootCompositionElement();
     if (stageSizeRootEl) {
-      const w = parseDimensionPx(stageSizeRootEl.getAttribute("data-width"));
-      const h = parseDimensionPx(stageSizeRootEl.getAttribute("data-height"));
-      const width = w ? parseInt(w, 10) : 0;
-      const height = h ? parseInt(h, 10) : 0;
-      if (width > 0 && height > 0) {
+      const width = parseCompositionDimension(stageSizeRootEl.getAttribute("data-width"));
+      const height = parseCompositionDimension(stageSizeRootEl.getAttribute("data-height"));
+      if (width !== null && height !== null) {
         postRuntimeMessage({ source: "hf-preview", type: "stage-size", width, height });
       }
     }
@@ -3257,8 +3238,7 @@ export function initSandboxRuntimeModular(): void {
 
   emitAnalyticsEvent("composition_loaded", {
     duration: player.getDuration(),
-    compositionId:
-      document.querySelector("[data-composition-id]")?.getAttribute("data-composition-id") ?? null,
+    compositionId: findRootCompositionElement()?.getAttribute("data-composition-id") ?? null,
   });
 
   state.deterministicAdapters = [

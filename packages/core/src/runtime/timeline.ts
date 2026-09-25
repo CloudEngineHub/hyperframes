@@ -5,6 +5,7 @@ import type {
   RuntimeTimelineLike,
 } from "./types";
 import { stableClipId } from "./clipTree";
+import { findRootCompositionElement, parseCompositionDimension } from "./compositionDimension";
 import {
   AUTHORED_DURATION_ATTR,
   AUTHORED_END_ATTR,
@@ -316,7 +317,7 @@ export function collectRuntimeTimelinePayload(params: {
     };
   };
 
-  const root = document.querySelector("[data-composition-id]") as Element | null;
+  const root = findRootCompositionElement();
   const compositionNodes = Array.from(document.querySelectorAll("[data-composition-id]"));
   const rootCompositionId = root?.getAttribute("data-composition-id") ?? null;
   const rootCompositionStart = root ? startResolver.resolveStartForElement(root, 0) : 0;
@@ -705,7 +706,7 @@ export function collectRuntimeTimelinePayload(params: {
     durationInFrames,
     clips,
     scenes,
-    compositionWidth: parseNum(root?.getAttribute("data-width")) ?? 1920,
-    compositionHeight: parseNum(root?.getAttribute("data-height")) ?? 1080,
+    compositionWidth: parseCompositionDimension(root?.getAttribute("data-width")) ?? 1920,
+    compositionHeight: parseCompositionDimension(root?.getAttribute("data-height")) ?? 1080,
   };
 }
