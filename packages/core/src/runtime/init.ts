@@ -629,11 +629,10 @@ export function initSandboxRuntimeModular(): void {
     const rootHeight = parseDimensionPx(rootEl.getAttribute("data-height"));
     if (rootWidth) rootEl.style.width = rootWidth;
     if (rootHeight) rootEl.style.height = rootHeight;
-    const children = Array.from(rootEl.children) as HTMLElement[];
-    for (const el of children) {
+    const clips = (Array.from(rootEl.children) as HTMLElement[]).filter((el) => {
       const tag = el.tagName.toLowerCase();
-      if (tag === "script" || tag === "style" || tag === "link" || tag === "meta") continue;
-      if (!el.hasAttribute("data-start")) continue;
+      if (tag === "script" || tag === "style" || tag === "link" || tag === "meta") return false;
+      if (!el.hasAttribute("data-start")) return false;
       // Runtime-stamped clips are NOT authored overlay clips. In Studio/preview
       // the runtime stamps `data-start` onto ID'd or GSAP-targeted flow children
       // (a <header>/<footer> in a flex column) so the design panel can discover
@@ -642,7 +641,14 @@ export function initSandboxRuntimeModular(): void {
       // `justify-content: space-between` clusters in the top-left. Leave them in
       // flow so the preview matches the rendered video, which never stamps
       // (production renders run as the top-level page, not in an iframe).
-      if (el.hasAttribute("data-hf-autostamped")) continue;
+      return !el.hasAttribute("data-hf-autostamped");
+    });
+    const displayNoneLiftedToMeasureShown = clips
+      .filter((el) => el.style.getPropertyValue("display") === "none")
+      .map((el) => ({ el, priority: el.style.getPropertyPriority("display") }));
+    for (const { el } of displayNoneLiftedToMeasureShown) el.style.removeProperty("display");
+    for (const el of clips) {
+      const tag = el.tagName.toLowerCase();
       const hasLegacyAnchoredDefaults =
         (el.style.top === "0px" || el.style.top === "0") &&
         (el.style.left === "0px" || el.style.left === "0") &&
@@ -687,22 +693,6 @@ export function initSandboxRuntimeModular(): void {
       if (shouldForceAbsolute) {
         el.style.position = "absolute";
       }
-      const hasExplicitVerticalAnchor =
-        Boolean(el.style.top) ||
-        Boolean(el.style.bottom) ||
-        computed.top !== "auto" ||
-        computed.bottom !== "auto";
-      if (!hasExplicitVerticalAnchor) {
-        el.style.top = "0";
-      }
-      const hasExplicitHorizontalAnchor =
-        Boolean(el.style.left) ||
-        Boolean(el.style.right) ||
-        computed.left !== "auto" ||
-        computed.right !== "auto";
-      if (!hasExplicitHorizontalAnchor) {
-        el.style.left = "0";
-      }
       if (tag !== "audio") {
         const forcedWidth = parseDimensionPx(el.getAttribute("data-width"));
         const forcedHeight = parseDimensionPx(el.getAttribute("data-height"));
@@ -723,6 +713,9 @@ export function initSandboxRuntimeModular(): void {
           el.style.height = "100%";
         }
       }
+    }
+    for (const { el, priority } of displayNoneLiftedToMeasureShown) {
+      el.style.setProperty("display", "none", priority);
     }
   };
 
