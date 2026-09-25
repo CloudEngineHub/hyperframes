@@ -8,6 +8,11 @@
     <meta name="viewport" content="width=1920, height=1080" />
     <title>Frost Sequence Rig</title>
     <script src="assets/gsap-3.14.2.min.js"></script>
+    <script>
+      // frost.js reads its asset base when it loads; beside this file when mounted.
+      if (typeof __hyperframes !== "undefined" && __hyperframes.assetUrl)
+        window.__frostAssetBase = __hyperframes.assetUrl("assets/");
+    </script>
     <script src="assets/frost.js"></script>
     <style>
       * {
@@ -2523,6 +2528,9 @@
             ? window.__hyperframes.getVariables()
             : {}),
         };
+        // The default logo ships beside this file; a logo the user sets is their project's path.
+        if (values.logoUrl === defaults.logoUrl && window.__frostAssetBase)
+          values.logoUrl = window.__frostAssetBase + "logo.svg";
         window.Frost.setRendererProfile(values.rendererProfile);
         console.info("[Frost renderer]", JSON.stringify(window.__rewrite));
         const matcapKeys = [
@@ -3160,7 +3168,7 @@
           ...opts,
           previewPixelRatio,
           rig: { duration: DURATION, mode: values.assemblyMode, sequence: true, sample: sampleRig },
-          fontUrl: "assets/fonts/Geist-Bold.ttf",
+          fontUrl: (window.__frostAssetBase || "assets/") + "fonts/Geist-Bold.ttf",
           onProgress: (msg) => {
             stage.dataset.state = msg;
             buildStatus.textContent = "Building Frost · " + msg;
