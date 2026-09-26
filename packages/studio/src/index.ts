@@ -183,3 +183,10 @@ export type { TimelinePaneProps } from "./components/nle/TimelinePane";
 export { TimelineEditProvider } from "./contexts/TimelineEditContext";
 export type { TimelineEditCallbacks } from "./player/components/timelineCallbacks";
 export type { BlockedTimelineEditIntent } from "./player/components/timelineEditing";
+
+export {
+  playSeamTransitionLoop,
+  type SeamTransitionFrameSource,
+  type SeamTransitionLoopHandle,
+  type SeamTransitionLoopOptions,
+} from "@hyperframes/shader-transitions";
