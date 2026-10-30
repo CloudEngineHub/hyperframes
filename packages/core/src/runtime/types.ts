@@ -278,6 +278,7 @@ export type RuntimePreviewHealthMessage = {
     worstFrameMs: number;
     skippedShare: number;
     waitingShare: number;
+    frozenShare: number;
     gapP50Ms: number;
     gapP95Ms: number;
     mode: "play";

@@ -26,6 +26,7 @@ import {
   stopMediaDownload,
 } from "./preloadMedia";
 import { notePlaybackFrame, noteDisplayScale } from "./playbackHealth";
+import { hasFrozenPicture } from "./frozenPicture";
 import { copiesReady } from "./previewCopies";
 import { installRuntimeControlBridge, postRuntimeMessage, setRuntimeProtocolFps } from "./bridge";
 import { instantTolerance } from "../clipFacts";
@@ -5721,6 +5722,7 @@ export function initSandboxRuntimeModular(): void {
           waiting: mediaClipsInWindow.some(
             ({ el }) => el.tagName === "VIDEO" && !el.paused && el.readyState < 3,
           ),
+          frozen: hasFrozenPicture(mediaClipsInWindow, t),
           layoutKey: `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}`,
         });
       }
