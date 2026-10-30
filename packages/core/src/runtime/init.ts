@@ -3419,6 +3419,8 @@ export function initSandboxRuntimeModular(): void {
   // boundaries crossed in between.
   let lastSyncedMediaTimeSeconds: number | null = null;
   let mediaClipsInWindow: RuntimeMediaClip[] = [];
+  // Clips due now that could not play: every track holds until they can, so none runs on alone.
+  let bufferingFor: HTMLMediaElement[] = [];
 
   // The one definition of "media the transport drives": timed itself, or hosted
   // by a composition whose timing it inherits. Both the media cache and the
@@ -3752,12 +3754,12 @@ export function initSandboxRuntimeModular(): void {
     const shouldPost =
       force ||
       frame !== state.bridgeLastPostedFrame ||
-      state.isPlaying !== state.bridgeLastPostedPlaying ||
+      (state.isPlaying || bufferingFor.length > 0) !== state.bridgeLastPostedPlaying ||
       state.bridgeMuted !== state.bridgeLastPostedMuted ||
       now - state.bridgeLastPostedAt >= state.bridgeMaxPostIntervalMs;
     if (!shouldPost) return;
     state.bridgeLastPostedFrame = frame;
-    state.bridgeLastPostedPlaying = state.isPlaying;
+    state.bridgeLastPostedPlaying = state.isPlaying || bufferingFor.length > 0;
     state.bridgeLastPostedMuted = state.bridgeMuted;
     state.bridgeLastPostedAt = now;
     postRuntimeMessage({
@@ -3766,7 +3768,8 @@ export function initSandboxRuntimeModular(): void {
       frame,
       currentTime: state.currentTime || 0,
       ended: clock.reachedEnd(),
-      isPlaying: state.isPlaying,
+      isPlaying: state.bridgeLastPostedPlaying,
+      buffering: bufferingFor.length > 0,
       muted: state.bridgeMuted,
       playbackRate: state.playbackRate,
     });
@@ -4709,9 +4712,28 @@ export function initSandboxRuntimeModular(): void {
     postState(true);
   };
 
+  const haltPlayback = () => {
+    webAudio.stopAll();
+    clock.detachAudioSource();
+    clock.pause();
+    state.isPlaying = false;
+    state.currentTime = clock.now();
+    state.mediaForceSyncNextTick = true;
+    hardSyncAllMedia(state.currentTime);
+    const tl = state.capturedTimeline;
+    pauseTimelineIfPossible(tl);
+    runAdapters("pause");
+    syncMediaForCurrentState();
+    colorGrading.redraw();
+    // Paused: back to plain DOM so Studio can select inside the composition.
+    void paintCaptureMotionBlur(state.currentTime);
+    postState(true);
+  };
+
   const transport: RuntimePlayerTransport = {
     play: () => {
       flushHeldSeek();
+      bufferingFor = [];
       const tl = state.capturedTimeline;
       if (clock.isPlaying()) return;
       const dur = getSafeTimelineDurationSeconds(tl, 0);
@@ -4742,22 +4764,10 @@ export function initSandboxRuntimeModular(): void {
       postState(true);
     },
     pause: () => {
-      if (!clock.isPlaying()) return;
-      webAudio.stopAll();
-      clock.detachAudioSource();
-      clock.pause();
-      state.isPlaying = false;
-      state.currentTime = clock.now();
-      state.mediaForceSyncNextTick = true;
-      hardSyncAllMedia(state.currentTime);
-      const tl = state.capturedTimeline;
-      pauseTimelineIfPossible(tl);
-      runAdapters("pause");
-      syncMediaForCurrentState();
-      colorGrading.redraw();
-      // Paused: back to plain DOM so Studio can select inside the composition.
-      void paintCaptureMotionBlur(state.currentTime);
-      postState(true);
+      const wasBuffering = bufferingFor.length > 0;
+      bufferingFor = [];
+      if (clock.isPlaying()) haltPlayback();
+      else if (wasBuffering) postState(true);
     },
     seek: (timeSeconds, options) => {
       const quantized = quantizeTimeToFrame(
@@ -5402,6 +5412,7 @@ export function initSandboxRuntimeModular(): void {
    */
   const canParkTransport = (): boolean =>
     !clock.isPlaying() &&
+    bufferingFor.length === 0 &&
     !isExportRenderDrivingFrames() &&
     // Without MutationObserver nothing can PUSH a DOM change: neither the
     // composition-timing watcher nor the gesture watch attaches, and both fall
@@ -5547,15 +5558,20 @@ export function initSandboxRuntimeModular(): void {
     requestTransportTick();
   };
 
+  const isPlayableTrack = (el: HTMLMediaElement): boolean =>
+    el.isConnected &&
+    !isSilencedByHidden(el) &&
+    !isUnplayable(el) &&
+    !(el.ended && !el.loop) &&
+    (el.hasAttribute("src") || el.querySelector("source[src]") !== null);
+
   const followedOrLongestRunningAudio = (
     followed: HTMLMediaElement | null,
   ): { el: HTMLMediaElement; start: number } | null => {
     const audioEls = queryForTransport("audio[data-start]");
     let longest: { el: HTMLMediaElement; start: number; runsUntil: number } | null = null;
     for (const el of followed ? [followed, ...audioEls] : audioEls) {
-      if (!isMediaElement(el) || !el.isConnected) continue;
-      if (isSilencedByHidden(el) || isUnplayable(el) || (el.ended && !el.loop)) continue;
-      if (!el.hasAttribute("src") && !el.querySelector("source[src]")) continue;
+      if (!isMediaElement(el) || !isPlayableTrack(el)) continue;
       const start = resolveAbsoluteMediaStartSeconds(el);
       const kept = playedMediaWindow(el, start);
       if (!Number.isFinite(start) || !isInClipWindow(state.currentTime, kept.start, kept.end))
@@ -5619,6 +5635,31 @@ export function initSandboxRuntimeModular(): void {
       if (clock.hasAudioSource()) clock.detachAudioSource();
     }
   }
+
+  const READY_AHEAD_SECONDS = 1;
+  // WebKit reports a paused element as HAVE_CURRENT_DATA however much it has buffered, so read the ranges too.
+  const hasDataAhead = (el: HTMLMediaElement): boolean => {
+    if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return true;
+    if (el.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return false;
+    const until = Math.min(el.currentTime + READY_AHEAD_SECONDS, el.duration) - 0.01;
+    for (let i = 0; i < el.buffered.length; i++) {
+      if (el.buffered.start(i) <= el.currentTime && el.buffered.end(i) >= until) return true;
+    }
+    return false;
+  };
+
+  const mediaNotReadyAt = (t: number): HTMLMediaElement[] =>
+    state.nativeMediaSyncDisabled
+      ? []
+      : mediaClipsInWindow
+          .filter(
+            ({ el, start, end }) =>
+              isInClipWindow(t, start, end) &&
+              !hasDataAhead(el) &&
+              isPlayableTrack(el) &&
+              !webAudio.ownsElement(el),
+          )
+          .map(({ el }) => el);
 
   const transportTick = () => {
     if (state.tornDown || inTransportTick) return;
@@ -5788,6 +5829,14 @@ export function initSandboxRuntimeModular(): void {
         // exactly the one to stop.
         lastSyncedMediaTimeSeconds = null;
         syncMediaForCurrentState(timingRevision);
+      }
+      // After media sync, so a clip that just fell due was asked to play, and fetch, before it holds.
+      const notReady = mediaNotReadyAt(state.currentTime);
+      if (clock.isPlaying() && notReady.length > 0) {
+        bufferingFor = notReady;
+        haltPlayback();
+      } else if (bufferingFor.length > 0 && !notReady.some((el) => bufferingFor.includes(el))) {
+        transport.play();
       }
       postState(false);
     } finally {
