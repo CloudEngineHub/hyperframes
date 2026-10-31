@@ -383,6 +383,53 @@ function stepsAt(
   return steps;
 }
 
+export function holdLandingMarks(
+  timeline: { getChildren?: RuntimeTimelineLike["getChildren"] },
+  structure?: GsapStructureKey,
+): () => void {
+  const placed = structure ? placedLandingMarks(timeline, structure) : null;
+  const marks = placed
+    ? [...placed.always, ...placed.points.map((point) => point.mark)]
+    : childrenWithLandingMarksIn(timeline);
+  const held = marks.map((mark) => [mark, mark.ratio, mark._zTime, mark._act] as const);
+  return () => {
+    for (const [mark, ratio, zTime, active] of held) {
+      mark.ratio = ratio;
+      mark._zTime = zTime;
+      mark._act = active;
+    }
+  };
+}
+
+export function holdFrameMarks({
+  scenes,
+  root,
+  structureOf,
+}: {
+  scenes: RuntimeTimelineLike[];
+  root: RuntimeTimelineLike | null;
+  structureOf: (timeline: RuntimeTimelineLike) => GsapStructureKey | undefined;
+}): (landBack: () => void) => void {
+  const rootLandsLast = root ? [...scenes, root] : scenes;
+  const marks = rootLandsLast.map((timeline) => holdLandingMarks(timeline, structureOf(timeline)));
+  return (landBack) => {
+    landBack();
+    for (const timeline of rootLandsLast) {
+      if (timeline.totalTime && !structureOf(timeline)) {
+        rerenderGsapTimelineAt(
+          {
+            totalTime: timeline.totalTime.bind(timeline),
+            totalDuration: timeline.totalDuration?.bind(timeline),
+            getChildren: timeline.getChildren?.bind(timeline),
+          },
+          Number(timeline.totalTime()),
+        );
+      }
+    }
+    for (const put of marks) put();
+  };
+}
+
 function landingMarksOf(
   timeline: { getChildren?: RuntimeTimelineLike["getChildren"] },
   structure: GsapStructureKey | undefined,
